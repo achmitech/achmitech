@@ -1,0 +1,24 @@
+image: atlassian/default-image:2
+pipelines:
+    branches:
+      dev:
+        - step:
+           script:
+             - git remote add sync git@github.com:achmitech/achmitech.git
+             - git checkout dev
+             - git pull
+             - git push sync dev
+      master:
+        - step:
+           script:
+             - git remote add sync git@github.com:achmitech/achmitech.git
+             - git checkout master
+             - git pull
+             - git push sync master
+      main:
+        - step:
+           script:
+             - git remote add sync git@github.com:achmitech/achmitech.git
+             - git checkout main
+             - git pull
+             - git push sync main
