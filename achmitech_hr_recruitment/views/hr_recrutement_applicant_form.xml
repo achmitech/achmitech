@@ -8,9 +8,7 @@
                 <page string="Évaluations" name="applicant_evaluation">
                     <field name="evaluation_ids">
                         <list editable="bottom" delete="1">
-                            <field name="date" readonly="1" column_invisible="1"/>
-                            <field name="applicant_id" readonly="1" column_invisible="1"/>
-                            <field name="job_id" readonly="1" column_invisible="1"/>
+                            <field name="date" readonly="1" optional="hide"/>
                             <field name="stage_id"/>
                             <field name="interviewer_id"/>
                             <field name="rating"/>
