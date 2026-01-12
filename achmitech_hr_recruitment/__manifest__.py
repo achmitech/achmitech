@@ -38,9 +38,7 @@ pilotage des processus de recrutement.
         'views/hr_recrutement_applicant_form.xml',
         'reports/hr_candidate_report.xml'
     ],
-    # only loaded in demonstration mode
-    'demo': [
-        'demo/demo.xml',
-    ],
+    
+    'license': 'LGPL-3',
 }
 
