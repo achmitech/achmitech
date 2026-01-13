@@ -1,0 +1,23 @@
+<odoo>
+  <record id="hr_applicant_view_form_inherited" model="ir.ui.view">
+        <field name="name">hr.applicant.view.form.inherited</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_applicant_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form//notebook" position="inside">
+                <page string="Évaluations" name="applicant_evaluation">
+                    <field name="evaluation_ids">
+                        <list editable="bottom" delete="1">
+                            <field name="date" readonly="1" optional="hide"/>
+                            <field name="stage_id"/>
+                            <field name="interviewer_id"/>
+                            <field name="rating"/>
+                            <field name="decision"/>
+                            <field name="comment"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
