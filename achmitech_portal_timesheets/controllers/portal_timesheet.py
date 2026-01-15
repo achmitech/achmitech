@@ -2,7 +2,6 @@
 from odoo import http, fields
 from odoo.http import request
 from odoo.addons.portal.controllers.portal import CustomerPortal
-from urllib.parse import urlsplit, urlunsplit, urlencode, parse_qsl
 
 class PortalTimesheet(CustomerPortal):
 
