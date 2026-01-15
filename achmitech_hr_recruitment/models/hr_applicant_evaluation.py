@@ -5,7 +5,7 @@ from odoo.exceptions import ValidationError
 class HrApplicantEvaluation(models.Model):
     _name = "hr.applicant.evaluation"
     _description = "Applicant Evaluation"
-    _order = "date desc, id desc"
+    _order = "create_date"
     _inherit = ["mail.thread", "mail.activity.mixin"]  # pratique pour audit/trace
 
     applicant_id = fields.Many2one(
