@@ -20,7 +20,7 @@
         <t t-if="success">
           <div class="alert alert-success alert-dismissible fade show" role="alert">
     Temps enregistré avec succès.
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"/>
           </div>
         </t>
 
@@ -28,7 +28,7 @@
         <t t-if="flash">
           <div t-attf-class="alert alert-#{flash.get('type','info')} alert-dismissible fade show" role="alert">
             <t t-esc="flash.get('message')"/>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"/>
           </div>
         </t>
 

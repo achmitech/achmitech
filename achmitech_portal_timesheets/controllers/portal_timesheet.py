@@ -54,9 +54,7 @@ class PortalTimesheet(CustomerPortal):
             request.session["ts_flash"] = {"type": "danger", "message": "Vous n'êtes pas assigné(e) à cette tâche."}
             return self._task_redirect(task)
 
-        # Create timesheet
-        # NOTE: You're using sudo() here (comment said otherwise). Keep sudo only if portal user lacks rights,
-        # but ensure your checks above are strict (they are).
+        # Create timesheet using sudo(to bypass ACL)
         request.env["account.analytic.line"].sudo().create({
             "name": description,
             "date": fields.Date.from_string(date_str),
