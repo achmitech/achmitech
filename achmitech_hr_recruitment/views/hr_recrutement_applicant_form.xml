@@ -9,10 +9,16 @@
                     <field name="evaluation_ids">
                         <list editable="bottom" delete="1">
                             <field name="date" readonly="1" optional="hide"/>
-                            <field name="stage_id"/>
-                            <field name="interviewer_id"/>
+                            <field name="stage_id" 
+                                readonly="1" 
+                                force_save="1" 
+                                options="{'no_create_edit': True, 'no_open': True}"/>
+                            <field name="interviewer_id" 
+                                required="stage_id.is_client_interview" 
+                                readonly="not stage_id.is_client_interview"
+                                options="{'no_create_edit': True, 'no_open': True}"/>
                             <field name="rating"/>
-                            <field name="decision"/>
+                            <field name="decision" readonly="1"/>
                             <field name="comment"/>
                         </list>
                     </field>

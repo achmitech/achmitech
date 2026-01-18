@@ -74,14 +74,23 @@
                                 <thead class="bg-200 fw-bold o_line_section">
                                     <tr>
                                         <th class="text-center">Date</th>
+<<<<<<< HEAD
+<<<<<<< Updated upstream
+                                        <th class="text-center">Intervieweur</th>
+=======
+                                        <th class="text-center">Entretien</th>
                                         <th class="text-center">Interviewer</th>
+>>>>>>> Stashed changes
+=======
+                                        <th class="text-center">Interviewer</th>
+>>>>>>> 069c8077039bc21f336dcdefd96884cc17da4030
                                         <th class="text-center">Score</th>
                                         <th class="text-center">Décision</th>
                                         <th class="text-center">Commentaire</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <t t-foreach="job_evals.sorted(lambda e: e.date or e.create_date, reverse=True)" t-as="line">
+                                    <t t-foreach="job_evals.sorted(lambda e: e.create_date or e.date)" t-as="line">
                                         <tr>
                                             <td class="text-center">
                                                 <t t-if="line.date">
@@ -90,10 +99,16 @@
                                             </td>
 
                                             <td class="text-center">
+                                                <t t-if="line.stage_id">
+                                                    <span t-esc="line.stage_id.name"/>
+                                                </t>
+                                            </td>
+
+                                            <td class="text-center">
                                                 <t t-if="line.interviewer_id">
                                                     <span t-field="line.interviewer_id.name"/>
                                                 </t>
-                                                <t t-else="">—</t>
+                                                <t t-else="">Client</t>
                                             </td>
 
                                             <td class="text-center">
@@ -105,7 +120,7 @@
 
                                             <td class="text-center">
                                                 <t t-if="line.decision">
-                                                    <span t-esc="dict(line._fields['decision'].selection).get(line.decision)"/>
+                                                    <span t-esc="line.decision"/>
                                                 </t>
                                                 <t t-else="">—</t>
                                             </td>
@@ -114,7 +129,6 @@
                                                 <t t-if="line.comment">
                                                     <span t-field="line.comment"/>
                                                 </t>
-                                                <t t-else="">—</t>
                                             </td>
                                         </tr>
                                     </t>
@@ -139,7 +153,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <t t-foreach="evals_no_job.sorted(lambda e: e.date or e.create_date, reverse=True)" t-as="line">
+                                    <t t-foreach="evals_no_job.sorted(lambda e: e.create_date or e.date)" t-as="line">
                                         <tr>
                                             <td class="text-center">
                                                 <t t-if="line.date">
@@ -147,10 +161,15 @@
                                                 </t>
                                             </td>
                                             <td class="text-center">
+                                                <t t-if="line.stage_id">
+                                                    <span t-esc="line.stage_id.name"/>
+                                                </t>
+                                            </td>
+                                            <td class="text-center">
                                                 <t t-if="line.interviewer_id">
                                                     <span t-field="line.interviewer_id.name"/>
                                                 </t>
-                                                <t t-else="">—</t>
+                                                <t t-else="">Client</t>
                                             </td>
 
                                             <td class="text-center">
