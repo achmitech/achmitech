@@ -74,16 +74,8 @@
                                 <thead class="bg-200 fw-bold o_line_section">
                                     <tr>
                                         <th class="text-center">Date</th>
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-                                        <th class="text-center">Intervieweur</th>
-=======
                                         <th class="text-center">Entretien</th>
                                         <th class="text-center">Interviewer</th>
->>>>>>> Stashed changes
-=======
-                                        <th class="text-center">Interviewer</th>
->>>>>>> 069c8077039bc21f336dcdefd96884cc17da4030
                                         <th class="text-center">Score</th>
                                         <th class="text-center">Décision</th>
                                         <th class="text-center">Commentaire</th>
@@ -146,6 +138,7 @@
                                 <thead class="bg-200 fw-bold o_line_section">
                                     <tr>
                                         <th class="text-center">Date</th>
+                                        <th class="text-center">Entretien</th>
                                         <th class="text-center">Interviewer</th>
                                         <th class="text-center">Score</th>
                                         <th class="text-center">Décision</th>
