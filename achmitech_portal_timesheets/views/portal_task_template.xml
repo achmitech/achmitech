@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <template id="portal_my_task_timesheet_header_with_button" inherit_id="hr_timesheet.portal_my_task" name="Portal: Timesheet header with Add button">
+
+    <xpath expr="//h5[@id='task_timesheets']/ancestor::div[hasclass('container')][1]" position="replace">
+      <div class="container" t-if="allow_timesheets">
+
+        <div class="d-flex justify-content-between align-items-center mt-2 mb-2">
+          <h5 id="task_timesheets" class="mb-0" data-anchor="true">Timesheets</h5>
+
+          <t t-if="request.env.user in task.user_ids">
+            <button type="button" class="btn btn-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#add_my_timesheet">
+              <i class="fa fa-plus"></i> Ajouter mes temps
+            </button>
+          </t>
+        </div>
+
+        <!-- Alerts (place right under the Timesheets header) -->
+      
+        <t t-if="success">
+          <div class="alert alert-success alert-dismissible fade show" role="alert">
+    Temps enregistré avec succès.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"/>
+          </div>
+        </t>
+
+        <t t-set="flash" t-value="request.session.pop('ts_flash', None)"/>
+        <t t-if="flash">
+          <div t-attf-class="alert alert-#{flash.get('type','info')} alert-dismissible fade show" role="alert">
+            <t t-esc="flash.get('message')"/>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"/>
+          </div>
+        </t>
+
+        <!-- Table if there are lines -->
+        <t t-if="timesheets">
+          <t t-call="hr_timesheet.portal_timesheet_table"/>
+        </t>
+
+        <!-- Empty state if no lines -->
+        <t t-else="">
+          <div class="alert alert-info mb-0" role="alert">
+            Aucune feuille de temps pour le moment.
+          </div>
+        </t>
+      </div>
+
+      <div class="modal fade" data-focus="false" id="add_my_timesheet" tabindex="-1" aria-labelledby="add_my_timesheet_label" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+
+            <form t-att-action="'/my/timesheets/create'" method="POST" class="modal-content">
+              <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+
+              <!-- keep task context -->
+              <input type="hidden" name="task_id" t-att-value="task.id"/>
+
+              <div class="modal-header">
+                <h5 class="modal-title" id="add_my_timesheet_label">Ajouter mes temps</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"/>
+              </div>
+
+              <div class="modal-body">
+
+                <div class="mb-3">
+                  <label class="form-label">Date</label>
+                  <input type="date" name="date" class="form-control" required="1"/>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Temps(heures:minutes)</label>
+                  <input type="time" name="time_spent" class="form-control" required="1"/>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Description</label>
+                  <textarea name="name" class="form-control" rows="3" placeholder="Décrivez le travail effectué"/>
+                </div>
+
+              </div>
+
+              <div class="modal-footer">
+                <button type="submit" class="btn btn-success">Sauvegarder</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+              </div>
+
+            </form>
+
+          </div>
+        </div>
+      </div>
+    </xpath>
+
+  </template>
+</odoo>

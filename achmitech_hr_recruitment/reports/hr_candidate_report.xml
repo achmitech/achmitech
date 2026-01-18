@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Report Action -->
+        <record id="action_report_hr_candidate_evaluations" model="ir.actions.report">
+            <field name="name">Évaluations du candidat</field>
+            <field name="model">hr.candidate</field>
+            <field name="report_type">qweb-pdf</field>
+            <!-- must match the wrapper template id below -->
+            <field name="report_name">achmitech_hr_recruitment.print_candidate_evaluation</field>
+            <field name="report_file">achmitech_hr_recruitment.print_candidate_evaluation</field>
+
+            <!-- Safe filename -->
+            <field name="print_report_name">'Evaluations-%s' % (object.partner_name or object.display_name or '').replace('/', '')</field>
+
+            <field name="binding_model_id" ref="hr_recruitment.model_hr_candidate"/>
+            <field name="binding_type">report</field>
+        </record>
+
+        <!-- Wrapper -->
+        <template id="print_candidate_evaluation">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="o">
+                    <t t-call="achmitech_hr_recruitment.report_print_candidate_evaluation_document" t-lang="o.partner_id.lang"/>
+                </t>
+            </t>
+        </template>
+
+        <template id="report_print_candidate_evaluation_document">
+            <t t-call="web.external_layout">
+                <t t-set="o" t-value="o.with_context(lang=o.partner_id.lang)"/>
+
+                <!-- Candidate block -->
+                <t t-set="address">
+                    <div t-field="o.partner_id" t-options='{"widget": "contact", "fields": ["name", "phone", "email"], "no_marker": True, "phone_icons": True}'/>
+                </t>
+
+                <!-- All evaluations of the candidate -->
+                <t t-set="evals" t-value="o.evaluation_ids"/>
+
+                <!-- Distinct jobs from evaluations -->
+                <t t-set="jobs" t-value="evals.mapped('applicant_id.job_id').filtered(lambda j: j).sorted(lambda j: (j.name or '').lower())"/>
+
+                <!-- Evaluations without job -->
+                <t t-set="evals_no_job" t-value="evals.filtered(lambda e: not e.applicant_id.job_id)"/>
+
+                <div class="page">
+                    <div class="oe_structure"/>
+
+                    <!-- Header -->
+                    <div class="mt-2">
+                        <h2>
+                    Rapport d’évaluation —
+                            <span t-esc="o.partner_id.name if o.partner_id else o.display_name"/>
+                        </h2>
+                    </div>
+
+                    <!-- ================= JOB GROUPED TABLES ================= -->
+
+                    <t t-if="evals">
+
+                        <!-- One table per job -->
+                        <t t-foreach="jobs" t-as="job">
+                            <t t-set="job_evals" t-value="evals.filtered(lambda e: e.applicant_id.job_id == job)"/>
+
+                            <div class="mt-4">
+                                <h4>
+                            Poste : <span t-esc="job.name"/>
+                                </h4>
+                            </div>
+
+                            <table class="table table-sm o_main_table table-borderless">
+                                <thead class="bg-200 fw-bold o_line_section">
+                                    <tr>
+                                        <th class="text-center">Date</th>
+                                        <th class="text-center">Entretien</th>
+                                        <th class="text-center">Interviewer</th>
+                                        <th class="text-center">Score</th>
+                                        <th class="text-center">Décision</th>
+                                        <th class="text-center">Commentaire</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="job_evals.sorted(lambda e: e.create_date or e.date)" t-as="line">
+                                        <tr>
+                                            <td class="text-center">
+                                                <t t-if="line.date">
+                                                    <span t-esc="line.date.strftime('%d/%m/%Y')"/>
+                                                </t>
+                                            </td>
+
+                                            <td class="text-center">
+                                                <t t-if="line.stage_id">
+                                                    <span t-esc="line.stage_id.name"/>
+                                                </t>
+                                            </td>
+
+                                            <td class="text-center">
+                                                <t t-if="line.interviewer_id">
+                                                    <span t-field="line.interviewer_id.name"/>
+                                                </t>
+                                                <t t-else="">Client</t>
+                                            </td>
+
+                                            <td class="text-center">
+                                                <t t-if="line.rating">
+                                                    <span t-esc="dict(line._fields['rating'].selection).get(line.rating)"/>
+                                                </t>
+                                                <t t-else="">—</t>
+                                            </td>
+
+                                            <td class="text-center">
+                                                <t t-if="line.decision">
+                                                    <span t-esc="line.decision"/>
+                                                </t>
+                                                <t t-else="">—</t>
+                                            </td>
+
+                                            <td class="text-left">
+                                                <t t-if="line.comment">
+                                                    <span t-field="line.comment"/>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+
+                        <!-- ================= Evaluations without job ================= -->
+                        <t t-if="evals_no_job">
+                            <div class="mt-4">
+                                <h4>Poste : Non renseigné</h4>
+                            </div>
+
+                            <table class="table table-sm o_main_table table-borderless">
+                                <thead class="bg-200 fw-bold o_line_section">
+                                    <tr>
+                                        <th class="text-center">Date</th>
+                                        <th class="text-center">Entretien</th>
+                                        <th class="text-center">Interviewer</th>
+                                        <th class="text-center">Score</th>
+                                        <th class="text-center">Décision</th>
+                                        <th class="text-center">Commentaire</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="evals_no_job.sorted(lambda e: e.create_date or e.date)" t-as="line">
+                                        <tr>
+                                            <td class="text-center">
+                                                <t t-if="line.date">
+                                                    <span t-esc="line.date.strftime('%d/%m/%Y')"/>
+                                                </t>
+                                            </td>
+                                            <td class="text-center">
+                                                <t t-if="line.stage_id">
+                                                    <span t-esc="line.stage_id.name"/>
+                                                </t>
+                                            </td>
+                                            <td class="text-center">
+                                                <t t-if="line.interviewer_id">
+                                                    <span t-field="line.interviewer_id.name"/>
+                                                </t>
+                                                <t t-else="">Client</t>
+                                            </td>
+
+                                            <td class="text-center">
+                                                <t t-if="line.rating">
+                                                    <span t-esc="dict(line._fields['rating'].selection).get(line.rating)"/>
+                                                </t>
+                                                <t t-else="">—</t>
+                                            </td>
+
+                                            <td class="text-center">
+                                                <t t-if="line.decision">
+                                                    <span t-esc="dict(line._fields['decision'].selection).get(line.decision)"/>
+                                                </t>
+                                                <t t-else="">—</t>
+                                            </td>
+
+                                            <td class="text-left">
+                                                <t t-if="line.comment">
+                                                    <span t-field="line.comment"/>
+                                                </t>
+                                                <t t-else="">—</t>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+
+                    </t>
+
+                    <!-- No evaluations -->
+                    <t t-else="">
+                        <div class="text-center text-muted mt-3">
+                    Aucune évaluation enregistrée pour ce candidat.
+                        </div>
+                    </t>
+
+                    <div class="oe_structure"/>
+                </div>
+            </t>
+        </template>
+
+
+    </data>
+</odoo>
