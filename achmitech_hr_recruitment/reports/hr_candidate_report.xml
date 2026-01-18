@@ -74,12 +74,16 @@
                                 <thead class="bg-200 fw-bold o_line_section">
                                     <tr>
                                         <th class="text-center">Date</th>
+<<<<<<< HEAD
 <<<<<<< Updated upstream
                                         <th class="text-center">Intervieweur</th>
 =======
                                         <th class="text-center">Entretien</th>
                                         <th class="text-center">Interviewer</th>
 >>>>>>> Stashed changes
+=======
+                                        <th class="text-center">Interviewer</th>
+>>>>>>> 069c8077039bc21f336dcdefd96884cc17da4030
                                         <th class="text-center">Score</th>
                                         <th class="text-center">Décision</th>
                                         <th class="text-center">Commentaire</th>
@@ -90,7 +94,7 @@
                                         <tr>
                                             <td class="text-center">
                                                 <t t-if="line.date">
-                                                    <span t-esc="line.date"/>
+                                                    <span t-esc="line.date.strftime('%d/%m/%Y')"/>
                                                 </t>
                                             </td>
 
@@ -142,7 +146,7 @@
                                 <thead class="bg-200 fw-bold o_line_section">
                                     <tr>
                                         <th class="text-center">Date</th>
-                                        <th class="text-center">Intervieweur</th>
+                                        <th class="text-center">Interviewer</th>
                                         <th class="text-center">Score</th>
                                         <th class="text-center">Décision</th>
                                         <th class="text-center">Commentaire</th>
@@ -153,7 +157,7 @@
                                         <tr>
                                             <td class="text-center">
                                                 <t t-if="line.date">
-                                                    <span t-esc="line.date"/>
+                                                    <span t-esc="line.date.strftime('%d/%m/%Y')"/>
                                                 </t>
                                             </td>
                                             <td class="text-center">
