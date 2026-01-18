@@ -36,6 +36,7 @@ pilotage des processus de recrutement.
     'data': [
         'security/ir.model.access.csv',
         'views/hr_recrutement_applicant_form.xml',
+        'views/hr_recruitement_stage.xml',
         'reports/hr_candidate_report.xml'
     ],
     
