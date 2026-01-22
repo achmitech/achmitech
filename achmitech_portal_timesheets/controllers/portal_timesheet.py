@@ -34,15 +34,21 @@ class PortalTimesheet(CustomerPortal):
             return request.redirect("/my/tasks")
 
         try:
-            time_str = (post.get("time_spent") or "").strip()  # "02:35"
-            hours, minutes = time_str.split(":")
-            unit_amount = int(hours) + int(minutes) / 60.0
+            ratio_str = (post.get("day_ratio") or "").strip()
+            ratio = float(ratio_str)
         except Exception:
-            request.session["ts_flash"] = {"type": "danger", "message": "Format de durée invalide."}
+            request.session["ts_flash"] = {"type": "danger", "message": "Veuillez choisir 0, 0,5 ou 1."}
             return self._task_redirect(task)
 
-        if not date_str or unit_amount <= 0:
-            request.session["ts_flash"] = {"type": "danger", "message": "Veuillez saisir une date et une durée valide."}
+        if ratio not in (0.0, 0.5, 1.0):
+            request.session["ts_flash"] = {"type": "danger", "message": "Valeur invalide. Choisissez 0, 0,5 ou 1."}
+            return self._task_redirect(task)
+
+        # Convert day ratio to hours (8h/day)
+        unit_amount = ratio * 8.0
+
+        if not date_str:
+            request.session["ts_flash"] = {"type": "danger", "message": "Veuillez saisir une date valide."}
             return self._task_redirect(task)
 
         project = task.project_id.sudo()

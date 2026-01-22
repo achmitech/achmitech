@@ -68,8 +68,13 @@
                 </div>
 
                 <div class="mb-3">
-                  <label class="form-label">Temps(heures:minutes)</label>
-                  <input type="time" name="time_spent" class="form-control" required="1"/>
+                  <label class="form-label">Temps</label>
+                  <select name="day_ratio" class="form-select" required="1">
+                    <option value="" disabled="1" selected="1">Choisir…</option>
+                    <option value="0">0</option>
+                    <option value="0.5">0,5</option>
+                    <option value="1">1</option>
+                  </select>
                 </div>
 
                 <div class="mb-3">
