@@ -3,7 +3,24 @@
   <template id="portal_my_task_timesheet_header_with_button" inherit_id="hr_timesheet.portal_my_task" name="Portal: Timesheet header with Add button">
 
     <xpath expr="//h5[@id='task_timesheets']/ancestor::div[hasclass('container')][1]" position="replace">
+      <!-- Alerts -->
+      <t t-if="success">
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+      Temps enregistré avec succès.
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"/>
+        </div>
+      </t>
+
+      <t t-set="flash" t-value="request.session.pop('ts_flash', None)"/>
+      <t t-if="flash">
+        <div t-attf-class="alert alert-#{flash.get('type','info')} alert-dismissible fade show" role="alert">
+          <t t-esc="flash.get('message')"/>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"/>
+        </div>
+      </t>
       <div class="container" t-if="allow_timesheets">
+        
+
 
         <div class="d-flex justify-content-between align-items-center mt-2 mb-2">
           <h5 id="task_timesheets" class="mb-0" data-anchor="true">Timesheets</h5>
@@ -14,23 +31,6 @@
             </button>
           </t>
         </div>
-
-        <!-- Alerts (place right under the Timesheets header) -->
-      
-        <t t-if="success">
-          <div class="alert alert-success alert-dismissible fade show" role="alert">
-    Temps enregistré avec succès.
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"/>
-          </div>
-        </t>
-
-        <t t-set="flash" t-value="request.session.pop('ts_flash', None)"/>
-        <t t-if="flash">
-          <div t-attf-class="alert alert-#{flash.get('type','info')} alert-dismissible fade show" role="alert">
-            <t t-esc="flash.get('message')"/>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"/>
-          </div>
-        </t>
 
         <!-- Table if there are lines -->
         <t t-if="timesheets">
