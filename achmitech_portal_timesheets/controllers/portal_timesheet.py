@@ -55,6 +55,25 @@ class PortalTimesheet(CustomerPortal):
         if not project or not project.allow_timesheets:
             request.session["ts_flash"] = {"type": "danger", "message": "Cette tâche appartient à un projet qui n'autorise pas la saisie des feuilles de temps."}
             return self._task_redirect(task)
+        
+        # Check if timesheet for that day is already entered
+        # One entry per day (per employee)
+        existing = request.env["account.analytic.line"].sudo().search([
+            ("employee_id", "=", employee.id),
+            ("date", "=", date_str),
+            ("company_id", "=", request.env.company.id),
+        ], limit=1)
+
+        if existing:
+           # Option 1: replace hours + description
+            existing.write({
+                "name": description,
+                "unit_amount": unit_amount,
+                "project_id": project.id,
+                "task_id": task.id,
+            })
+            request.session["ts_flash"] = {"type": "success", "message": "Votre saisie pour cette date a été mise à jour."}
+            return self._task_redirect(task)
 
         if request.env.user not in task.user_ids:
             request.session["ts_flash"] = {"type": "danger", "message": "Vous n'êtes pas assigné(e) à cette tâche."}

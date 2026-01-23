@@ -1,6 +1,6 @@
 from odoo import models, fields
 
-class HrEmployee(models.Model):
-    _inherit = "hr.employee"
+class HrEmployeeBase(models.AbstractModel):
+    _inherit = "hr.employee.base"
 
     cra_order_number = fields.Char(string="N° Commande (CRA)")
