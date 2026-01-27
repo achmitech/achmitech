@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- Vue Dashboard (Kanban) pour le Tableau de Bord de Recrutement -->
+        <record id="recruitment_dashboard_view" model="ir.ui.view">
+            <field name="name">Tableau de Bord - Recrutement</field>
+            <field name="model">hr.applicant</field>
+            <field name="arch" type="xml">
+                <dashboard>
+                    <view type="kanban" ref="hr_recruitment.hr_job_kanban_view" />
+                    <group>
+                        <aggregate name="applicant_count" string="Total Candidatures" />
+                    </group>
+                </dashboard>
+            </field>
+        </record>
+
+        <!-- Vue du Tableau de Bord avec graphiques -->
+        <record id="recruitment_dashboard_kanban" model="ir.ui.view">
+            <field name="name">Tableau de Bord Recrutement - Kanban</field>
+            <field name="model">hr.applicant</field>
+            <field name="type">kanban</field>
+            <field name="arch" type="xml">
+                <kanban class="o_kanban_dashboard" create="false">
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div class="oe_kanban_global_click">
+                                <div class="o_kanban_card_header">
+                                    <span class="o_priority" />
+                                    <div class="o_dropdown_kanban dropdown">
+                                        <a class="dropdown-toggle o-no-caret btn btn-sm btn-icon-only" href="#" role="button" data-toggle="dropdown" aria-label="Dropdown menu" title="Dropdown menu">
+                                            <i class="fa fa-ellipsis-v" />
+                                        </a>
+                                        <div class="dropdown-menu" role="menu">
+                                            <a type="edit" class="dropdown-item">Éditer</a>
+                                            <a type="delete" class="dropdown-item">Supprimer</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="partner_name" />
+                                        </strong>
+                                    </div>
+                                    <small class="o_kanban_record_subtitle">
+                                        <field name="job_id" />
+                                    </small>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <div>
+                                        <strong>Étape:</strong>
+                                        <field name="stage_id" widget="state_selection" />
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_bottom">
+                                    <div class="oe_kanban_bottom_left">
+                                        <field name="create_date" widget="date" />
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <!-- Vue Graphique - Candidatures par Étape -->
+        <record id="hr_applicant_graph_stage" model="ir.ui.view">
+            <field name="name">Candidatures par Étape</field>
+            <field name="model">hr.applicant</field>
+            <field name="type">graph</field>
+            <field name="arch" type="xml">
+                <graph type="bar" stacked="True">
+                    <field name="stage_id" type="row" />
+                    <field name="id" type="measure" />
+                </graph>
+            </field>
+        </record>
+
+        <!-- Vue Graphique - Candidatures par Poste -->
+        <record id="hr_applicant_graph_job" model="ir.ui.view">
+            <field name="name">Candidatures par Poste</field>
+            <field name="model">hr.applicant</field>
+            <field name="type">graph</field>
+            <field name="arch" type="xml">
+                <graph type="pie">
+                    <field name="job_id" type="row" />
+                    <field name="id" type="measure" />
+                </graph>
+            </field>
+        </record>
+
+        <!-- Vue Graphique - Évaluations par Score -->
+        <record id="hr_applicant_evaluation_graph_rating" model="ir.ui.view">
+            <field name="name">Évaluations par Score</field>
+            <field name="model">hr.applicant.evaluation</field>
+            <field name="type">graph</field>
+            <field name="arch" type="xml">
+                <graph type="bar">
+                    <field name="rating" type="row" />
+                    <field name="id" type="measure" />
+                </graph>
+            </field>
+        </record>
+
+        <!-- Vue Pivot - Analyse Détaillée -->
+        <record id="hr_applicant_pivot_analysis" model="ir.ui.view">
+            <field name="name">Analyse Détaillée des Candidatures</field>
+            <field name="model">hr.applicant</field>
+            <field name="type">pivot</field>
+            <field name="arch" type="xml">
+                <pivot>
+                    <field name="stage_id" type="row" />
+                    <field name="job_id" type="column" />
+                    <field name="id" type="measure" />
+                </pivot>
+            </field>
+        </record>
+
+        <!-- Action de Menu - Tableau de Bord -->
+        <record id="action_recruitment_dashboard" model="ir.actions.act_window">
+            <field name="name">Tableau de Bord Recrutement</field>
+            <field name="res_model">hr.applicant</field>
+            <field name="view_mode">kanban,tree,form,graph</field>
+            <field name="context">{}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Pas de candidatures enregistrées
+                </p>
+            </field>
+        </record>
+
+        <!-- Vue Dashboard avec statistiques -->
+        <record id="view_recruitment_stats_dashboard" model="ir.ui.view">
+            <field name="name">Tableau de Bord Statistiques</field>
+            <field name="model">recruitment.dashboard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form create="false" edit="false" delete="false">
+                    <div class="alert alert-info">
+                        <span>Tableau de bord de recrutement - Vue d'ensemble des métriques clés</span>
+                    </div>
+                    
+                    <!-- Statistiques principales en haut -->
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Candidatures</h5>
+                                    <p class="card-text" style="font-size: 24px;">
+                                        <button type="action" name="action_view_all_applicants" class="btn btn-link text-white">
+                                            <span id="total_applicants">-</span>
+                                        </button>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Postes Ouverts</h5>
+                                    <p class="card-text" style="font-size: 24px;">
+                                        <button type="action" name="action_view_open_jobs" class="btn btn-link text-white">
+                                            <span id="open_jobs">-</span>
+                                        </button>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Candidats</h5>
+                                    <p class="card-text" style="font-size: 24px;">
+                                        <button type="action" name="action_view_all_candidates" class="btn btn-link text-white">
+                                            <span id="total_candidates">-</span>
+                                        </button>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Taux de Conversion</h5>
+                                    <p class="card-text" style="font-size: 24px;">
+                                        <span id="conversion_rate">-</span>%
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Candidatures par Étape</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="applicants_by_stage">Chargement...</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Distribution des Évaluations</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="evaluations_by_rating">Chargement...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <!-- Menu: Tableau de Bord Recrutement -->
+        <menuitem
+            id="menu_recruitment_dashboard"
+            name="Tableau de Bord"
+            parent="hr_recruitment.menu_hr_recruitment_root"
+            action="action_recruitment_dashboard"
+            sequence="1"
+        />
+
+    </data>
+</odoo>

@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- Actions pour le Tableau de Bord -->
+        
+        <!-- Action: Voir toutes les candidatures -->
+        <record id="action_view_all_applicants" model="ir.actions.act_window">
+            <field name="name">Toutes les Candidatures</field>
+            <field name="res_model">hr.applicant</field>
+            <field name="view_mode">kanban,tree,form,graph</field>
+            <field name="context">{}</field>
+        </record>
+
+        <!-- Action: Voir les candidats -->
+        <record id="action_view_all_candidates" model="ir.actions.act_window">
+            <field name="name">Tous les Candidats</field>
+            <field name="res_model">hr.candidate</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Action: Voir les postes ouverts -->
+        <record id="action_view_open_jobs" model="ir.actions.act_window">
+            <field name="name">Postes Ouverts</field>
+            <field name="res_model">hr.job</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[['state','=','open']]</field>
+        </record>
+
+        <!-- Action: Voir les candidatures non évaluées -->
+        <record id="action_view_unevaluated_applicants" model="ir.actions.act_window">
+            <field name="name">Candidatures Non Évaluées</field>
+            <field name="res_model">hr.applicant</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="domain">[['evaluation_ids','=',False]]</field>
+        </record>
+
+        <!-- Action: Voir les évaluations de la semaine -->
+        <record id="action_view_evaluations_week" model="ir.actions.act_window">
+            <field name="name">Entretiens Cette Semaine</field>
+            <field name="res_model">hr.applicant.evaluation</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Vue formulaire améliorée du tableau de bord -->
+        <record id="recruitment_dashboard_form_advanced" model="ir.ui.view">
+            <field name="name">Tableau de Bord - Formulaire Avancé</field>
+            <field name="model">recruitment.dashboard</field>
+            <field name="type">form</field>
+            <field name="priority">16</field>
+            <field name="arch" type="xml">
+                <form create="false" edit="false" delete="false">
+                    <style>
+                        .dashboard-stat {
+                            text-align: center;
+                            padding: 20px;
+                            border-radius: 5px;
+                            color: white;
+                            font-weight: bold;
+                        }
+                        .stat-primary {
+                            background-color: #3498db;
+                        }
+                        .stat-success {
+                            background-color: #27ae60;
+                        }
+                        .stat-warning {
+                            background-color: #f39c12;
+                        }
+                        .stat-info {
+                            background-color: #16a085;
+                        }
+                        .stat-number {
+                            font-size: 32px;
+                            font-weight: bold;
+                        }
+                        .stat-label {
+                            font-size: 14px;
+                            margin-top: 5px;
+                        }
+                    </style>
+
+                    <div class="alert alert-info alert-dismissible fade show">
+                        <button type="button" class="close" data-dismiss="alert">×</button>
+                        <strong>Tableau de Bord de Recrutement</strong> - Vue d'ensemble en temps réel de vos métriques de recrutement
+                    </div>
+
+                    <!-- Statistiques principales -->
+                    <div class="row">
+                        <div class="col-lg-3">
+                            <div class="dashboard-stat stat-primary">
+                                <div class="stat-number">-</div>
+                                <div class="stat-label">Total Candidatures</div>
+                                <button type="action" name="%(action_view_all_applicants)d" class="btn btn-sm btn-light mt-2">Voir</button>
+                            </div>
+                        </div>
+                        <div class="col-lg-3">
+                            <div class="dashboard-stat stat-success">
+                                <div class="stat-number">-</div>
+                                <div class="stat-label">Postes Ouverts</div>
+                                <button type="action" name="%(action_view_open_jobs)d" class="btn btn-sm btn-light mt-2">Voir</button>
+                            </div>
+                        </div>
+                        <div class="col-lg-3">
+                            <div class="dashboard-stat stat-warning">
+                                <div class="stat-number">-</div>
+                                <div class="stat-label">Candidats</div>
+                                <button type="action" name="%(action_view_all_candidates)d" class="btn btn-sm btn-light mt-2">Voir</button>
+                            </div>
+                        </div>
+                        <div class="col-lg-3">
+                            <div class="dashboard-stat stat-info">
+                                <div class="stat-number">-%</div>
+                                <div class="stat-label">Taux de Conversion</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <br/>
+
+                    <!-- Sections de contenu -->
+                    <div class="row mt-4">
+                        <div class="col-lg-6">
+                            <div class="card">
+                                <div class="card-header bg-primary text-white">
+                                    <h5>Candidatures par Étape</h5>
+                                </div>
+                                <div class="card-body">
+                                    <button type="action" name="%(hr_recruitment.action_hr_job_kanban)d" class="btn btn-sm btn-primary">Vue Kanban</button>
+                                    <button type="action" name="%(hr_applicant_graph_stage)d" class="btn btn-sm btn-info">Vue Graphique</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h5>Distribution des Évaluations</h5>
+                                </div>
+                                <div class="card-body">
+                                    <button type="action" name="%(hr_applicant_evaluation_graph_rating)d" class="btn btn-sm btn-success">Vue Graphique</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-lg-6">
+                            <div class="card">
+                                <div class="card-header bg-warning text-white">
+                                    <h5>Top Postes</h5>
+                                </div>
+                                <div class="card-body">
+                                    <button type="action" name="%(hr_applicant_graph_job)d" class="btn btn-sm btn-warning">Vue Graphique</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card">
+                                <div class="card-header bg-danger text-white">
+                                    <h5>Actions Rapides</h5>
+                                </div>
+                                <div class="card-body">
+                                    <button type="action" name="%(action_view_unevaluated_applicants)d" class="btn btn-sm btn-danger btn-block">
+                                        Candidatures Non Évaluées
+                                    </button>
+                                    <button type="action" name="%(action_view_evaluations_week)d" class="btn btn-sm btn-info btn-block mt-2">
+                                        Entretiens Cette Semaine
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-lg-12">
+                            <div class="card">
+                                <div class="card-header bg-info text-white">
+                                    <h5>Analyse Détaillée</h5>
+                                </div>
+                                <div class="card-body">
+                                    <button type="action" name="%(hr_applicant_pivot_analysis)d" class="btn btn-sm btn-info">
+                                        Vue Pivot (Analyse Croisée)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</odoo>
