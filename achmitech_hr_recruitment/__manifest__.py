@@ -37,8 +37,15 @@ pilotage des processus de recrutement.
         'security/ir.model.access.csv',
         'views/hr_recrutement_applicant_form.xml',
         'views/hr_recruitement_stage.xml',
+        'views/hr_applicant_dossier_template.xml',
         'reports/hr_candidate_report.xml'
     ],
+    'assets': {
+        'web.assets_frontend': [
+            'achmitech_hr_recruitment/static/src/css/style.css',
+            'achmitech_hr_recruitment/static/src/js/public_dossier_form.js',
+        ],
+    },
     
     'license': 'LGPL-3',
 }
