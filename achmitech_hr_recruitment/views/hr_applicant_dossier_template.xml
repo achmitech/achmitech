@@ -1,0 +1,798 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="dossier_form" name="Dossier de compétences">
+        <t t-call="website.layout">
+            <div id="wrap" class="container my-5">
+
+                <h2 class="mb-4">
+          Dossier de compétences
+                </h2>
+
+                <p>
+          Bonjour <strong t-esc="candidate.partner_name"/>
+,
+          merci de compléter votre dossier de compétences.
+                </p>
+
+                <form id="dossier_form" action="/dossier/submit" method="post" class="o_website_form">
+
+                    <!-- CSRF -->
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <input type="hidden" name="token" t-att-value="candidate.access_token"/>
+
+                    <h4 class="mt-4">Compétences, technologies &amp; secteurs d'intervention</h4>
+
+                    <table class="table table-bordered mt-3">
+                        <tbody>
+                        <tr>
+                                <th style="width: 30%;">Soft Skills</th>
+                                <td>
+                                    <div class="competency-section" data-scope="soft_skills" data-next-index="1">
+                                        <div class="competency-lines">
+                                            <div class="row mb-2 competency_line">
+                                                <div class="col-7">
+                                                    <select class="form-control skill-select rounded-pill" name="soft_skill_id_0" data-index="0"  data-category="2" required="required">
+                                                        <option value="" disabled="true" selected="true">Choisir un skill</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-4">
+                                                    
+                                                    <select class="form-control level-select rounded-pill" name="soft_skill_level_0" data-index="0" required="required" disabled="1">
+                                                        <option value="" disabled="true" selected="true">Choisir un niveau</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-1 d-flex align-items-end">
+                                                    <button type="button" class="btn btn-danger remove-line rounded-pill">×</button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <button type="button" class="btn btn-sm btn-primary rounded-pill add-competency-line">
+                                                + Ajouter une ligne
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                </td>
+                            </tr>
+                            <tr>
+                                <th style="width: 30%;">Logiciels</th>
+                                <td>
+                                    <div class="competency-section" data-scope="logiciels" data-next-index="1">
+                                        <div class="competency-lines">
+                                            <div class="row mb-2 competency_line">
+                                                <div class="col-7">
+                                                    <select class="form-control skill-select rounded-pill" name="logiciels_skill_id_0" data-index="0" required="required">
+                                                        <option value="" disabled="true" selected="true">Choisir un logiciel</option>
+                                                        <t t-foreach="skills" t-as="s">
+                                                            <option t-att-value="s.id">
+                                                                <t t-esc="s.name"/>
+                                                            </option>
+                                                        </t>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-4">
+                                                    
+                                                    <select class="form-control level-select rounded-pill" name="logiciels_skill_level_0" data-index="0" required="required" disabled="1">
+                                                        <option value="" disabled="true" selected="true">Choisir un niveau</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-1 d-flex align-items-end">
+                                                    <button type="button" class="btn btn-danger remove-line rounded-pill">×</button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <button type="button" class="btn btn-sm btn-primary rounded-pill add-competency-line">
+                                                + Ajouter une ligne
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Langages de Programmation</th>
+                                <td>
+                                    <div class="competency-section" data-scope="programming_languages" data-next-index="1">
+                                        <div class="competency-lines">
+                                            <div class="row mb-2 competency_line">
+                                                <div class="col-7">
+                                                    <select class="form-control skill-select rounded-pill" name="programming_languages_id_0" data-index="0" required="required">
+                                                        <option value="" disabled="true" selected="true">Choisir un lang. de programmation</option>
+                                                        <t t-foreach="skills" t-as="s">
+                                                            <option t-att-value="s.id">
+                                                                <t t-esc="s.name"/>
+                                                            </option>
+                                                        </t>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-4">
+                                                    
+                                                    <select class="form-control level-select rounded-pill" name="programming_languages_skill_level_0" data-index="0" required="required" disabled="1">
+                                                        <option value="" disabled="true" selected="true">Choisir un niveau</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-1 d-flex align-items-end">
+                                                    <button type="button" class="btn btn-danger remove-line rounded-pill">×</button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <button type="button" class="btn btn-sm btn-primary rounded-pill add-competency-line">
+                                                + Ajouter une ligne
+                                            </button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Technologies</th>
+                                <td>
+                                    <div class="competency-section" data-scope="technologies" data-next-index="1">
+                                        <div class="competency-lines">
+                                            <div class="row mb-2 competency_line">
+                                                <div class="col-7">
+                                                    <select class="form-control skill-select rounded-pill" name="technologies_skill_id_0" data-index="0" required="required">
+                                                        <option value="" disabled="true" selected="true">Choisir une technologie</option>
+                                                        <t t-foreach="skills" t-as="s">
+                                                            <option t-att-value="s.id">
+                                                                <t t-esc="s.name"/>
+                                                            </option>
+                                                        </t>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-4">
+                                                    
+                                                    <select class="form-control level-select rounded-pill" name="technologies_skill_level_0" data-index="0" required="required" disabled="1">
+                                                        <option value="" disabled="true" selected="true">Choisir un niveau</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-1 d-flex align-items-end">
+                                                    <button type="button" class="btn btn-danger remove-line rounded-pill">×</button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <button type="button" class="btn btn-sm btn-primary rounded-pill add-competency-line">
+                                                + Ajouter une ligne
+                                            </button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Méthodes</th>
+                                <td>
+                                    <div class="competency-section" data-scope="methods" data-next-index="1">
+                                        <div class="competency-lines">
+                                            <div class="row mb-2 competency_line">
+                                                <div class="col-7">
+                                                    <select class="form-control skill-select rounded-pill" name="methods_skill_id_0" data-index="0" required="required">
+                                                        <option value="" disabled="true" selected="true">Choisir une méthode</option>
+                                                        <t t-foreach="skills" t-as="s">
+                                                            <option t-att-value="s.id">
+                                                                <t t-esc="s.name"/>
+                                                            </option>
+                                                        </t>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-4">
+                                                    
+                                                    <select class="form-control level-select rounded-pill" name="methods_skill_level_0" data-index="0" required="required" disabled="1">
+                                                        <option value="" disabled="true" selected="true">Choisir un niveau</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-1 d-flex align-items-end">
+                                                    <button type="button" class="btn btn-danger remove-line rounded-pill">×</button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <button type="button" class="btn btn-sm btn-primary rounded-pill add-competency-line">
+                                                + Ajouter une ligne
+                                            </button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Systèmes</th>
+                                <td>
+                                    <div class="competency-section" data-scope="systems" data-next-index="1">
+                                        <div class="competency-lines">
+                                            <div class="row mb-2 competency_line">
+                                                <div class="col-7">
+                                                    <select class="form-control skill-select rounded-pill" name="systems_skill_id_0" data-index="0" required="required">
+                                                        <option value="" disabled="true" selected="true">Choisir un système</option>
+                                                        <t t-foreach="skills" t-as="s">
+                                                            <option t-att-value="s.id">
+                                                                <t t-esc="s.name"/>
+                                                            </option>
+                                                        </t>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-4">
+                                                    
+                                                    <select class="form-control level-select rounded-pill" name="systems_skill_level_0" data-index="0" required="required" disabled="1">
+                                                        <option value="" disabled="true" selected="true">Choisir un niveau</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-1 d-flex align-items-end">
+                                                    <button type="button" class="btn btn-danger remove-line rounded-pill">×</button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <button type="button" class="btn btn-sm btn-primary rounded-pill add-competency-line">
+                                                + Ajouter une ligne
+                                            </button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Normes et protocoles</th>
+                                <td>
+                                    <div class="competency-section" data-scope="norms_protocols" data-next-index="1">
+                                        <div class="competency-lines">
+                                            <div class="row mb-2 competency_line">
+                                                <div class="col-7">
+                                                    <select class="form-control skill-select rounded-pill" name="norms_protocols_skill_id_0" data-index="0" required="required">
+                                                        <option value="" disabled="true" selected="true">Choisir une norme/protocole</option>
+                                                        <t t-foreach="skills" t-as="s">
+                                                            <option t-att-value="s.id">
+                                                                <t t-esc="s.name"/>
+                                                            </option>
+                                                        </t>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-4">
+                                                    
+                                                    <select class="form-control level-select rounded-pill" name="norms_protocols_skill_level_0" data-index="0" required="required" disabled="1">
+                                                        <option value="" disabled="true" selected="true">Choisir un niveau</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-1 d-flex align-items-end">
+                                                    <button type="button" class="btn btn-danger remove-line rounded-pill">×</button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <button type="button" class="btn btn-sm btn-primary rounded-pill add-competency-line">
+                                                + Ajouter une ligne
+                                            </button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Matériels</th>
+                                <td>
+                                    <div class="competency-section" data-scope="materials" data-next-index="1">
+                                        <div class="competency-lines">
+                                            <div class="row mb-2 competency_line">
+                                                <div class="col-7">
+                                                    <select class="form-control skill-select rounded-pill" name="materials_skill_id_0" data-index="0" required="required">
+                                                        <option value="" disabled="true" selected="true">Choisir un matériel</option>
+                                                        <t t-foreach="skills" t-as="s">
+                                                            <option t-att-value="s.id">
+                                                                <t t-esc="s.name"/>
+                                                            </option>
+                                                        </t>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-4">
+                                                    
+                                                    <select class="form-control level-select rounded-pill" name="materials_skill_level_0" data-index="0" required="required" disabled="1">
+                                                        <option value="" disabled="true" selected="true">Choisir un niveau</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-1 d-flex align-items-end">
+                                                    <button type="button" class="btn btn-danger remove-line rounded-pill">×</button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <button type="button" class="btn btn-sm btn-primary rounded-pill add-competency-line">
+                                                + Ajouter une ligne
+                                            </button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4 class="mt-4">Formation, habilitations &amp; langues</h4>
+
+                    <table class="table table-bordered mt-3">
+                        <tbody>
+                            <tr>
+                                <th style="width: 30%;">Formation</th>
+                                <td>
+                                    <div class="repeat-section" data-scope="formations" data-next-index="1">
+                                        <div class="repeat-lines">
+                                            <div class="row mb-2 repeat-line">
+                                                <div class="col-5">
+                                                    <label>Intitulé</label>
+                                                    <input type="text" class="form-control" name="formations_title_0" data-index="0" required="required" placeholder="Ex: Formation Scrum / Odoo / AWS..." />
+                                                </div>
+
+                                                <div class="col-3">
+                                                    <label>Date début</label>
+                                                    <input type="date" class="form-control" name="formations_start_0" data-index="0" />
+                                                </div>
+
+                                                <div class="col-3">
+                                                    <label>Date fin</label>
+                                                    <input type="date" class="form-control" name="formations_end_0" data-index="0" />
+                                                </div>
+
+                                                <div class="col-1 d-flex align-items-end">
+                                                    <button type="button" class="btn btn-danger remove-line rounded-pill">×</button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-2">
+                                            <button type="button" class="btn btn-sm btn-primary rounded-pill add-repeat-line">
+                                        + Ajouter une formation
+                                            </button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th style="width: 30%;">Habilitations</th>
+                                <td>
+                                    <div class="repeat-section" data-scope="habilitations" data-next-index="1">
+                                        <div class="repeat-lines">
+                                            <div class="row mb-2 repeat-line">
+                                                <div class="col-11">
+                                                    <input type="text" class="form-control" name="habilitations_title_0" data-index="0" placeholder="Ex: Habilitation électrique, SST, CACES..." />
+                                                </div>
+
+                                                <div class="col-1 d-flex align-items-end">
+                                                    <button type="button" class="btn btn-danger remove-line rounded-pill">×</button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-2">
+                                            <button type="button" class="btn btn-sm btn-primary rounded-pill add-repeat-line">
+                                        + Ajouter une ligne
+                                            </button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Langues</th>
+                                <td>
+                                    <div class="competency-section" data-scope="languages" data-next-index="1">
+                                        <div class="competency-lines">
+                                            <div class="row mb-2 competency_line">
+                                                <div class="col-7">
+                                                    <select class="form-control skill-select rounded-pill" name="languages_skill_id_0" data-index="0" required="required">
+                                                        <option value="" disabled="true" selected="true">Choisir une langue</option>
+                                                        <t t-foreach="skills" t-as="s">
+                                                            <option t-att-value="s.id">
+                                                                <t t-esc="s.name"/>
+                                                            </option>
+                                                        </t>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-4">
+                                                    
+                                                    <select class="form-control level-select rounded-pill" name="languages_skill_level_0" data-index="0" required="required" disabled="1">
+                                                        <option value="" disabled="true" selected="true">Choisir un niveau</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-1 d-flex align-items-end">
+                                                    <button type="button" class="btn btn-danger remove-line rounded-pill">×</button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <button type="button" class="btn btn-sm btn-primary rounded-pill add-competency-line">
+                                                + Ajouter une ligne
+                                            </button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4 class="mt-4">Projets, réalisations &amp; responsabilités</h4>
+
+
+                    <div class="repeat-section experiences-section" data-scope="experiences" data-next-index="1">
+                        <div class="repeat-lines">
+
+                            <div class="experience-block repeat-line" data-index="0">
+                                <!-- Header Projet -->
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="experience-title">Projet 1</h5>
+                                    <button type="button" class="btn btn-danger btn-sm rounded-pill remove-experience">×</button>
+                                </div>
+                                <!-- <div class="d-flex justify-content-end mb-2">
+                                    <button type="button" class="btn btn-danger btn-sm rounded-pill remove-experience">×</button>
+                                </div> -->
+                                <!-- INFOS GÉNÉRALES -->
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <label>Entreprise</label>
+                                        <input type="text" class="form-control" name="experiences_company_0" placeholder="Ex: ACHMITECH" required="required"/>
+                                    </div>
+
+                                    <div class="col-3">
+                                        <label>Date début</label>
+                                        <input type="date" class="form-control" name="experiences_start_0"/>
+                                    </div>
+
+                                    <div class="col-3">
+                                        <label>Date fin</label>
+                                        <input type="date" class="form-control" name="experiences_end_0"/>
+                                    </div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6">
+                                        <label>Poste occupé</label>
+                                        <input type="text" class="form-control" name="experiences_poste_0"/>
+                                    </div>
+                                    <div class="col-6">
+                                        <label>Rôle</label>
+                                        <input type="text" class="form-control" name="experiences_role_0"/>
+                                    </div>
+                                </div>
+                                <!-- TEXTES -->
+                                <div class="mb-2">
+                                    <label>Contexte général</label>
+                                    <textarea class="form-control" name="experiences_contexte_0" rows="2"></textarea>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label>Sujet du projet</label>
+                                    <textarea class="form-control" name="experiences_sujet_0" rows="2"></textarea>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label>Travail réalisé</label>
+                                    <textarea class="form-control" name="experiences_travail_0" rows="3"></textarea>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label>Résultats obtenus</label>
+                                    <textarea class="form-control" name="experiences_resultats_0" rows="2"></textarea>
+                                </div>
+
+
+                                <!-- Environnement technique (copie de ta table, mais SCOPÉE) -->
+                                <h6 class="mt-3">Environnement technique</h6>
+
+                                <table class="table table-sm table-bordered mt-3">
+                                    <tbody>
+                                        <tr>
+                                            <th style="width: 30%;">Logiciels</th>
+                                            <td>
+                                                <div class="competency-section" data-scope="experiences_0_logiciels" data-next-index="1">
+                                                    <div class="competency-lines">
+                                                        <div class="row mb-2 competency_line">
+                                                            <div class="col-7">
+                                                                <select class="form-control skill-select rounded-pill" name="experiences_0_logiciels_skill_id_0" data-index="0" required="required">
+                                                                    <option value="" disabled="true" selected="true">Choisir un logiciel</option>
+                                                                    <t t-foreach="skills" t-as="s">
+                                                                        <option t-att-value="s.id">
+                                                                            <t t-esc="s.name"/>
+                                                                        </option>
+                                                                    </t>
+                                                                </select>
+                                                            </div>
+
+                                                            <div class="col-4">
+                                                                
+                                                                <select class="form-control level-select rounded-pill" name="experiences_0_logiciels_skill_level_0" data-index="0" required="required" disabled="1">
+                                                                    <option value="" disabled="true" selected="true">Choisir un niveau</option>
+                                                                </select>
+                                                            </div>
+
+                                                            <div class="col-1 d-flex align-items-end">
+                                                                <button type="button" class="btn btn-danger remove-line rounded-pill">×</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <button type="button" class="btn btn-sm btn-primary rounded-pill add-competency-line">
+                                                + Ajouter une ligne
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Langages de Programmation</th>
+                                            <td>
+                                                <div class="competency-section" data-scope="experiences_0_programming_languages" data-next-index="1">
+                                                    <div class="competency-lines">
+                                                        <div class="row mb-2 competency_line">
+                                                            <div class="col-7">
+                                                                <select class="form-control skill-select rounded-pill" name="experiences_0_programming_languages_skill_id_0" data-index="0" required="required">
+                                                                    <option value="" disabled="true" selected="true">Choisir un lang. de programmation</option>
+                                                                    <t t-foreach="skills" t-as="s">
+                                                                        <option t-att-value="s.id">
+                                                                            <t t-esc="s.name"/>
+                                                                        </option>
+                                                                    </t>
+                                                                </select>
+                                                            </div>
+
+                                                            <div class="col-4">
+                                                                
+                                                                <select class="form-control level-select rounded-pill" name="experiences_0_programming_languages_skill_level_0" data-index="0" required="required" disabled="1">
+                                                                    <option value="" disabled="true" selected="true">Choisir un niveau</option>
+                                                                </select>
+                                                            </div>
+
+                                                            <div class="col-1 d-flex align-items-end">
+                                                                <button type="button" class="btn btn-danger remove-line rounded-pill">×</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <button type="button" class="btn btn-sm btn-primary rounded-pill add-competency-line">
+                                                + Ajouter une ligne
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Technologies</th>
+                                            <td>
+                                                <div class="competency-section" data-scope="experiences_0_technologies" data-next-index="1">
+                                                    <div class="competency-lines">
+                                                        <div class="row mb-2 competency_line">
+                                                            <div class="col-7">
+                                                                <select class="form-control skill-select rounded-pill" name="experiences_0_technologies_skill_id_0" data-index="0" required="required">
+                                                                    <option value="" disabled="true" selected="true">Choisir une technologie</option>
+                                                                    <t t-foreach="skills" t-as="s">
+                                                                        <option t-att-value="s.id">
+                                                                            <t t-esc="s.name"/>
+                                                                        </option>
+                                                                    </t>
+                                                                </select>
+                                                            </div>
+
+                                                            <div class="col-4">
+                                                                
+                                                                <select class="form-control level-select rounded-pill" name="experiences_0_technologies_skill_level_0" data-index="0" required="required" disabled="1">
+                                                                    <option value="" disabled="true" selected="true">Choisir un niveau</option>
+                                                                </select>
+                                                            </div>
+
+                                                            <div class="col-1 d-flex align-items-end">
+                                                                <button type="button" class="btn btn-danger remove-line rounded-pill">×</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <button type="button" class="btn btn-sm btn-primary rounded-pill add-competency-line">
+                                                + Ajouter une ligne
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Méthodes</th>
+                                            <td>
+                                                <div class="competency-section" data-scope="experiences_0_methods" data-next-index="1">
+                                                    <div class="competency-lines">
+                                                        <div class="row mb-2 competency_line">
+                                                            <div class="col-7">
+                                                                <select class="form-control skill-select rounded-pill" name="experiences_0_methods_skill_id_0" data-index="0" required="required">
+                                                                    <option value="" disabled="true" selected="true">Choisir une méthode</option>
+                                                                    <t t-foreach="skills" t-as="s">
+                                                                        <option t-att-value="s.id">
+                                                                            <t t-esc="s.name"/>
+                                                                        </option>
+                                                                    </t>
+                                                                </select>
+                                                            </div>
+
+                                                            <div class="col-4">
+                                                                
+                                                                <select class="form-control level-select rounded-pill" name="experiences_0_methods_skill_level_0" data-index="0" required="required" disabled="1">
+                                                                    <option value="" disabled="true" selected="true">Choisir un niveau</option>
+                                                                </select>
+                                                            </div>
+
+                                                            <div class="col-1 d-flex align-items-end">
+                                                                <button type="button" class="btn btn-danger remove-line rounded-pill">×</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <button type="button" class="btn btn-sm btn-primary rounded-pill add-competency-line">
+                                                + Ajouter une ligne
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Systèmes</th>
+                                            <td>
+                                                <div class="competency-section" data-scope="experiences_0_systems" data-next-index="1">
+                                                    <div class="competency-lines">
+                                                        <div class="row mb-2 competency_line">
+                                                            <div class="col-7">
+                                                                <select class="form-control skill-select rounded-pill" name="experiences_0_systems_skill_id_0" data-index="0" required="required">
+                                                                    <option value="" disabled="true" selected="true">Choisir un système</option>
+                                                                    <t t-foreach="skills" t-as="s">
+                                                                        <option t-att-value="s.id">
+                                                                            <t t-esc="s.name"/>
+                                                                        </option>
+                                                                    </t>
+                                                                </select>
+                                                            </div>
+
+                                                            <div class="col-4">
+                                                                
+                                                                <select class="form-control level-select rounded-pill" name="experiences_0_systems_skill_level_0" data-index="0" required="required" disabled="1">
+                                                                    <option value="" disabled="true" selected="true">Choisir un niveau</option>
+                                                                </select>
+                                                            </div>
+
+                                                            <div class="col-1 d-flex align-items-end">
+                                                                <button type="button" class="btn btn-danger remove-line rounded-pill">×</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <button type="button" class="btn btn-sm btn-primary rounded-pill add-competency-line">
+                                                + Ajouter une ligne
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Normes et protocoles</th>
+                                            <td>
+                                                <div class="competency-section" data-scope="experiences_0_norms_protocols" data-next-index="1">
+                                                    <div class="competency-lines">
+                                                        <div class="row mb-2 competency_line">
+                                                            <div class="col-7">
+                                                                <select class="form-control skill-select rounded-pill" name="experiences_0_norms_protocols_skill_id_0" data-index="0" required="required">
+                                                                    <option value="" disabled="true" selected="true">Choisir une norme/protocole</option>
+                                                                    <t t-foreach="skills" t-as="s">
+                                                                        <option t-att-value="s.id">
+                                                                            <t t-esc="s.name"/>
+                                                                        </option>
+                                                                    </t>
+                                                                </select>
+                                                            </div>
+
+                                                            <div class="col-4">
+                                                                
+                                                                <select class="form-control level-select rounded-pill" name="experiences_0_norms_protocols_skill_level_0" data-index="0" required="required" disabled="1">
+                                                                    <option value="" disabled="true" selected="true">Choisir un niveau</option>
+                                                                </select>
+                                                            </div>
+
+                                                            <div class="col-1 d-flex align-items-end">
+                                                                <button type="button" class="btn btn-danger remove-line rounded-pill">×</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <button type="button" class="btn btn-sm btn-primary rounded-pill add-competency-line">
+                                                + Ajouter une ligne
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Matériels</th>
+                                            <td>
+                                                <div class="competency-section" data-scope="experiences_0_materials" data-next-index="1">
+                                                    <div class="competency-lines">
+                                                        <div class="row mb-2 competency_line">
+                                                            <div class="col-7">
+                                                                <select class="form-control skill-select rounded-pill" name="experiences_0_materials_skill_id_0" data-index="0" required="required">
+                                                                    <option value="" disabled="true" selected="true">Choisir un matériel</option>
+                                                                    <t t-foreach="skills" t-as="s">
+                                                                        <option t-att-value="s.id">
+                                                                            <t t-esc="s.name"/>
+                                                                        </option>
+                                                                    </t>
+                                                                </select>
+                                                            </div>
+
+                                                            <div class="col-4">
+                                                                
+                                                                <select class="form-control level-select rounded-pill" name="experiences_0_materials_skill_level_0" data-index="0" required="required" disabled="1">
+                                                                    <option value="" disabled="true" selected="true">Choisir un niveau</option>
+                                                                </select>
+                                                            </div>
+
+                                                            <div class="col-1 d-flex align-items-end">
+                                                                <button type="button" class="btn btn-danger remove-line rounded-pill">×</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <button type="button" class="btn btn-sm btn-primary rounded-pill add-competency-line">
+                                                + Ajouter une ligne
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+
+
+                            </div>
+                        </div>
+
+                        <div class="mt-2">
+                            <button type="button" class="btn btn-sm btn-primary rounded-pill add-experience-line">
+                                + Ajouter une expérience
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-end">
+                    <button type="button" class="btn btn-outline-secondary" id="btn_autofill_skills">
+                        🧪 Auto-fill compétences (dev)
+                    </button>
+                        <button type="submit" class="btn btn-primary">
+                                        Soumettre mon dossier
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </t>
+    </template>
+</odoo>
