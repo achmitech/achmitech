@@ -1,0 +1,17 @@
+.choices[data-type*="select"] select.choices__input {
+    display: block !important;
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+}
+
+/* Round Choices.js containers */
+.choices__inner, .input_round {
+  border-radius: 20px !important;
+  min-height: 44px;
+}
+.choices__list--dropdown {
+  border-radius: 20px !important;
+}
