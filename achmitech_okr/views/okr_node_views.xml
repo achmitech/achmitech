@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- list -->
+  <record id="okr_node_view_list" model="ir.ui.view">
+    <field name="name">okr.node.list</field>
+    <field name="model">okr.node</field>
+    <field name="arch" type="xml">
+      <list>
+        <field name="name"/>
+        <field name="mode"/>
+        <field name="company_id"/>
+        <field name="department_id"/>
+        <field name="employee_id"/>
+        <field name="year"/>
+        <field name="quarter"/>
+        <field name="state"/>
+        <field name="result"/>
+        <field name="progress"/>
+        <field name="key_results_count" string="KRs"/>
+      </list>
+    </field>
+  </record>
+
+  <!-- SEARCH -->
+  <record id="okr_node_view_search" model="ir.ui.view">
+    <field name="name">okr.node.search</field>
+    <field name="model">okr.node</field>
+    <field name="arch" type="xml">
+      <search>
+        <field name="name"/>
+        <field name="quarter"/>
+        <field name="year"/>
+        <field name="state"/>
+        <field name="result"/>
+        <field name="mode"/>
+        <field name="company_id"/>
+        <field name="department_id"/>
+        <field name="employee_id"/>
+        <filter string="Objectives" name="filter_objectives" domain="[('parent_id','=',False)]"/>
+        <filter string="Key Results" name="filter_krs" domain="[('parent_id','!=',False)]"/>
+        <!-- <groupby expand="0" string="Group By">
+          <filter name="group_by_year" string="Year" context="{'group_by':'year'}"/>
+          <filter name="group_by_quarter" string="Quarter" context="{'group_by':'quarter'}"/>
+          <filter name="group_by_state" string="Status" context="{'group_by':'state'}"/>
+          <filter name="group_by_result" string="Result" context="{'group_by':'result'}"/>
+        </groupby> -->
+      </search>
+    </field>
+  </record>
+
+  <!-- FORM -->
+  <record id="okr_node_view_form" model="ir.ui.view">
+    <field name="name">okr.node.form</field>
+    <field name="model">okr.node</field>
+    <field name="arch" type="xml">
+      <form string="OKR Node">
+        <sheet>
+          <header>
+              <field name="active" invisible="True"/>
+              <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,cancelled" invisible="not active"/>
+          </header>
+          <div class="oe_title">
+            <h1><field name="name" placeholder="Objective / Key Result"/></h1>
+          </div>
+
+          <group>
+            <group>
+              <field name="result"/>
+              <field name="type"/>
+              <field name="weight"/>
+              <field name="progress"/>
+            </group>
+            <group>
+              <field name="year"/>
+              <field name="quarter"/>
+              <field name="time_frame"/>
+              <field name="okr_success_points_threshold"/>
+              <field name="points"/>
+            </group>
+          </group>
+
+          <group string="Target">
+            <field name="mode"/>
+            <field name="company_id"
+                  invisible="mode != 'company'"/>
+            <field name="department_id"
+                  invisible="mode != 'department'"/>
+            <field name="employee_id"
+                  invisible="mode != 'employee'"/>
+            <field name="user_id"/>
+            <field name="owner"/>
+            <field name="allow_access_hierarchy_node"/>
+        </group>
+
+
+          <group string="Hierarchy">
+            <field name="parent_id" domain="[('id','!=',id)]"/>
+            <field name="key_results_count" readonly="1"/>
+          </group>
+
+          <notebook>
+            <page string="Description">
+              <field name="description"/>
+            </page>
+
+            <page string="Key Results">
+              <field name="child_ids" context="{'default_parent_id': id}">
+                <list editable="bottom">
+                  <field name="name"/>
+                  <field name="result"/>
+                  <field name="state"/>
+                  <field name="progress"/>
+                  <field name="weight"/>
+                </list>
+              </field>
+            </page>
+          </notebook>
+        </sheet>
+
+        <!-- Chatter -->
+        <chatter/>
+      </form>
+    </field>
+  </record>
+
+  <!-- HIERARCHY VIEW (simple) -->
+  <record id="okr_node_hierarchy_view" model="ir.ui.view">
+    <field name="name">okr.node.view.hierarchy</field>
+    <field name="model">okr.node</field>
+    <field name="arch" type="xml">
+        <hierarchy child_field="child_ids"
+                   js_class="okr_node_hierarchy"
+                   icon="fa-bullseye"
+                   draggable="1">
+
+            <field name="name"/>
+            <field name="quarter"/>
+            <field name="year"/>
+            <field name="user_id"/>
+            <field name="department_id"/>
+            <field name="progress"/>
+            <field name="result"/>
+            <field name="mode"/>
+            <field name="time_frame"/>
+            <field name="allow_access_hierarchy_node"/>
+            <field name="company_id"/>
+            <field name="employee_id"/>
+
+            <templates>
+                <t t-name="hierarchy-box">
+                    <div class="o_hierarchy_node_header o_hierarchy_okr_node_header flex-column">
+                        <div class="o_hierarchy_okr_node_title w-100 position-relative text-center">
+                            <field name="name"/>
+                            <span>(<field name="time_frame"/>)</span>
+                            <span>
+                                <i t-if="record.result.raw_value == 'new'" class="fa fa-fw fa-circle-o"
+                                   aria-label="Result" t-att-title="record.result.value" role="img"/>
+                                <i t-if="record.result.raw_value == 'inprogress'" class="fa fa-fw fa-circle text-info"
+                                   aria-label="Result" t-att-title="record.result.value" role="img"/>
+                                <i t-if="record.result.raw_value == 'successful'" class="fa fa-fw fa-circle text-success"
+                                   aria-label="Result" t-att-title="record.result.value" role="img"/>
+                                <i t-if="record.result.raw_value == 'failed'" class="fa fa-fw fa-circle text-danger"
+                                   aria-label="Result" t-att-title="record.result.value" role="img"/>
+                                <i t-if="!record.allow_access_hierarchy_node.raw_value" class="fa fa-fw fa-exclamation-triangle text-danger"
+                                   aria-label="Warning Access" title="You do not have permission to access this OKR Node." role="img"/>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="o_hierarchy_node_body o_hierarchy_okr_node_body flex-column">
+                        <div class="o_hierarchy_okr_node_department w-100 position-relative text-center">
+
+                            <span t-if="record.mode.raw_value == 'company'" t-att-title="record.mode.value">
+                                <span groups="!base.group_multi_company">Company Objectives</span>
+                                <span groups="base.group_multi_company">
+                                    <field name="company_id"/>
+                                </span>
+                            </span>
+
+                            <span t-if="record.mode.raw_value == 'department'" t-att-title="record.mode.value">
+                                <span t-if="!record.allow_access_hierarchy_node.raw_value">Department Objectives</span>
+                                <span t-if="record.allow_access_hierarchy_node.raw_value">
+                                    <field name="department_id"/>
+                                </span>
+                            </span>
+
+                            <span t-if="record.mode.raw_value == 'employee'" t-att-title="record.mode.value">
+                                <span t-if="!record.allow_access_hierarchy_node.raw_value">Employee Objectives</span>
+                                <span t-if="record.allow_access_hierarchy_node.raw_value">
+                                    <field name="employee_id"/>
+                                </span>
+                            </span>
+
+                        </div>
+                    </div>
+
+                    <div class="o_hierarchy_okr_node_footer flex-column">
+                        <div class="o_okr_node_result_container">
+                            <div class="o_okr_node_result d-flex">
+                                <img class="rounded"
+                                     t-attf-src="/web/image/res.users/#{record.user_id.raw_value}/avatar_128"
+                                     t-att-title="record.user_id.value"
+                                     alt="Owner"/>
+                            </div>
+                            <div class="o_okr_node_result d-flex">
+                                <field name="progress"/>
+                                <span>%</span>
+                            </div>
+                        </div>
+
+                        <div t-if="record.progress.value || record.progress.value == 0"
+                             class="progress o_okr_node_progress_bar"
+                             t-att-title="record.progress.value + '%'">
+
+                            <t t-set="background_progress" t-value="'bg-secondary'"/>
+                            <t t-if="record.result.raw_value == 'inprogress'">
+                                <t t-set="background_progress" t-value="'bg-info'"/>
+                            </t>
+                            <t t-if="record.result.raw_value == 'successful'">
+                                <t t-set="background_progress" t-value="'bg-success'"/>
+                            </t>
+                            <t t-if="record.result.raw_value == 'failed'">
+                                <t t-set="background_progress" t-value="'bg-danger'"/>
+                            </t>
+
+                            <div t-attf-class="progress-bar #{background_progress}"
+                                 role="progressbar"
+                                 t-att-style="'width:' + record.progress.raw_value + '%'"/>
+                        </div>
+                    </div>
+                </t>
+            </templates>
+        </hierarchy>
+    </field>
+</record>
+
+
+  <!-- ACTION -->
+  <record id="action_okr_node" model="ir.actions.act_window">
+    <field name="name">OKRs</field>
+    <field name="res_model">okr.node</field>
+    <field name="view_mode">list,form,hierarchy</field>
+    <field name="search_view_id" ref="okr_node_view_search"/>
+  </record>
+
+</odoo>

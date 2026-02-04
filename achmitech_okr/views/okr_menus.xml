@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <menuitem id="okr_menu_root" 
+  name="OKR"
+  sequence="10"
+  web_icon="achmitech_okr,static/description/icon.png"/>
+  <menuitem id="okr_menu_okrs" name="OKRs" parent="okr_menu_root" action="action_okr_node" sequence="10"/>
+</odoo>
