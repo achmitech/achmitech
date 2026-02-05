@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="cra_report">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+
+                <t t-set="company" t-value="env.company"/>
+                <t t-set="employee_name" t-value="employee.name"/>
+                <t t-set="cra_order_number" t-value="employee.cra_order_number"/>
+                <t t-set="conges_previsionnels" t-value="conges_previsionnels"/>
+
+                <!-- period comes from wizard via AbstractModel -->
+                <t t-set="period_start" t-value="period_start"/>
+                <t t-set="period_end" t-value="period_end"/>
+
+                <!-- values comes from AbstractModel -->
+                <t t-set="days_local" t-value="values.get('days', [])"/>
+                <t t-set="months_local" t-value="values.get('months', [])"/>
+                <t t-set="total_cra_local" t-value="values.get('total_cra', 0)"/>
+
+
+                <div class="page">
+                    <div class="oe_structure"/>
+                    <!-- CRA/Congés et Periode -->
+                    <div class="row">
+                        <!-- Col 1 (40%) -->
+                        <div class="col-5 text-center" style="background:#0B2A5B; color:#FFFFFF; font-weight:700; padding:8px 12px;">
+                            <span>CRA et Congés</span>
+                        </div>
+
+                        <!-- Col 2 (20%) vide -->
+                        <div class="col-2"></div>
+
+                        <!-- Col 3 (40%) -->
+                        <div class="col-5 text-center" style="background:#0B2A5B; color:#FFFFFF; font-weight:700; padding:8px 12px;">
+                            <span>
+                            De
+                                <t t-if="period_start" t-esc="period_start.strftime('%d/%m/%Y')"/>
+                                <t t-else="">--/--/----</t>
+                            à
+                                <t t-if="period_end" t-esc="period_end.strftime('%d/%m/%Y')"/>
+                                <t t-else="">--/--/----</t>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- INFORMATIONS PERSONNELLES-->
+                    <div class="row mt8">
+                        <!-- Col 1 (40%) -->
+                        <div class="col-5 text-center" style="font-weight:500; border: 2px solid orange">
+                            <span>Informations personnelles Collaborateur</span>
+                        </div>
+                    </div>
+
+                    <div class="row mt8">
+                        <!-- Col 1 (40%) -->
+                        <div class="col-5" style="border:1px solid #0B2A5B; font-weight:700; padding:8px 12px;">
+                            <strong>Nom complet : </strong>
+                            <span style="font-weight:500" t-esc="employee_name"/>
+                        </div>
+
+                        <!-- Col 2 (20%) vide -->
+                        <div class="col-2"></div>
+
+                        <!-- Col 3 (40%) -->
+                        <div class="col-5" style="border:1px solid #0B2A5B; font-weight:700; padding:8px 12px;">
+                            <strong>N° Commande : </strong>
+                            <span t-esc="cra_order_number" style="font-weight:500"/>
+                        </div>
+                    </div>
+
+
+                    <div class="row mt8">
+                        <div class="col-lg-12">
+                            <div class="mt-2 mb-2">
+                                <div class="fw-bold mb-1" style="color: orange;">À faire :</div>
+                                <ol class="mb-0 ps-3">
+                                    <li>
+    <strong>Signature Collaborateur :</strong> signature du <strong>Collaborateur</strong> requise sur la <strong>2ᵉ page</strong>.
+</li>
+<li>
+    <strong>Signature Client final :</strong> indication de la <strong>date</strong> suivie de la <strong>signature</strong> du <strong>Client final</strong> sur la <strong>2ᵉ page</strong>.
+</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt16">
+                    <!-- 60% width -->
+                    <div class="col-5">
+                        <div class="text-center" style="font-weight:500; border: 2px solid orange; margin-bottom: 15px;">
+                            <span>CRA</span>
+                        </div>
+
+                        <table class="table table-sm" style="width:100%; border:1px solid #000; font-size:12px;">
+                            <thead>
+                                <tr style="padding:6px;">
+                                    <th class="text-center" style="background-color: #93aacf; border:1px solid #000;">
+                            Jour
+                                    </th>
+                                    <th class="text-center" style="background-color: #93aacf; border:1px solid #000;">
+                            Temps travaillé
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                <!-- loop comes from python: days = [{label, cra_value, bg, status_code, ...}] -->
+                                <t t-foreach="days_local" t-as="day">
+                                    <tr>
+                                        <td style="border:1px solid #000; padding:6px;">
+                                            <t t-esc="day.get('label')"/>
+                                        </td>
+
+                                        <td class="text-center" t-att-style="'border:1px solid #000; padding:6px; background: %s;' % (day.get('bg') or '#b4b4b4')">
+                                            <!-- if overlay (leave/holiday) show code, else show cra_value -->
+                                            <t t-if="day.get('status_code')">
+                                                <t t-esc="day.get('status_code')"/>
+                                            </t>
+                                            <t t-else="">
+                                                <t t-esc="day.get('cra_value')"/>
+                                            </t>
+                                        </td>
+                                    </tr>
+                                </t>
+
+                                <!-- TOTAL row -->
+                                <tr>
+                                    <td class="text-end" style="border:1px solid #000; padding:6px; font-weight:700;">
+                            TOTAL
+                                    </td>
+                                    <td class="text-center" style="border:1px solid #000; padding:6px; font-weight:700;">
+                                        <t t-esc="total_cra_local"/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="col-2"/>
+
+                    <div class="col-5">
+                        <div class="text-center" style="font-weight:500; border: 2px solid orange; margin-bottom: 15px;">
+                            <span>Nombre de jours de congés prévisionnel</span>
+                        </div>
+
+                        <table class="table table-sm" style="width:100%; border:1px solid #000; font-size:12px;">
+                            <thead>
+                                <tr style="background:#93aacf; color:#FFFFFF;">
+
+                                    <!-- months comes from python: months = [{name, year}, {name, year}, {name, year}] -->
+                                    <th style="background-color: #93aacf; border:1px solid #000;" class="text-center">
+                                        <t t-esc="months_local[0]['name'] if len(months_local) &gt; 0 else ''"/>
+                                        <t t-esc="months_local[0]['year'] if len(months_local) &gt; 0 else ''"/>
+                                    </th>
+
+                                    <th style="background-color: #93aacf; border:1px solid #000;" class="text-center">
+                                        <t t-esc="months_local[1]['name'] if len(months_local) &gt; 1 else ''"/>
+                                        <t t-esc="months_local[1]['year'] if len(months_local) &gt; 1 else ''"/>
+                                    </th>
+
+                                    <th style="background-color: #93aacf; border:1px solid #000;" class="text-center">
+                                        <t t-esc="months_local[2]['name'] if len(months_local) &gt; 2 else ''"/>
+                                        <t t-esc="months_local[2]['year'] if len(months_local) &gt; 2 else ''"/>
+                                    </th>
+
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <tr>
+                                    <!-- empty cells (for manual / Sign fill) -->
+                                    <td class="text-center" style="border:1px solid #000; padding:6px;">
+                                        <t t-esc="conges_previsionnels[0]['planned_days'] if conges_previsionnels else ''"/>
+                                    </td>
+                                    <td class="text-center" style="border:1px solid #000; padding:6px;">
+                                        <t t-esc="conges_previsionnels[1]['planned_days'] if conges_previsionnels else ''"/>
+                                    </td>
+                                    <td class="text-center" style="border:1px solid #000; padding:6px;">
+                                        <t t-esc="conges_previsionnels[2]['planned_days'] if conges_previsionnels else ''"/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div style="margin-top:12px; width:170px; border:1px solid #000;">
+                            <div class="text-center" style="background:#B4B4B4; font-weight:700; padding:6px; border-bottom:1px solid #000;">
+                    Week-End
+                            </div>
+                            <div class="text-center" style="background:#FFD966; font-weight:700; padding:6px; border-bottom:1px solid #000;">
+                    Férié
+                            </div>
+                            <div class="text-center" style="background:#F4B183; font-weight:700; padding:6px; border-bottom:1px solid #000;">
+                    Maladie
+                            </div>
+                            <div class="text-center" style="background:#78DB7D; font-weight:700; padding:6px; border-bottom:1px solid #000;">
+                    Travaillé
+                            </div>
+                            <div class="text-center" style="background:#00B0F0; color:#FFFFFF; font-weight:700; padding:6px;">
+                    Congés
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SIGNATURES BLOCK -->
+                <div class="row mt16">
+                    <!-- SIGNATURES BLOCK (stick to bottom without forcing a new page) -->
+                    <table style="width:100%; border-collapse:collapse; page-break-inside:avoid;">
+
+                        <!-- Spacer that pushes the signature block down -->
+                        <tr>
+                            <td style="height:260px;">&amp;nbsp;</td>
+                        </tr>
+
+                        <!-- Actual signatures content -->
+                        <tr>
+                            <td>
+                                <table class="table table-sm table-borderless" style="width:100%; margin:0;">
+                                    <!-- ROW 1: À / Le -->
+                                    <tr style="border:none;">
+                                        <td style="width:50%; vertical-align:top; padding-right:10mm; border:none;">
+                                            <div>
+                                                <strong>À :</strong>
+                                                <span style="display:inline-block; width:220px; background:#d9eef7;">&amp;nbsp;RABAT</span>
+                                            </div>
+                                        </td>
+
+                                        <td style="width:50%; vertical-align:top; padding-left:10mm; text-align:left; border:none;">
+                                            <div>
+                                                <strong>Le :</strong>
+                                                <span style="display:inline-block; width:220px; background:#d9eef7;">&amp;nbsp;</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <!-- ROW 2: (blank left) / Informations Responsable -->
+                                    <tr style="border:none;">
+                                        <td style="width:50%; padding-right:10mm; border:none;"></td>
+                                        <td style="width:50%; padding-left:10mm; text-align:left; padding-top:6px; border:none;">
+                                            <strong>Informations du Responsable UM6P</strong>
+                                        </td>
+                                    </tr>
+
+                                    <!-- ROW 3: (blank left) / NOM Prénom -->
+                                    <tr style="border:none;">
+                                        <td style="width:50%; padding-right:10mm; border:none;"></td>
+                                        <td style="width:50%; padding-left:10mm; text-align:left; padding-top:4px; border:none;">
+                                            <strong>NOM Prénom :</strong>
+                                            <span style="display:inline-block; width:220px; background:#d9eef7;">&amp;nbsp;</span>
+                                        </td>
+                                    </tr>
+
+                                    <!-- ROW 4: Signature labels -->
+                                    <tr style="border:none;">
+                                        <td style="padding-top:14px; border:none;">
+                                            <strong>Signature Collaborateur :</strong>
+                                        </td>
+                                        <td style="padding-top:14px; border:none;">
+                                            <strong>Signature Client final :</strong>
+                                        </td>
+                                    </tr>
+
+                                    <!-- ROW 5: Signature boxes -->
+                                    <tr style="border:none;">
+                                        <td style="padding-right:10mm; border:none;">
+                                            <div style="border:1px solid #000; height:120px;"></div>
+                                        </td>
+                                        <td style="padding-left:10mm; border:none;">
+                                            <div style="border:1px solid #000; height:120px;"></div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+
+                </div>
+            </t>
+        </t>
+    </template>
+
+
+    <template id="cra_custom_report_header_footer">
+        <div t-attf-class="header o_company_#{company.id}_layout" style="width:100%;">
+            <table style="width:100%; border-collapse:collapse;">
+                <tr>
+                    <!-- LEFT logo -->
+                    <td style="width:50%; text-align:left; vertical-align:middle;">
+                        <img t-att-src="'/achmitech_portal_timesheets/static/src/img/service_empower.png'" alt="Service Empower" style="max-height:70px; width:auto;"/>
+                    </td>
+
+                    <!-- RIGHT logo -->
+                    <td style="width:50%; text-align:right; vertical-align:middle;">
+                        <img t-if="client and client.image_1920" t-att-src="image_data_uri(client.image_1920)" alt="Logo Client" style="max-height:70px; width:auto;"/>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <t t-set="layout_background_url" t-value="'data:image/png;base64,%s' % company.layout_background_image.decode('utf-8') if company.layout_background_image and company.layout_background == 'Custom' else
+                '/base/static/img/demo_logo_report.png' if company.layout_background == 'Demo logo' else ''" />
+        <div t-attf-class="article o_report_layout_standard o_table_standard o_company_#{company.id}_layout o_snail_mail {{'o_report_layout_background' if company.layout_background != 'Blank' else ''}}" t-attf-style="{{ 'background-image: url(%s);' % layout_background_url if layout_background_url else '' }}" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
+            <t t-call="web.address_layout"/>
+            <h2 t-out="layout_document_title"/>
+            <t t-out="0"/>
+        </div>
+    </template>
+
+    <template id="cra_report_with_custom_header" inherit_id="achmitech_portal_timesheets.cra_report">
+        <xpath expr="//t[@t-call='web.external_layout']" position="attributes">
+            <attribute name="t-call">achmitech_portal_timesheets.cra_custom_report_header_footer</attribute>
+        </xpath>
+    </template>
+
+
+    <record id="timesheet_report_interim" model="ir.actions.report">
+        <field name="name">CRA Client final</field>
+        <field name="model">employee.timesheet.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">achmitech_portal_timesheets.cra_report</field>
+        <field name="report_file">achmitech_portal_timesheets.cra_report</field>
+        <field name="print_report_name">(object._get_cra_report_filename())</field>
+        <field name="binding_type">report</field>
+
+    </record>
+
+</odoo>
