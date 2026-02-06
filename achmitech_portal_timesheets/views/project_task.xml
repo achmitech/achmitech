@@ -10,4 +10,15 @@
         </xpath>
       </field>
     </record>
+
+    <record id="quick_create_task_form_inherit" model="ir.ui.view">
+      <field name="name">quick.create.task.form.inherit</field>
+      <field name="model">project.task</field>
+      <field name="inherit_id" ref="project.quick_create_task_form" />
+      <field name="arch" type="xml">
+        <xpath expr="//field[@name='user_ids']" position="attributes">
+          <attribute name="domain">[("active", "=", True)]</attribute>
+        </xpath>
+      </field>
+    </record>
 </odoo>
