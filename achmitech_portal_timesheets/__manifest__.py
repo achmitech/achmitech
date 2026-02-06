@@ -32,7 +32,7 @@
         'views/project_task.xml',
         'wizard/employee_timesheet_wizard.xml',
         'views/portal_task_template.xml',
-        'views/hr_employee_form_view.xml',
+        # 'views/hr_employee_form_view.xml',  MIGRATION v19: enable this once in v19
         'report/report_timesheet_inherited.xml',
         
     ],
