@@ -319,7 +319,7 @@
 
 
     <record id="timesheet_report_interim" model="ir.actions.report">
-        <field name="name">CRA Client final</field>
+        <field name="name">Rapport Feuilles de temps</field>
         <field name="model">employee.timesheet.wizard</field>
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">achmitech_portal_timesheets.cra_report</field>
