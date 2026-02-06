@@ -26,7 +26,8 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
         const minChars = 3;
         const endpoint = '/dossier/skills/search';
         const skillTypeId = parseInt(select.dataset.category); // We get the category of skills from the select attribute 'data-category'
-        
+        const token = this.el.querySelector('input[name="token"]')?.value || "";
+
 
         // Start with empty choices for product select
         instance.clearChoices();
@@ -53,7 +54,7 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
                     url: endpoint,
                     type: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify({ q: term, limit: 40, skill_type_id: skillTypeId }),
+                    data: JSON.stringify({ token, q: term, limit: 40, skill_type_id: skillTypeId }),
                     success: function (response) {
                         const data = response.result || response;
 
@@ -122,36 +123,36 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
         });
     },
 
-    _reindexSectionLines: function (sectionKey) {
-        const $lines = $(this.el).find(`.${sectionKey}_line`);
+    // _reindexSectionLines: function (sectionKey) {
+    //     const $lines = $(this.el).find(`.${sectionKey}_line`);
 
-        $lines.each(function (newIndex) {
-            const row = this;
+    //     $lines.each(function (newIndex) {
+    //         const row = this;
 
-            row.querySelectorAll("[name]").forEach((el) => {
-                if (!el.name) return;
+    //         row.querySelectorAll("[name]").forEach((el) => {
+    //             if (!el.name) return;
 
-                // only reindex fields of this section
-                if (!el.name.startsWith(sectionKey + "_")) return;
+    //             // only reindex fields of this section
+    //             if (!el.name.startsWith(sectionKey + "_")) return;
 
-                el.name = el.name.replace(/_\d+$/, "_" + newIndex);
-            });
+    //             el.name = el.name.replace(/_\d+$/, "_" + newIndex);
+    //         });
 
-            row.querySelectorAll("[id]").forEach((el) => {
-                if (!el.id) return;
-                // optional: only if your ids include sectionKey
-                if (!el.id.startsWith(sectionKey + "_")) return;
+    //         row.querySelectorAll("[id]").forEach((el) => {
+    //             if (!el.id) return;
+    //             // optional: only if your ids include sectionKey
+    //             if (!el.id.startsWith(sectionKey + "_")) return;
 
-                el.id = el.id.replace(/_\d+$/, "_" + newIndex);
-            });
+    //             el.id = el.id.replace(/_\d+$/, "_" + newIndex);
+    //         });
 
-            row.dataset.index = newIndex;
-        });
+    //         row.dataset.index = newIndex;
+    //     });
 
-        // if you store per-section counter
-        this.sectionIndexes = this.sectionIndexes || {};
-        this.sectionIndexes[sectionKey] = $lines.length;
-    },
+    //     // if you store per-section counter
+    //     this.sectionIndexes = this.sectionIndexes || {};
+    //     this.sectionIndexes[sectionKey] = $lines.length;
+    // },
 
     _reindexCompetencyLines: function (sectionEl, scope) {
         const lines = sectionEl.querySelectorAll(".competency_line");
@@ -236,100 +237,7 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
     },
 
 
-
-
-
-
-
-    _autofillOneCompetencyLine: async function (skillSelectEl) {
-    const lineEl = skillSelectEl.closest(".competency_line");
-    if (!lineEl) return;
-
-    const levelEl = lineEl.querySelector(".level-select");
-    if (!levelEl) return;
-
-    // Pick a random skill option (not empty/disabled)
-    const skillOptions = Array.from(skillSelectEl.options).filter(o => o.value && !o.disabled);
-    if (!skillOptions.length) return;
-
-    const randomSkill = skillOptions[Math.floor(Math.random() * skillOptions.length)].value;
-
-    // Set skill in DOM + Choices UI
-    this._setSelectValue(skillSelectEl, randomSkill);
-
-    // Trigger change so your existing handler loads levels
-    skillSelectEl.dispatchEvent(new Event("change", { bubbles: true }));
-
-    // Wait until levels are loaded and enabled
-    await this._waitForLevelsLoaded(levelEl);
-
-    // Pick a random level (not empty/disabled)
-    const levelOptions = Array.from(levelEl.options).filter(o => o.value && !o.disabled);
-    if (!levelOptions.length) return;
-
-    const randomLevel = levelOptions[Math.floor(Math.random() * levelOptions.length)].value;
-    this._setSelectValue(levelEl, randomLevel);
-},
-_setSelectValue: function (selectEl, value) {
-    selectEl.value = value;
-
-    // If Choices is attached, sync UI
-    if (selectEl.choicesInstance) {
-        // Ensure UI reflects selection
-        selectEl.choicesInstance.setChoiceByValue(value);
-    }
-},
-_waitForLevelsLoaded: function (levelEl, timeoutMs = 4000) {
-    return new Promise((resolve, reject) => {
-        const start = Date.now();
-
-        const tick = () => {
-            const enabled = !levelEl.hasAttribute("disabled");
-            const hasChoices = Array.from(levelEl.options).some(o => o.value && !o.disabled);
-
-            if (enabled && hasChoices) return resolve();
-
-            if (Date.now() - start > timeoutMs) {
-                return reject(new Error("Timeout waiting for levels"));
-            }
-            setTimeout(tick, 100);
-        };
-
-        tick();
-    });
-},
-
-
-
     _bindEvents: function () {
-
-        // TO REMOVE
-        // ----------------------------
-        // DEV: Auto-fill skills + levels
-        // ----------------------------
-        this.el.addEventListener("click", async (e) => {
-            const btn = e.target.closest("#btn_autofill_skills");
-            if (!btn) return;
-
-            btn.disabled = true;
-
-            try {
-                // Fill every competency line currently in the DOM
-                const skillSelects = Array.from(this.el.querySelectorAll(".competency_line .skill-select"));
-                for (const skillSel of skillSelects) {
-                    await this._autofillOneCompetencyLine(skillSel);
-                }
-
-                console.log("✅ Auto-fill done");
-            } catch (err) {
-                console.error("Auto-fill error:", err);
-                alert("Erreur pendant l’auto-fill (voir console).");
-            } finally {
-                btn.disabled = false;
-            }
-});
-
-
         // ----------------------------
         // A) COMPETENCY: Add line
         // ----------------------------
@@ -344,12 +252,12 @@ _waitForLevelsLoaded: function (levelEl, timeoutMs = 4000) {
             const linesContainer = sectionEl.querySelector(".competency-lines");
             const firstLine = linesContainer?.querySelector(".competency_line");
             if (!linesContainer || !firstLine) return;
-
+            
             let nextIndex = parseInt(sectionEl.dataset.nextIndex || "1", 10);
-
+            
             // 1) Destroy Choices temporarily on the template line
             this._destroyChoicesAll(firstLine);
-
+            
             // 2) Clone
             const newLine = firstLine.cloneNode(true);
 
@@ -368,6 +276,7 @@ _waitForLevelsLoaded: function (levelEl, timeoutMs = 4000) {
             skillSelect.name = `${scope}_skill_id_${nextIndex}`;
             skillSelect.dataset.index = nextIndex;
             skillSelect.value = "";
+            skillSelect.innerHTML = '<option value="" disabled="true" selected="true">Choisir un niveau</option>';
             skillSelect.classList.remove("choices-initialized");
             delete skillSelect.choicesInstance;
 
@@ -700,196 +609,10 @@ _waitForLevelsLoaded: function (levelEl, timeoutMs = 4000) {
             $el.trigger('change');
         }
 
-        // Toggle fields based on demande_type
-        const toggleAdresseLivraison = () => {
-            const selectedType = $('#demande_type').val();
-            if (selectedType === 'transfert') {
-                $('#delivery_address_id_field').hide();
-                $('#delivery_address_id').prop('required', false);
-                resetSelect('#delivery_address_id');
-                $('#site_id_to_field').show();
-                $('#site_id_to').prop('required', true);
-            } else {
-                $('#delivery_address_id_field').show();
-                $('#delivery_address_id').prop('required', true);
-                $('#site_id_to_field').hide();
-                $('#site_id_to').prop('required', false);
-                resetSelect('#site_id_to');
-            }
-        };
-
-        // Update picking types based on demande_type
-        // Update picking type options based on demande_type (form-style POST)
-        const updatePickingTypeOptions = (demandeType) => {
-            const $pickingTypeSelect = $('#picking_type_id_field');
-            if ($pickingTypeSelect.length && $pickingTypeSelect[0].choicesInstance) {
-                $.ajax({
-                    url: "/get-picking-types",
-                    type: "POST",
-                    data: { demande_type: demandeType },
-                    success: function (response) {
-                        const instance = $pickingTypeSelect[0].choicesInstance;
-                        instance.clearStore();
-                        instance.setChoices(
-                            [{ value: '', label: 'Choisir une opération', disabled: true, selected: true }],
-                            'value',
-                            'label',
-                            true
-                        );
-                        const choices = response.map(pt => ({
-                            value: pt.id,
-                            label: pt.warehouse_name + ' - ' + pt.name
-                        }));
-                        instance.setChoices(choices, 'value', 'label', true);
-                    },
-                    error: function () {
-                        alert("Erreur lors du chargement des types de picking.");
-                    }
-                });
-            }
-        };
-        const updateSkillLevels = (skillTypeId) => {
-            if (!skillTypeId) return;
-
-            $.ajax({
-                url: "/get-skill-type-levels",
-                type: "POST",
-                data: { picking_type_id: skillTypeId },
-                success: function (response) {
-                    // Fill skill_level
-                    const $siteFrom = $('#skill_type_level');
-                    if ($siteFrom.length && $siteFrom[0].choicesInstance) {
-                        const instance = $siteFrom[0].choicesInstance;
-                        instance.clearStore();
-                        instance.setChoices(
-                            [{ value: '', label: 'Choose expertise', disabled: true, selected: true }],
-                            'value',
-                            'label',
-                            true
-                        );
-                        const choices = response.locations.map(loc => ({
-                            value: loc.id,
-                            label: loc.name,
-                            selected: loc.id === response.default_location_src_id,
-                        }));
-                        instance.setChoices(choices, 'value', 'label', true);
-                    }
-
-                    // Fill site_id_to
-                    const $siteTo = $('#site_id_to');
-                    if ($siteTo.length && $siteTo[0].choicesInstance) {
-                        const instance = $siteTo[0].choicesInstance;
-                        instance.clearStore();
-                        instance.setChoices(
-                            [{ value: '', label: 'Choisir une location', disabled: true, selected: true }],
-                            'value',
-                            'label',
-                            true
-                        );
-                        const choices = response.locations.map(loc => ({
-                            value: loc.id,
-                            label: loc.name,
-                            selected: loc.id === response.default_location_dest_id,
-                        }));
-                        instance.setChoices(choices, 'value', 'label', true);
-                    }
-                },
-                error: function () {
-                    alert("Erreur lors du chargement des emplacements.");
-                }
-            });
-        };
-        const fetchDeliveryAddresses = (projectId) => {
-            if (!projectId) return;
-
-            $.ajax({
-                url: '/get-delivery-addresses',
-                type: 'POST',
-                data: { project_id: projectId },
-                success: (response) => {
-                    const $addressSelect = $('#delivery_address_id');
-                    if (!$addressSelect.length) return;
-
-                    if ($addressSelect[0].choicesInstance) {
-                        const instance = $addressSelect[0].choicesInstance;
-                        const choices = response.addresses.map(addr => ({
-                            value: addr.id,
-                            label: addr.name + ' ' + addr.street + ' ' + addr.zip + ' ' + addr.city,
-                        }));
-                        console.log(choices)
-                        instance.clearStore();
-                        instance.setChoices(choices, 'value', 'label', true);
-                    } else {
-                        $addressSelect.empty().append('<option value="">Choisir une adresse</option>');
-                        response.addresses.forEach((addr) => {
-                            $addressSelect.append(`<option value="${addr.id}">${addr.name} ${addr.street} ${addr.zip} ${addr.city}</option>`);
-                        });
-                    }
-                },
-                error: () => {
-                    console.error('Erreur lors de la récupération des adresses');
-                }
-            });
-        };
-
-
-        // Initial logic on load
-        toggleAdresseLivraison();
-        updatePickingTypeOptions($('#demande_type').val());
-        $('#project_id_field').on('change', function () {
-            const projectId = $(this).val();
-            fetchDeliveryAddresses(projectId);
-        });
-        // Bind change event
-        $('#demande_type').on('change', function () {
-            toggleAdresseLivraison();
-            updatePickingTypeOptions($(this).val());
-        });
-        // When user selects a picking type, fetch related locations
-        $('#picking_type_id_field').on('change', function () {
-            const pickingTypeId = $(this).val();
-            updateLocationsByPickingType(pickingTypeId);
-        });
-
-        // When user selects a skill, fetch related levels
-        $('#skill_type_level').on('change', function () {
-            const pickingTypeId = $(this).val();
-            updateLocationsByPickingType(pickingTypeId);
-        });
 
     }
 });
-$('.open-edit-modal').on('click', function () {
-    var recordId = $(this).data('id');
-    console.log("RecordId == >", recordId);
 
-    $.ajax({
-        url: '/stock_site_request/' + recordId,
-        type: 'POST',
-        contentType: 'application/json',
-        dataType: 'json',
-        data: JSON.stringify({}),
-        success: function (response) {
-            console.log('Success:', response);
-            const $modal = $('#add_stock_site_request');
-            $modal.find('select[name="demande_type"]').val(response.demande_type).trigger('change');
-            $('#picking_type_id_field').val(response.picking_type_id).trigger('change');
-            $('#project_id_field').val(response.project_id).trigger('change');
-            $('#site_id_from').val(response.site_id_from).trigger('change');
-            $('#site_id_to').val(response.site_id_to).trigger('change');
-            $('#delivery_address_id').val(response.delivery_address_id).trigger('change');
-            $modal.find('textarea[name="description"]').val(response.description || '');
-            $modal.find('.modal-title').text('Modifier la demande');
-            $modal.find('form').attr('action', `/update/stock_site_request/${recordId}`);
-
-            $modal.modal('show');
-        },
-        error: function (xhr, status, error) {
-            console.error('Erreur AJAX:', xhr.responseText);
-        }
-    });
-
-});
 $(document).ready(function () {
     $('#controleForm').on('submit', function (e) {
         e.preventDefault();

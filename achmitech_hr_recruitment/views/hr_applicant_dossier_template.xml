@@ -20,7 +20,7 @@
                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                     <input type="hidden" name="token" t-att-value="candidate.access_token"/>
 
-                    <h4 class="mt-4">Compétences, technologies &amp; secteurs d'intervention</h4>
+                    <!-- <h4 class="mt-4">Compétences, technologies &amp; secteurs d'intervention</h4>
 
                     <table class="table table-bordered mt-3">
                         <tbody>
@@ -326,7 +326,7 @@
                                 </td>
                             </tr>
                         </tbody>
-                    </table>
+                    </table> -->
 
                     <h4 class="mt-4">Formation, habilitations &amp; langues</h4>
 
@@ -398,13 +398,9 @@
                                         <div class="competency-lines">
                                             <div class="row mb-2 competency_line">
                                                 <div class="col-7">
-                                                    <select class="form-control skill-select rounded-pill" name="languages_skill_id_0" data-index="0" required="required">
+                                                    <!-- ATTENTION: data-categoey is id of the category of competences in our backend -->
+                                                    <select class="form-control skill-select rounded-pill" name="languages_skill_id_0" data-category="1" data-index="0" required="required">
                                                         <option value="" disabled="true" selected="true">Choisir une langue</option>
-                                                        <t t-foreach="skills" t-as="s">
-                                                            <option t-att-value="s.id">
-                                                                <t t-esc="s.name"/>
-                                                            </option>
-                                                        </t>
                                                     </select>
                                                 </div>
 
@@ -508,13 +504,9 @@
                                                     <div class="competency-lines">
                                                         <div class="row mb-2 competency_line">
                                                             <div class="col-7">
-                                                                <select class="form-control skill-select rounded-pill" name="experiences_0_logiciels_skill_id_0" data-index="0" required="required">
+                                                            <!-- ATTENTION: data-categoey is id of the category of competences in our backend -->
+                                                                <select class="form-control skill-select rounded-pill" name="experiences_0_logiciels_skill_id_0" data-category="1" data-index="0" required="required">
                                                                     <option value="" disabled="true" selected="true">Choisir un logiciel</option>
-                                                                    <t t-foreach="skills" t-as="s">
-                                                                        <option t-att-value="s.id">
-                                                                            <t t-esc="s.name"/>
-                                                                        </option>
-                                                                    </t>
                                                                 </select>
                                                             </div>
 
@@ -547,18 +539,13 @@
                                                     <div class="competency-lines">
                                                         <div class="row mb-2 competency_line">
                                                             <div class="col-7">
-                                                                <select class="form-control skill-select rounded-pill" name="experiences_0_programming_languages_skill_id_0" data-index="0" required="required">
+                                                                <!-- ATTENTION: data-categoey is id of the category of competences in our backend -->
+                                                                <select class="form-control skill-select rounded-pill" name="experiences_0_programming_languages_skill_id_0" data-category="1" data-index="0" required="required">
                                                                     <option value="" disabled="true" selected="true">Choisir un lang. de programmation</option>
-                                                                    <t t-foreach="skills" t-as="s">
-                                                                        <option t-att-value="s.id">
-                                                                            <t t-esc="s.name"/>
-                                                                        </option>
-                                                                    </t>
                                                                 </select>
                                                             </div>
 
                                                             <div class="col-4">
-                                                                
                                                                 <select class="form-control level-select rounded-pill" name="experiences_0_programming_languages_skill_level_0" data-index="0" required="required" disabled="1">
                                                                     <option value="" disabled="true" selected="true">Choisir un niveau</option>
                                                                 </select>
@@ -585,13 +572,9 @@
                                                     <div class="competency-lines">
                                                         <div class="row mb-2 competency_line">
                                                             <div class="col-7">
-                                                                <select class="form-control skill-select rounded-pill" name="experiences_0_technologies_skill_id_0" data-index="0" required="required">
+                                                                <!-- ATTENTION: data-categoey is id of the category of competences in our backend -->
+                                                                <select class="form-control skill-select rounded-pill" name="experiences_0_technologies_skill_id_0" data-index="0" data-category="1" required="required">
                                                                     <option value="" disabled="true" selected="true">Choisir une technologie</option>
-                                                                    <t t-foreach="skills" t-as="s">
-                                                                        <option t-att-value="s.id">
-                                                                            <t t-esc="s.name"/>
-                                                                        </option>
-                                                                    </t>
                                                                 </select>
                                                             </div>
 
@@ -623,18 +606,13 @@
                                                     <div class="competency-lines">
                                                         <div class="row mb-2 competency_line">
                                                             <div class="col-7">
-                                                                <select class="form-control skill-select rounded-pill" name="experiences_0_methods_skill_id_0" data-index="0" required="required">
+                                                                <!-- ATTENTION: data-categoey is id of the category of competences in our backend -->
+                                                                <select class="form-control skill-select rounded-pill" name="experiences_0_methods_skill_id_0" data-index="0" data-category="1" required="required">
                                                                     <option value="" disabled="true" selected="true">Choisir une méthode</option>
-                                                                    <t t-foreach="skills" t-as="s">
-                                                                        <option t-att-value="s.id">
-                                                                            <t t-esc="s.name"/>
-                                                                        </option>
-                                                                    </t>
                                                                 </select>
                                                             </div>
 
                                                             <div class="col-4">
-                                                                
                                                                 <select class="form-control level-select rounded-pill" name="experiences_0_methods_skill_level_0" data-index="0" required="required" disabled="1">
                                                                     <option value="" disabled="true" selected="true">Choisir un niveau</option>
                                                                 </select>
@@ -661,16 +639,11 @@
                                                     <div class="competency-lines">
                                                         <div class="row mb-2 competency_line">
                                                             <div class="col-7">
-                                                                <select class="form-control skill-select rounded-pill" name="experiences_0_systems_skill_id_0" data-index="0" required="required">
+                                                                <!-- ATTENTION: data-categoey is id of the category of competences in our backend -->
+                                                                <select class="form-control skill-select rounded-pill" name="experiences_0_systems_skill_id_0" data-index="0" data-category="1" required="required">
                                                                     <option value="" disabled="true" selected="true">Choisir un système</option>
-                                                                    <t t-foreach="skills" t-as="s">
-                                                                        <option t-att-value="s.id">
-                                                                            <t t-esc="s.name"/>
-                                                                        </option>
-                                                                    </t>
                                                                 </select>
                                                             </div>
-
                                                             <div class="col-4">
                                                                 
                                                                 <select class="form-control level-select rounded-pill" name="experiences_0_systems_skill_level_0" data-index="0" required="required" disabled="1">
@@ -699,18 +672,13 @@
                                                     <div class="competency-lines">
                                                         <div class="row mb-2 competency_line">
                                                             <div class="col-7">
-                                                                <select class="form-control skill-select rounded-pill" name="experiences_0_norms_protocols_skill_id_0" data-index="0" required="required">
+                                                                <!-- ATTENTION: data-categoey is id of the category of competences in our backend -->
+                                                                <select class="form-control skill-select rounded-pill" name="experiences_0_norms_protocols_skill_id_0" data-index="0" data-category="1" required="required">
                                                                     <option value="" disabled="true" selected="true">Choisir une norme/protocole</option>
-                                                                    <t t-foreach="skills" t-as="s">
-                                                                        <option t-att-value="s.id">
-                                                                            <t t-esc="s.name"/>
-                                                                        </option>
-                                                                    </t>
                                                                 </select>
                                                             </div>
 
                                                             <div class="col-4">
-                                                                
                                                                 <select class="form-control level-select rounded-pill" name="experiences_0_norms_protocols_skill_level_0" data-index="0" required="required" disabled="1">
                                                                     <option value="" disabled="true" selected="true">Choisir un niveau</option>
                                                                 </select>
@@ -737,13 +705,9 @@
                                                     <div class="competency-lines">
                                                         <div class="row mb-2 competency_line">
                                                             <div class="col-7">
-                                                                <select class="form-control skill-select rounded-pill" name="experiences_0_materials_skill_id_0" data-index="0" required="required">
+                                                                <!-- ATTENTION: data-categoey is id of the category of competences in our backend -->
+                                                                <select class="form-control skill-select rounded-pill" name="experiences_0_materials_skill_id_0" data-index="0" data-category="1" required="required">
                                                                     <option value="" disabled="true" selected="true">Choisir un matériel</option>
-                                                                    <t t-foreach="skills" t-as="s">
-                                                                        <option t-att-value="s.id">
-                                                                            <t t-esc="s.name"/>
-                                                                        </option>
-                                                                    </t>
                                                                 </select>
                                                             </div>
 
@@ -770,9 +734,6 @@
                                         </tr>
                                     </tbody>
                                 </table>
-
-
-
                             </div>
                         </div>
 
@@ -782,15 +743,13 @@
                             </button>
                         </div>
                     </div>
+
+
                     <div class="mt-4 text-end">
-                    <button type="button" class="btn btn-outline-secondary" id="btn_autofill_skills">
-                        🧪 Auto-fill compétences (dev)
-                    </button>
                         <button type="submit" class="btn btn-primary">
                                         Soumettre mon dossier
                         </button>
                     </div>
-
                 </form>
             </div>
         </t>
