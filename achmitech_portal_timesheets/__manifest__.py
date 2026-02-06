@@ -30,10 +30,11 @@
     'data': [
         'security/ir.model.access.csv',
         'views/project_task.xml',
+        'wizard/employee_timesheet_wizard.xml',
         'views/portal_task_template.xml',
         'views/hr_employee_form_view.xml',
         'report/report_timesheet_inherited.xml',
-        'wizard/employee_timesheet_wizard.xml'
+        
     ],
     
     'license': 'LGPL-3',
