@@ -32,7 +32,6 @@ class HrApplicantEvaluation(models.Model):
     stage_id = fields.Many2one(
         string="Etape d'entretien",
         comodel_name="hr.recruitment.stage",
-        tracking=True,
     )
 
     interviewer_id = fields.Many2one(
@@ -50,7 +49,6 @@ class HrApplicantEvaluation(models.Model):
             ("2", "Favorable"),
             ("1", "Très favorable"),
         ],
-        tracking=True,
     )
 
     decision_state = fields.Selection(
