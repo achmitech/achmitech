@@ -16,7 +16,7 @@ class AchmitechHrRecruitment(http.Controller):
     website=True
     )
     def dossier_form(self, token, **kw):
-        candidate = request.env["hr.candidate"].sudo().search(
+        candidate = request.env["hr.applicant"].sudo().search(
             [("access_token", "=", token)],
             limit=1
         )
@@ -38,7 +38,7 @@ class AchmitechHrRecruitment(http.Controller):
     methods=["POST"]
     )
     def dossier_submit(self, token=None, **post):
-        candidate = request.env["hr.candidate"].sudo().search(
+        candidate = request.env["hr.applicant"].sudo().search(
             [("access_token", "=", token)],
             limit=1
         )
@@ -102,7 +102,7 @@ class AchmitechHrRecruitment(http.Controller):
     
     @http.route("/dossier/get-levels", type="http", auth="public", methods=['POST'], website=True, csrf=False)
     def dossier_get_levels(self, token=None, skill_id=None, **kw):
-        candidate = request.env["hr.candidate"].sudo().search(
+        candidate = request.env["hr.applicant"].sudo().search(
             [("access_token", "=", token)],
             limit=1
         )
