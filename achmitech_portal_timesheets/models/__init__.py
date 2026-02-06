@@ -1,3 +1,4 @@
 # -*- coding: utf-8 -*-
 
-from . import hr_employee
+# MIGRATION v19: enable this once in v19
+#from . import hr_employee

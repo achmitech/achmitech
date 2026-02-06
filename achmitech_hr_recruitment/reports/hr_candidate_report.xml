@@ -5,7 +5,7 @@
         <!-- Report Action -->
         <record id="action_report_hr_candidate_evaluations" model="ir.actions.report">
             <field name="name">Évaluations du candidat</field>
-            <field name="model">hr.candidate</field>
+            <field name="model">hr.applicant</field>
             <field name="report_type">qweb-pdf</field>
             <!-- must match the wrapper template id below -->
             <field name="report_name">achmitech_hr_recruitment.print_candidate_evaluation</field>
@@ -14,7 +14,7 @@
             <!-- Safe filename -->
             <field name="print_report_name">'Evaluations-%s' % (object.partner_name or object.display_name or '').replace('/', '')</field>
 
-            <field name="binding_model_id" ref="hr_recruitment.model_hr_candidate"/>
+            <field name="binding_model_id" ref="hr_recruitment.model_hr_applicant"/>
             <field name="binding_type">report</field>
         </record>
 
@@ -36,8 +36,9 @@
                     <div t-field="o.partner_id" t-options='{"widget": "contact", "fields": ["name", "phone", "email"], "no_marker": True, "phone_icons": True}'/>
                 </t>
 
-                <!-- All evaluations of the candidate -->
-                <t t-set="evals" t-value="o.evaluation_ids"/>
+                <!-- All evaluations of the applicant -->
+                <t t-set="evals" t-value="o.env['hr.applicant.evaluation'].sudo().search([('applicant_id.partner_id', '=', o.partner_id.id)]) if o.partner_id else o.evaluation_ids"/>
+
 
                 <!-- Distinct jobs from evaluations -->
                 <t t-set="jobs" t-value="evals.mapped('applicant_id.job_id').filtered(lambda j: j).sorted(lambda j: (j.name or '').lower())"/>
@@ -51,7 +52,7 @@
                     <!-- Header -->
                     <div class="mt-2">
                         <h2>
-                    Rapport d’évaluation —
+                    Rapport d'évaluation —
                             <span t-esc="o.partner_id.name if o.partner_id else o.display_name"/>
                         </h2>
                     </div>
