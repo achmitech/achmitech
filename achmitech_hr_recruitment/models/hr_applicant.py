@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import secrets
 from odoo import models, fields, api
 
 
@@ -12,4 +13,13 @@ class HrApplicant(models.Model):
         string="Evaluations",
         copy=False,
     )
+
+    dca_access_token = fields.Char(copy=False, index=True)
+    dca_submitted = fields.Boolean(default=False, copy=False)
+    dca_submitted_at = fields.Datetime(copy=False)
+
+    def _ensure_dca_token(self):
+        for rec in self:
+            if not rec.dca_access_token:
+                rec.dca_access_token = secrets.token_urlsafe(32)
 
