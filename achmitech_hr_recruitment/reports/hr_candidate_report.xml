@@ -5,7 +5,7 @@
         <!-- Report Action -->
         <record id="action_report_hr_candidate_evaluations" model="ir.actions.report">
             <field name="name">Évaluations du candidat</field>
-            <field name="model">hr.candidate</field>
+            <field name="model">hr.applicant</field>
             <field name="report_type">qweb-pdf</field>
             <!-- must match the wrapper template id below -->
             <field name="report_name">achmitech_hr_recruitment.print_candidate_evaluation</field>
@@ -14,7 +14,7 @@
             <!-- Safe filename -->
             <field name="print_report_name">'Evaluations-%s' % (object.partner_name or object.display_name or '').replace('/', '')</field>
 
-            <field name="binding_model_id" ref="hr_recruitment.model_hr_candidate"/>
+            <field name="binding_model_id" ref="hr_recruitment.model_hr_applicant"/>
             <field name="binding_type">report</field>
         </record>
 
