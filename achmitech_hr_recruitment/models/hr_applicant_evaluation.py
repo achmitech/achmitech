@@ -9,19 +9,23 @@ class HrApplicantEvaluation(models.Model):
     _inherit = ["mail.thread", "mail.activity.mixin"]  # pratique pour audit/trace
 
     applicant_id = fields.Many2one(
-        string="Candidature",
+        string="Candidat",
         comodel_name="hr.applicant",
         ondelete="cascade",
     )
-    candidate_id = fields.Many2one(
-        comodel_name="hr.candidate",
-        string="Candidat",
-        related="applicant_id.candidate_id",
+    partner_id = fields.Many2one(
+        "res.partner",
+        string="Contact",
+        related="applicant_id.partner_id",
+        store=True,
+        index=True,
     )
     job_id = fields.Many2one(
         string="Poste",
         comodel_name="hr.job",
         related="applicant_id.job_id",
+        store=True,
+        index=True,
     )
 
     date = fields.Datetime(default=fields.Datetime.now)
