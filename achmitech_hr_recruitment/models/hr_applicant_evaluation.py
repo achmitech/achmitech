@@ -6,7 +6,6 @@ class HrApplicantEvaluation(models.Model):
     _name = "hr.applicant.evaluation"
     _description = "Applicant Evaluation"
     _order = "create_date"
-    _inherit = ["mail.thread", "mail.activity.mixin"]  # pratique pour audit/trace
 
     applicant_id = fields.Many2one(
         string="Candidat",
