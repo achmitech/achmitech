@@ -6,7 +6,6 @@ class HrApplicantEvaluation(models.Model):
     _name = "hr.applicant.evaluation"
     _description = "Applicant Evaluation"
     _order = "create_date"
-    _inherit = ["mail.thread", "mail.activity.mixin"]  # pratique pour audit/trace
 
     applicant_id = fields.Many2one(
         string="Candidat",
@@ -33,7 +32,6 @@ class HrApplicantEvaluation(models.Model):
     stage_id = fields.Many2one(
         string="Etape d'entretien",
         comodel_name="hr.recruitment.stage",
-        tracking=True,
     )
 
     interviewer_id = fields.Many2one(
@@ -51,7 +49,6 @@ class HrApplicantEvaluation(models.Model):
             ("2", "Favorable"),
             ("1", "Très favorable"),
         ],
-        tracking=True,
     )
 
     decision_state = fields.Selection(
