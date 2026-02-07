@@ -4,36 +4,11 @@
 # pylint: disable=consider-merging-classes-inherited
 import logging
 
-from odoo import _, api, fields, models
-from odoo.exceptions import UserError
+from odoo import fields, models
 
 from odoo.addons.base.models.ir_model import MODULE_UNINSTALL_FLAG
 
 _logger = logging.getLogger(__name__)
-
-
-class IrModel(models.Model):
-    _inherit = "ir.model"
-
-    def _drop_table(self):
-        """this function crashes for undefined models"""
-        self = self.filtered(lambda x: x.model in self.env)
-        return super()._drop_table()
-
-    @api.depends()
-    def _inherited_models(self):
-        """this function crashes for undefined models"""
-        self = self.filtered(lambda x: x.model in self.env)
-        return super()._inherited_models()
-
-
-class IrModelFields(models.Model):
-    _inherit = "ir.model.fields"
-
-    def _prepare_update(self):
-        """this function crashes for undefined models"""
-        self = self.filtered(lambda x: x.model in self.env)
-        return super()._prepare_update()
 
 
 class CleanupPurgeLineModel(models.TransientModel):
@@ -73,7 +48,7 @@ class CleanupPurgeLineModel(models.TransientModel):
             )
             if attachments:
                 self.env.cr.execute(
-                    "UPDATE ir_attachment SET res_model = NULL " "WHERE id in %s",
+                    "UPDATE ir_attachment SET res_model = NULL WHERE id in %s",
                     (tuple(attachments.ids),),
                 )
             self.env["ir.model.constraint"].search(
@@ -105,27 +80,3 @@ class CleanupPurgeLineModel(models.TransientModel):
             self.env["ir.model"].browse([row[0]]).with_context(**context_flags).unlink()
             line.write({"purged": True})
         return True
-
-
-class CleanupPurgeWizardModel(models.TransientModel):
-    _inherit = "cleanup.purge.wizard"
-    _name = "cleanup.purge.wizard.model"
-    _description = "Purge models"
-
-    @api.model
-    def find(self):
-        """
-        Search for models that cannot be instantiated.
-        """
-        res = []
-        self.env.cr.execute("SELECT model from ir_model")
-        for (model,) in self.env.cr.fetchall():
-            if model not in self.env:
-                res.append((0, 0, {"name": model}))
-        if not res:
-            raise UserError(_("No orphaned models found"))
-        return res
-
-    purge_line_ids = fields.One2many(
-        "cleanup.purge.line.model", "wizard_id", "Models to purge"
-    )

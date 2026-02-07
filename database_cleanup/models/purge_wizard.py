@@ -3,34 +3,9 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 # pylint: disable=consider-merging-classes-inherited
 
-import logging
 
-from odoo import _, api, fields, models
+from odoo import api, fields, models
 from odoo.exceptions import AccessDenied
-
-
-class CleanupPurgeLine(models.AbstractModel):
-    """Abstract base class for the purge wizard lines"""
-
-    _name = "cleanup.purge.line"
-    _order = "name"
-    _description = "Purge Column Abstract Wizard"
-
-    name = fields.Char(readonly=True)
-    purged = fields.Boolean(readonly=True)
-    wizard_id = fields.Many2one("cleanup.purge.wizard")
-
-    logger = logging.getLogger("odoo.addons.database_cleanup")
-
-    def purge(self):
-        raise NotImplementedError
-
-    @api.model_create_multi
-    def create(self, values):
-        # make sure the user trying this is actually supposed to do it
-        if self.env.ref("base.group_erp_manager") not in self.env.user.groups_id:
-            raise AccessDenied
-        return super().create(values)
 
 
 class PurgeWizard(models.AbstractModel):
@@ -71,7 +46,7 @@ class PurgeWizard(models.AbstractModel):
     def select_lines(self):
         return {
             "type": "ir.actions.act_window",
-            "name": _("Select lines to purge"),
+            "name": self.env._("Select lines to purge"),
             "views": [(False, "list"), (False, "form")],
             "res_model": self._fields["purge_line_ids"].comodel_name,
             "domain": [("wizard_id", "in", self.ids)],
@@ -84,7 +59,7 @@ class PurgeWizard(models.AbstractModel):
     @api.model_create_multi
     def create(self, values):
         # make sure the user trying this is actually supposed to do it
-        if self.env.ref("base.group_erp_manager") not in self.env.user.groups_id:
+        if self.env.ref("base.group_erp_manager") not in self.env.user.group_ids:
             raise AccessDenied
         return super().create(values)
 
