@@ -4,8 +4,7 @@
 # pylint: disable=consider-merging-classes-inherited
 from psycopg2.extensions import AsIs
 
-from odoo import _, api, fields, models
-from odoo.exceptions import UserError
+from odoo import fields, models
 
 from ..identifier_adapter import IdentifierAdapter
 
@@ -89,57 +88,3 @@ class CleanupPurgeLineTable(models.TransientModel):
             )
             line.write({"purged": True})
         return True
-
-
-class CleanupPurgeWizardTable(models.TransientModel):
-    _inherit = "cleanup.purge.wizard"
-    _name = "cleanup.purge.wizard.table"
-    _description = "Purge tables"
-
-    blacklist = [
-        "endpoint_route",  # web-api/endpoint_route_handler
-    ]
-
-    @api.model
-    def find(self):
-        """
-        Search for tables and views that cannot be instantiated.
-        """
-        known_tables = list(self.blacklist)
-        for model in self.env["ir.model"].search([]):
-            if model.model not in self.env:
-                continue
-            model_pool = self.env[model.model]
-            known_tables.append(model_pool._table)
-            known_tables += [
-                column.relation
-                for column in model_pool._fields.values()
-                if column.type == "many2many"
-                and (column.compute is None or column.store)
-                and column.relation
-            ]
-
-        self.env.cr.execute(
-            """
-            SELECT table_name, table_type FROM information_schema.tables
-            WHERE table_schema = 'public'
-            AND table_type in ('BASE TABLE', 'VIEW')
-            AND table_name NOT IN %s""",
-            (tuple(known_tables),),
-        )
-
-        res = [
-            (
-                0,
-                0,
-                {"name": row[0], "table_type": "view" if row[1] == "VIEW" else "base"},
-            )
-            for row in self.env.cr.fetchall()
-        ]
-        if not res:
-            raise UserError(_("No orphaned tables found"))
-        return res
-
-    purge_line_ids = fields.One2many(
-        "cleanup.purge.line.table", "wizard_id", "Tables to purge"
-    )
