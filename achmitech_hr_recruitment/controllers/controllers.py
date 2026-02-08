@@ -66,7 +66,7 @@ class AchmitechHrRecruitment(http.Controller):
         return
         
     
-    @http.route("/dossier/skills/search", type="jsonrpc", auth="public", csrf=False)
+    @http.route("/dossier/skills/search", type="json2", auth="public", csrf=False)
     def dossier_skills_search(self, **kwargs):
         payload = request.get_json_data() or {}
 

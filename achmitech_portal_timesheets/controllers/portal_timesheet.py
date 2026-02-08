@@ -16,6 +16,8 @@ class PortalTimesheet(CustomerPortal):
         url = task.get_portal_url()  # may contain ?access_token=...
         return request.redirect(url + "#task_timesheets")
 
+    def _is_task_locked(self, task):
+        return bool(task.stage_id and task.stage_id.fold)
 
     @http.route("/my/timesheets/create", type="http", auth="user", website=True, methods=["POST"])
     def portal_timesheet_create(self, **post):
@@ -78,6 +80,15 @@ class PortalTimesheet(CustomerPortal):
         if request.env.user not in task.user_ids:
             request.session["ts_flash"] = {"type": "danger", "message": "Vous n'êtes pas assigné(e) à cette tâche."}
             return self._task_redirect(task)
+
+        # Task lock check (DONE / CLOSED)
+        if task.stage_id and task.stage_id.fold:
+            request.session["ts_flash"] = {
+                "type": "danger",
+                "message": "Cette tâche est clôturée. Vous ne pouvez plus modifier vos feuilles de temps."
+            }
+            return self._task_redirect(task)
+        
 
         # Create timesheet using sudo(to bypass ACL)
         request.env["account.analytic.line"].sudo().create({
