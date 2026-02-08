@@ -5,7 +5,7 @@
         <field name="model">hr.employee</field>
         <field name="inherit_id" ref="hr.view_employee_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//header" position="inside">
+            <xpath expr="/form/header/button[last()]" position="after">
                 <button name="%(action_timesheet_interim_report_wizard)d" 
                     type="action" 
                     class="btn btn-primary" 
@@ -14,16 +14,9 @@
                     groups="hr.group_hr_manager"
                     context="{'default_employee_id': id}" />
             </xpath>
-            
-            <xpath expr="//form[1]/sheet[1]/notebook[1]/page[@name='hr_settings']/group[1]/group[@name='active_group']/div[1]/field[@name='user_id']" position="attributes">
-              <attribute name="domain">[('company_ids', 'in', company_id)]</attribute>
+            <xpath expr="/form//field[@name='parent_id']" position="after">
+                <field name="cra_order_number"/>
             </xpath>
-            <!-- MIGRATION v19: find the correct placement in employee form in Odoo 19 -->
-            <!-- <xpath expr="//field[@name='work_location_id']/ancestor::group[1]" position="after">
-                <group string="Interim">
-                    <field name="cra_order_number"/>
-                </group>
-            </xpath> -->
         </field>
     </record>
 </odoo>
