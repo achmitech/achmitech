@@ -9,9 +9,7 @@
                 </h2>
 
                 <p>
-          Bonjour <strong t-esc="candidate.partner_name"/>
-,
-          merci de compléter votre dossier de compétences.
+          Bonjour <strong t-esc="candidate.partner_name"/>, merci de compléter votre dossier de compétences.
                 </p>
 
                 <form id="dossier_form" action="/dossier/submit" method="post" class="o_website_form">
@@ -214,6 +212,107 @@
             </div>
         </t>
     </template>
+
+
+    <template id="dossier_thankyou" name="Thank you (Dossier)" t-name="achmitech_hr_recruitment.dossier_thankyou">
+        <t t-call="website.layout">
+            <div id="wrap">
+                <div class="oe_structure"/>
+                <div id="dossier_thankyou" class="container">
+                    <div class="row pt24 pb24">
+                        <!-- Main content -->
+                        <div class="col pt24 pb24 text-center">
+                            <h1 class="fw-bolder">Merci !</h1>
+
+                            <p class="fw-light pb24">
+                                Votre dossier de compétences a été envoyé avec succès.<br class="mb-2"/>
+                                Notre équipe reviendra vers vous dès que possible.
+                            </p>
+
+                            <!-- same image style (you can replace the src with your own asset) -->
+                            <img class="img-fluid o_we_custom_image"
+                                 style="width: 30% !important;"
+                                 src="/website_hr_recruitment/static/src/img/job_congratulations.svg"
+                                 alt="Merci"/>
+
+                            <div class="row" id="dossier_thank_cta">
+                                <div class="col-lg-12 text-center mt32 mb48">
+                                    <p>
+                                        <span class="h5 fw-light">En attendant,</span><br/>
+                                        <span class="h3 mt8 mb32 fw-bold">Découvrez notre univers :</span>
+                                    </p>
+
+                                    <a role="button" href="/" class="btn btn-primary btn-lg">Accueil</a>
+                                    <a role="button" href="https://www.achmitech.com/contact" class="btn btn-primary btn-lg ms-3">Contact</a>
+                                    <a role="button" href="/jobs" class="btn btn-primary btn-lg ms-3">Offres</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Optional recruiter block (similar to Odoo default) -->
+                        <t t-if="job_sudo and job_sudo.user_id">
+                            <div class="col-lg-4 align-self-center ps-4 o_cc o_cc2 rounded">
+                                <section class="s_text_block pt24" data-snippet="s_text_block" data-name="Text">
+                                    <div class="container">
+                                        <p class="text-center mb-0 fs-3 lead">Votre <b>contact</b> :</p>
+                                    </div>
+                                </section>
+
+                                <section class="s_company_team pt12" data-snippet="s_company_team" data-name="Team">
+                                    <div class="container-fluid">
+                                        <div class="row justify-content-center">
+                                            <div class="o_jobs_hr_recruiter col-10 o_cc o_cc1 mt24 p-4 border border-primary rounded shadow">
+                                                <div class="row align-items-center">
+                                                    <div class="col-lg-5 pb16 o_not_editable">
+                                                        <img t-att-src="image_data_uri(job_sudo.user_id.avatar_256)"
+                                                             class="img-fluid" loading="lazy"/>
+                                                    </div>
+                                                    <div class="col-lg-7 px-1">
+                                                        <h2 class="text-truncate" t-field="job_sudo.user_id.name"/>
+                                                        <p class="fw-light text-truncate" t-field="job_sudo.user_id.job_title"/>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row">
+                                                    <ul class="list-unstyled mb-0">
+                                                        <li t-if="job_sudo.user_id.work_phone">
+                                                            <i class="fa fa-phone fa-fw me-2"></i>
+                                                            <span class="o_force_ltr" t-field="job_sudo.user_id.work_phone"/>
+                                                        </li>
+                                                        <li class="d-inline-flex align-items-baseline">
+                                                            <i class="fa fa-envelope fa-fw me-2"></i>
+                                                            <span>
+                                                                <a class="text-break"
+                                                                   t-attf-href="mailto:#{job_sudo.user_id.email}"
+                                                                   t-field="job_sudo.user_id.email"/>
+                                                            </span>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <section class="s_text_block pt24" data-snippet="s_text_block" data-name="Text">
+                                    <div class="container">
+                                        <p class="lead alert px-0">
+                                            Nous traitons généralement les dossiers sous <strong>quelques jours</strong>.<br/><br/>
+                                            La prochaine étape peut être un appel ou un entretien.<br/><br/>
+                                            Si besoin, vous pouvez contacter votre interlocuteur ci-dessus.
+                                        </p>
+                                    </div>
+                                </section>
+                            </div>
+                        </t>
+
+                    </div>
+                </div>
+                <div class="oe_structure"/>
+            </div>
+        </t>
+    </template>
+
 
     <record model="ir.actions.server" id="action_regenerate_dca_token">
             <field name="name">Regenerate Dossier Token</field>
