@@ -2,7 +2,7 @@
 from collections import defaultdict
 import json
 from odoo.http import request, Response
-from odoo import fields, http
+from odoo import http
 
 import logging
 
@@ -16,14 +16,19 @@ class AchmitechHrRecruitment(http.Controller):
     website=True
     )
     def dossier_form(self, token, **kw):
+<<<<<<< Updated upstream
         candidate = request.env["hr.candidate"].sudo().search(
             [("access_token", "=", token)],
+=======
+        candidate = request.env["hr.applicant"].sudo().search(
+            [("dca_access_token", "=", token)],
+>>>>>>> Stashed changes
             limit=1
         )
         if not candidate:
             return request.not_found()
 
-        if candidate.dossier_state == "submitted":
+        if candidate.dca_submitted:
             return request.render("achmitech_hr_recruitment.dossier_already")
 
         return request.render("achmitech_hr_recruitment.dossier_form", {
@@ -38,8 +43,13 @@ class AchmitechHrRecruitment(http.Controller):
     methods=["POST"]
     )
     def dossier_submit(self, token=None, **post):
+<<<<<<< Updated upstream
         candidate = request.env["hr.candidate"].sudo().search(
             [("access_token", "=", token)],
+=======
+        candidate = request.env["hr.applicant"].sudo().search(
+            [("dca_access_token", "=", token)],
+>>>>>>> Stashed changes
             limit=1
         )
         if not candidate:
@@ -102,8 +112,13 @@ class AchmitechHrRecruitment(http.Controller):
     
     @http.route("/dossier/get-levels", type="http", auth="public", methods=['POST'], website=True, csrf=False)
     def dossier_get_levels(self, token=None, skill_id=None, **kw):
+<<<<<<< Updated upstream
         candidate = request.env["hr.candidate"].sudo().search(
             [("access_token", "=", token)],
+=======
+        candidate = request.env["hr.applicant"].sudo().search(
+            [("dca_access_token", "=", token)],
+>>>>>>> Stashed changes
             limit=1
         )
         if not candidate:
