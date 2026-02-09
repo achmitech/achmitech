@@ -27,7 +27,7 @@
                     <!-- Submission info -->
                     <group>
                         <field name="dca_access_token" readonly="1"/>
-                        <field name="dca_submitted" readonly="1"/>
+                        <field name="dca_submitted"/>
                         <field name="dca_submitted_date"
                             readonly="1"
                             invisible="not dca_submitted"/>
