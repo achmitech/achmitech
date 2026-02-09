@@ -244,6 +244,7 @@ class AchmitechHrRecruitment(http.Controller):
 
             exp = Experience.create({
                 "applicant_id": candidate.id,
+                "name": name,
                 "sequence": (exp_idx + 1) * 10,
                 "company": company,
                 "start": start,
@@ -271,9 +272,23 @@ class AchmitechHrRecruitment(http.Controller):
         #     applicant.write({"dca_submitted": False, "dca_submitted_date": False})
         #     return request.render("achmitech_hr_recruitment.dossier_form", {...})
 
-        return request.render("website_hr_recruitment.thankyou")
-        
+        return request.make_json_response({
+            "redirect": f"/dossier/thank-you/{candidate.dca_access_token}"
+        })
+
+                
+    @http.route("/dossier/thank-you/<string:token>", type="http", auth="public", website=True)
+    def dossier_thankyou(self, token, **kw):
+        applicant = request.env["hr.applicant"].sudo().search([("dca_access_token", "=", token)], limit=1)
+        if not applicant:
+            return request.not_found()
+
+        return request.render("achmitech_hr_recruitment.dossier_thankyou", {
+            "candidate": applicant,
+            "job_sudo": applicant.job_id.sudo() if applicant.job_id else False,
+        })
     
+
     @http.route("/dossier/skills/search", type="json2", auth="public", csrf=False)
     def dossier_skills_search(self, **kwargs):
         payload = request.get_json_data() or {}
