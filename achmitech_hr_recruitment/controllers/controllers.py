@@ -4,7 +4,7 @@ import json
 import re
 import unicodedata
 from odoo.http import request, Response
-from odoo import http, fields
+from odoo import fields, http
 
 import logging
 
