@@ -23,6 +23,36 @@
                         </list>
                     </field>
                 </page>
+                <page string="Dossier de compétence" name="applicant_dca">
+                    <!-- Submission info -->
+                    <group>
+                        <field name="dca_access_token" readonly="1"/>
+                        <field name="dca_submitted"/>
+                        <field name="dca_submitted_date"
+                            readonly="1"
+                            invisible="not dca_submitted"/>
+                    </group>
+                    <field name="dossier_experience_ids"
+                            context="{'default_applicant_id': id}"
+                            readonly="dca_submitted">
+
+                        <list editable="bottom" delete="1">
+                            <field name="sequence" widget="handle"/>
+                            <field name="name"/>
+                            <field name="company"/>
+                            <field name="role"/>
+                            <field name="poste"/>
+                            <field name="contexte"/>
+                            <field name="sujet"/>
+                            <field name="travail"/>
+                            <field name="resultats"/>
+                            <field name="competency_line_ids" widget="many2many_tags"/>
+                            <field name="start"/>
+                            <field name="end"/>
+                        </list>
+
+                    </field>
+                </page>
             </xpath>
         </field>
     </record>
