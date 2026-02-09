@@ -104,7 +104,7 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
                 placeholderValue: select.getAttribute("placeholder") || 'Sélectionner...',
             });
 
-            // Only product selects get the remote min-chars search
+            // Only skill selects get the remote min-chars search
             if (isSkillSelect) {
                 this._attachSkillRemoteSearch(select, instance);
             }
@@ -122,37 +122,6 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
             select.classList.remove("choices-initialized");
         });
     },
-
-    // _reindexSectionLines: function (sectionKey) {
-    //     const $lines = $(this.el).find(`.${sectionKey}_line`);
-
-    //     $lines.each(function (newIndex) {
-    //         const row = this;
-
-    //         row.querySelectorAll("[name]").forEach((el) => {
-    //             if (!el.name) return;
-
-    //             // only reindex fields of this section
-    //             if (!el.name.startsWith(sectionKey + "_")) return;
-
-    //             el.name = el.name.replace(/_\d+$/, "_" + newIndex);
-    //         });
-
-    //         row.querySelectorAll("[id]").forEach((el) => {
-    //             if (!el.id) return;
-    //             // optional: only if your ids include sectionKey
-    //             if (!el.id.startsWith(sectionKey + "_")) return;
-
-    //             el.id = el.id.replace(/_\d+$/, "_" + newIndex);
-    //         });
-
-    //         row.dataset.index = newIndex;
-    //     });
-
-    //     // if you store per-section counter
-    //     this.sectionIndexes = this.sectionIndexes || {};
-    //     this.sectionIndexes[sectionKey] = $lines.length;
-    // },
 
 
     _reindexCompetencyLines: function (sectionEl, scope) {
@@ -624,6 +593,10 @@ $(document).ready(function () {
             type: 'POST',
             data: data,
             success: function (response) {
+                if (response && response.redirect) {
+                    window.location.href = response.redirect;
+                    return;
+                }
                 $('#controle-message').removeClass('d-none').text('Formulaire soumis avec succès.');
             },
             error: function (xhr) {
