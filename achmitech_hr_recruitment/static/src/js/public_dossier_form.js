@@ -111,6 +111,7 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
             select.choicesInstance = instance;
             select.classList.add("choices-initialized");
         });
+        
     },
 
     _destroyChoicesAll: function (rootEl) {
@@ -265,7 +266,7 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
 
             // 7) Init Choices in cloned line
             this._initChoicesAll(newLine);
-
+            
             // 8) Increment section counter
             sectionEl.dataset.nextIndex = String(nextIndex + 1);
         });
@@ -391,10 +392,13 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
             const firstLine = container?.querySelector(".repeat-line");
             if (!container || !firstLine) return;
 
-            let nextIndex = parseInt(sectionEl.dataset.nextIndex || "1", 10);
+            let nextIndex = parseInt(sectionEl.dataset.nextIndex || "0", 10);
 
             const newLine = firstLine.cloneNode(true);
-
+            
+            // ✅ set line index
+            newLine.dataset.index = String(nextIndex);
+            
             // Update names + reset values in cloned line
             newLine.querySelectorAll("input, select, textarea").forEach((el) => {
                 if (el.name) {

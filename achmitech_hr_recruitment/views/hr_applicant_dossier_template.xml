@@ -25,57 +25,86 @@
                             <tr>
                                 <th style="width: 30%;">Formation</th>
                                 <td>
-                                    <div class="repeat-section" data-scope="formations" data-next-index="1">
-                                        <div class="repeat-lines">
-                                            <div class="row mb-2 repeat-line">
-                                                <div class="col-5">
-                                                    <label>Intitulé</label>
-                                                    <input type="text" class="form-control" name="formations_title_0" data-index="0" required="required" placeholder="Ex: Formation Scrum / Odoo / AWS..." />
-                                                </div>
+                                    <t t-set="formation_list" t-value="(dossier and dossier.get('formations')) or [ {} ]"/>
+                                        <div class="repeat-section" data-scope="formations"
+                                            t-att-data-next-index="str(len(formation_list))">
+                                            <div class="repeat-lines">
 
-                                                <div class="col-3">
-                                                    <label>Date début</label>
-                                                    <input type="date" class="form-control" name="formations_start_0" data-index="0" />
-                                                </div>
+                                                <t t-foreach="formation_list" t-as="f">
+                                                    <div class="row mb-2 repeat-line" t-att-data-index="f_index">
+                                                        <div class="col-5">
+                                                            <label t-att-for="'formations_title_%s' % f_index">Intitulé</label>
+                                                            <input type="text" class="form-control"
+                                                                t-att-id="'formations_title_%s' % f_index"
+                                                                t-att-name="'formations_title_%s' % f_index"
+                                                                t-att-data-index="f_index"
+                                                                placeholder="Ex: Formation Scrum / Odoo / AWS..."
+                                                                t-att-value="f.get('title') or ''"/>
+                                                        </div>
 
-                                                <div class="col-3">
-                                                    <label>Date fin</label>
-                                                    <input type="date" class="form-control" name="formations_end_0" data-index="0" />
-                                                </div>
+                                                        <div class="col-3">
+                                                            <label t-att-for="'formations_start_%s' % f_index">Date début</label>
+                                                            <input type="date" class="form-control"
+                                                                t-att-id="'formations_start_%s' % f_index"
+                                                                t-att-name="'formations_start_%s' % f_index"
+                                                                t-att-data-index="f_index"
+                                                                t-att-value="f.get('start') or ''"/>
+                                                        </div>
 
-                                                <div class="col-1 d-flex align-items-end">
-                                                    <button type="button" class="btn btn-danger remove-line rounded-pill">×</button>
-                                                </div>
+                                                        <div class="col-3">
+                                                            <label t-att-for="'formations_end_%s' % f_index">Date fin</label>
+                                                            <input type="date" class="form-control"
+                                                                t-att-id="'formations_end_%s' % f_index"
+                                                                t-att-name="'formations_end_%s' % f_index"
+                                                                t-att-data-index="f_index"
+                                                                t-att-value="f.get('end') or ''"/>
+                                                        </div>
+
+                                                        <div class="col-1 d-flex align-items-end">
+                                                            <button type="button" class="btn btn-danger remove-line rounded-pill">×</button>
+                                                        </div>
+                                                    </div>
+                                                </t>
+
+                                            </div>
+
+                                            <div class="mt-2">
+                                                <button type="button" class="btn btn-sm btn-primary rounded-pill add-repeat-line">
+                                                    + Ajouter une formation
+                                                </button>
                                             </div>
                                         </div>
 
-                                        <div class="mt-2">
-                                            <button type="button" class="btn btn-sm btn-primary rounded-pill add-repeat-line">
-                                        + Ajouter une formation
-                                            </button>
-                                        </div>
-                                    </div>
                                 </td>
                             </tr>
                             <tr>
                                 <th style="width: 30%;">Habilitations</th>
                                 <td>
-                                    <div class="repeat-section" data-scope="habilitations" data-next-index="1">
+                                    <t t-set="hab_list" t-value="(dossier and dossier.get('habilitations')) or [ {} ]"/>
+                                    <div class="repeat-section" data-scope="habilitations"
+                                        t-att-data-next-index="str(len(hab_list))">
                                         <div class="repeat-lines">
-                                            <div class="row mb-2 repeat-line">
-                                                <div class="col-11">
-                                                    <input type="text" class="form-control" name="habilitations_title_0" data-index="0" placeholder="Ex: Habilitation électrique, SST, CACES..." />
-                                                </div>
 
-                                                <div class="col-1 d-flex align-items-end">
+                                            <t t-foreach="hab_list" t-as="h">
+                                                <div class="row mb-2 repeat-line" t-att-data-index="h_index">
+                                                    <div class="col-11">
+                                                        <input type="text" class="form-control"
+                                                            t-att-name="'habilitations_title_%s' % h_index"
+                                                            t-att-data-index="h_index"
+                                                            placeholder="Ex: Habilitation électrique, SST, CACES..."
+                                                            t-att-value="h.get('title') or ''"/>
+                                                    </div>
+                                                 <div class="col-1 d-flex align-items-end">
                                                     <button type="button" class="btn btn-danger remove-line rounded-pill">×</button>
                                                 </div>
-                                            </div>
+                                                </div>
+                                            </t>
+
                                         </div>
 
                                         <div class="mt-2">
                                             <button type="button" class="btn btn-sm btn-primary rounded-pill add-repeat-line">
-                                        + Ajouter une ligne
+                                                + Ajouter une ligne
                                             </button>
                                         </div>
                                     </div>
@@ -87,120 +116,207 @@
                     <h4 class="mt-4">Projets, réalisations &amp; responsabilités</h4>
 
 
-                    <div class="repeat-section experiences-section" data-scope="experiences" data-next-index="1">
-                        <div class="repeat-lines">
+                    <div class="repeat-section experiences-section"
+     data-scope="experiences"
+     t-att-data-next-index="str((dossier and dossier.get('experiences') and len(dossier['experiences'])) or 1)">
 
-                            <div class="experience-block repeat-line" data-index="0">
-                                <!-- Header Projet -->
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h5 class="experience-title">Projet 1</h5>
-                                    <button type="button" class="btn btn-danger btn-sm rounded-pill remove-experience">×</button>
-                                </div>
-                                <!-- INFOS GÉNÉRALES -->
-                                <div class="row mb-3">
-                                    <div class="col-6">
-                                        <label>Entreprise</label>
-                                        <input type="text" class="form-control" name="experiences_company_0" placeholder="Ex: ACHMITECH" required="required"/>
-                                    </div>
+    <div class="repeat-lines">
 
-                                    <div class="col-3">
-                                        <label>Date début</label>
-                                        <input type="date" class="form-control" name="experiences_start_0"/>
-                                    </div>
+        <!-- Decide list of experiences to render -->
+        <t t-set="exp_list" t-value="(dossier and dossier.get('experiences')) or [ {} ]"/>
 
-                                    <div class="col-3">
-                                        <label>Date fin</label>
-                                        <input type="date" class="form-control" name="experiences_end_0"/>
-                                    </div>
-                                </div>
-                                <div class="row mb-2">
-                                    <div class="col-6">
-                                        <label>Poste occupé</label>
-                                        <input type="text" class="form-control" name="experiences_poste_0"/>
-                                    </div>
-                                    <div class="col-6">
-                                        <label>Rôle</label>
-                                        <input type="text" class="form-control" name="experiences_role_0"/>
-                                    </div>
-                                </div>
-                                <!-- TEXTES -->
-                                <div class="mb-2">
-                                    <label>Contexte général</label>
-                                    <textarea class="form-control" name="experiences_contexte_0" rows="2"></textarea>
-                                </div>
+        <t t-foreach="exp_list" t-as="exp">
 
-                                <div class="mb-2">
-                                    <label>Sujet du projet</label>
-                                    <textarea class="form-control" name="experiences_sujet_0" rows="2"></textarea>
-                                </div>
+            <div class="experience-block repeat-line" t-att-data-index="exp_index">
 
-                                <div class="mb-2">
-                                    <label>Travail réalisé</label>
-                                    <textarea class="form-control" name="experiences_travail_0" rows="3"></textarea>
-                                </div>
+                <!-- Header Projet -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="experience-title">
+                        <t t-esc="'Projet %s' % (exp_index + 1)"/>
+                    </h5>
+                    <button type="button" class="btn btn-danger btn-sm rounded-pill remove-experience">×</button>
+                </div>
 
-                                <div class="mb-3">
-                                    <label>Résultats obtenus</label>
-                                    <textarea class="form-control" name="experiences_resultats_0" rows="2"></textarea>
-                                </div>
+                <!-- INFOS GÉNÉRALES -->
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label t-att-for="'experiences_company_%s' % exp_index">Entreprise</label>
+                        <input type="text"
+                               class="form-control"
+                               t-att-id="'experiences_company_%s' % exp_index"
+                               t-att-name="'experiences_company_%s' % exp_index"
+                               placeholder="Ex: ACHMITECH"
+                               t-att-value="exp.get('company') or ''"/>
+                    </div>
 
+                    <div class="col-3">
+                        <label t-att-for="'experiences_start_%s' % exp_index">Date début</label>
+                        <input type="date"
+                               class="form-control"
+                               t-att-id="'experiences_start_%s' % exp_index"
+                               t-att-name="'experiences_start_%s' % exp_index"
+                               t-att-value="exp.get('start') or ''"/>
+                    </div>
 
-                                <!-- Environnement technique (copie de ta table, mais SCOPÉE) -->
-                                <h6 class="mt-3">Environnement technique</h6>
+                    <div class="col-3">
+                        <label t-att-for="'experiences_end_%s' % exp_index">Date fin</label>
+                        <input type="date"
+                               class="form-control"
+                               t-att-id="'experiences_end_%s' % exp_index"
+                               t-att-name="'experiences_end_%s' % exp_index"
+                               t-att-value="exp.get('end') or ''"/>
+                    </div>
+                </div>
 
-                                <table class="table table-sm table-bordered mt-3">
-                                    <tbody>
-                                        <t t-foreach="skill_types['skill_types']" t-as="type">
-                                            <tr>
-                                                <th style="width: 30%;">
-                                                    <t t-esc="type['name']"/>
-                                                </th>
-                                                <td>
-                                                    <div class="competency-section" t-att-data-scope="'experiences_0_%s' % type['code']" data-next-index="1">
-                                                        <div class="competency-lines">
-                                                            <div class="row mb-2 competency_line">
-                                                                <div class="col-7">
-                                                                <!-- ATTENTION: data-categoey is id of the category of competences in our backend -->
-                                                                    <select class="form-control skill-select rounded-pill" t-att-name="'experiences_0_%s_skill_id_0' % type['code']" t-att-data-category="type['id']" data-index="0">
-                                                                        <option value="" disabled="true" selected="true">Choisir une compétence</option>
-                                                                    </select>
-                                                                </div>
+                <div class="row mb-2">
+                    <div class="col-6">
+                        <label t-att-for="'experiences_poste_%s' % exp_index">Poste occupé</label>
+                        <input type="text"
+                               class="form-control"
+                               t-att-id="'experiences_poste_%s' % exp_index"
+                               t-att-name="'experiences_poste_%s' % exp_index"
+                               t-att-value="exp.get('poste') or ''"/>
+                    </div>
+                    <div class="col-6">
+                        <label t-att-for="'experiences_role_%s' % exp_index">Rôle</label>
+                        <input type="text"
+                               class="form-control"
+                               t-att-id="'experiences_role_%s' % exp_index"
+                               t-att-name="'experiences_role_%s' % exp_index"
+                               t-att-value="exp.get('role') or ''"/>
+                    </div>
+                </div>
 
-                                                                <div class="col-4">
-                                                                    
-                                                                    <select class="form-control level-select rounded-pill" t-att-name="'experiences_0_%s_skill_level_0' % type['code']" data-index="0" disabled="1">
-                                                                        <option value="" disabled="true" selected="true">Choisir un niveau</option>
-                                                                    </select>
-                                                                </div>
+                <!-- TEXTES -->
+                <div class="mb-2">
+                    <label t-att-for="'experiences_contexte_%s' % exp_index">Contexte général</label>
+                    <textarea class="form-control"
+                              t-att-id="'experiences_contexte_%s' % exp_index"
+                              t-att-name="'experiences_contexte_%s' % exp_index"
+                              rows="2"><t t-esc="exp.get('contexte') or ''"/></textarea>
+                </div>
 
-                                                                <div class="col-1 d-flex align-items-end">
-                                                                    <button type="button" class="btn btn-danger remove-line rounded-pill">×</button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                <div class="mb-2">
+                    <label t-att-for="'experiences_sujet_%s' % exp_index">Sujet du projet</label>
+                    <textarea class="form-control"
+                              t-att-id="'experiences_sujet_%s' % exp_index"
+                              t-att-name="'experiences_sujet_%s' % exp_index"
+                              rows="2"><t t-esc="exp.get('sujet') or ''"/></textarea>
+                </div>
 
-                                                        <div class="mb-3">
-                                                            <button type="button" class="btn btn-sm btn-primary rounded-pill add-competency-line">
-                                                    + Ajouter une ligne
-                                                            </button>
-                                                        </div>
+                <div class="mb-2">
+                    <label t-att-for="'experiences_travail_%s' % exp_index">Travail réalisé</label>
+                    <textarea class="form-control"
+                              t-att-id="'experiences_travail_%s' % exp_index"
+                              t-att-name="'experiences_travail_%s' % exp_index"
+                              rows="3"><t t-esc="exp.get('travail') or ''"/></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label t-att-for="'experiences_resultats_%s' % exp_index">Résultats obtenus</label>
+                    <textarea class="form-control"
+                              t-att-id="'experiences_resultats_%s' % exp_index"
+                              t-att-name="'experiences_resultats_%s' % exp_index"
+                              rows="2"><t t-esc="exp.get('resultats') or ''"/></textarea>
+                </div>
+
+                <!-- Environnement technique -->
+                <h6 class="mt-3">Environnement technique</h6>
+
+                <table class="table table-sm table-bordered mt-3">
+                    <tbody>
+                        <t t-foreach="skill_types['skill_types']" t-as="type">
+
+                            <!-- competency lines for this type -->
+                            <t t-set="type_code" t-value="type['code']"/>
+                            <t t-set="pref_lines"
+                               t-value="(exp.get('competencies') and exp.get('competencies').get(type_code)) or []"/>
+                            <t t-set="lines_to_render"
+                               t-value="pref_lines if pref_lines else [ {} ]"/>
+
+                            <tr>
+                                <th style="width: 30%;">
+                                    <t t-esc="type['name']"/>
+                                </th>
+                                <td>
+                                    <div class="competency-section"
+                                         t-att-data-scope="'experiences_%s_%s' % (exp_index, type_code)"
+                                         t-att-data-next-index="str(len(lines_to_render))">
+
+                                        <div class="competency-lines">
+
+                                            <t t-foreach="lines_to_render" t-as="pref_line">
+
+                                                <div class="row mb-2 competency_line" t-att-data-index="pref_line_index">
+
+                                                    <div class="col-7">
+                                                        <select class="form-control skill-select rounded-pill"
+                                                                t-att-name="'experiences_%s_%s_skill_id_%s' % (exp_index, type_code, pref_line_index)"
+                                                                t-att-data-category="type['id']"
+                                                                t-att-data-index="pref_line_index">
+                                                            <option value="" disabled="true" t-att-selected="'selected' if not (pref_line and pref_line.get('skill_id')) else None">
+                                                                Choisir une compétence
+                                                            </option>
+
+                                                            <!-- If prefilled, inject the selected option so Choices shows it -->
+                                                            <t t-if="pref_line and pref_line.get('skill_id')">
+                                                                <option t-att-value="pref_line['skill_id']" selected="selected">
+                                                                    <t t-esc="pref_line.get('skill_name') or ''"/>
+                                                                </option>
+                                                            </t>
+                                                        </select>
                                                     </div>
 
-                                                </td>
-                                            </tr>
-                                        </t>
-                                        
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                                                    <div class="col-4">
+                                                        <select class="form-control level-select rounded-pill"
+                                                                t-att-name="'experiences_%s_%s_skill_level_%s' % (exp_index, type_code, pref_line_index)"
+                                                                t-att-data-index="pref_line_index"
+                                                                t-att-disabled="'disabled' if not (pref_line and pref_line.get('skill_id')) else None">
+                                                            <option value="" disabled="true" t-att-selected="'selected' if not (pref_line and pref_line.get('skill_level_id')) else None">
+                                                                Choisir un niveau
+                                                            </option>
 
-                        <div class="mt-2">
-                            <button type="button" class="btn btn-sm btn-primary rounded-pill add-experience-line">
-                                + Ajouter une expérience
-                            </button>
-                        </div>
-                    </div>
+                                                            <t t-if="pref_line and pref_line.get('skill_level_id')">
+                                                                <option t-att-value="pref_line['skill_level_id']" selected="selected">
+                                                                    <t t-esc="pref_line.get('skill_level_name') or ''"/>
+                                                                </option>
+                                                            </t>
+                                                        </select>
+                                                    </div>
+
+                                                    <div class="col-1 d-flex align-items-end">
+                                                        <button type="button" class="btn btn-danger remove-line rounded-pill">×</button>
+                                                    </div>
+
+                                                </div>
+                                            </t>
+
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <button type="button" class="btn btn-sm btn-primary rounded-pill add-competency-line">
+                                                + Ajouter une ligne
+                                            </button>
+                                        </div>
+
+                                    </div>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+
+            </div>
+        </t>
+    </div>
+
+    <div class="mt-2">
+        <button type="button" class="btn btn-sm btn-primary rounded-pill add-experience-line">
+            + Ajouter une expérience
+        </button>
+    </div>
+</div>
+
 
 
                     <div class="mt-4 text-end">

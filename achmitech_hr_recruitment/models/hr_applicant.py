@@ -27,6 +27,19 @@ class HrApplicant(models.Model):
         string="Expériences (Dossier)",
         copy=False,
     )
+    
+    dossier_formation_ids = fields.One2many(
+        "hr.applicant.dossier.formation",
+        "applicant_id",
+        string="Formations",
+    )
+
+    dossier_habilitation_ids = fields.One2many(
+        "hr.applicant.dossier.habilitation",
+        "applicant_id",
+        string="Habilitations",
+    )
+
     def _regenerate_dca_token(self):
         for rec in self:
             if not rec.dca_access_token:
