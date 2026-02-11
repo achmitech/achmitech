@@ -354,8 +354,12 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
             $.ajax({
                 url: "/dossier/get-levels",
                 type: "POST",
+                contentType: "application/json",
                 dataType: "json",
-                data: { token: token, skill_id: skillId },
+                data: JSON.stringify({
+                    token: token,
+                    skill_id: skillId,
+                }),
                 success: function (response) {
                     const levels = response?.levels || [];
                     if (!levels.length) return;

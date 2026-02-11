@@ -3,7 +3,11 @@
     <template id="dossier_form" name="Dossier de compétences">
         <t t-call="website.layout">
             <div id="wrap" class="container my-5">
-
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <img t-att-src="image_data_uri(request.env.company.logo)"
+                        class="o_company_logo_small"
+                        alt="Logo"/>
+                </div>
                 <h2 class="mb-4">
           Dossier de compétences
                 </h2>
@@ -18,7 +22,7 @@
                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                     <input type="hidden" name="token" t-att-value="candidate.dca_access_token"/>
 
-                    <h4 class="mt-4">Formation, habilitations &amp; langues</h4>
+                    <h4 class="mt-5 mb-3">Formations &amp; habilitations</h4>
 
                     <table class="table table-bordered mt-3">
                         <tbody>
@@ -89,6 +93,7 @@
                                                 <div class="row mb-2 repeat-line" t-att-data-index="h_index">
                                                     <div class="col-11">
                                                         <input type="text" class="form-control"
+                                                            t-att-id="'habilitations_title_%s' % h_index"
                                                             t-att-name="'habilitations_title_%s' % h_index"
                                                             t-att-data-index="h_index"
                                                             placeholder="Ex: Habilitation électrique, SST, CACES..."
@@ -104,7 +109,7 @@
 
                                         <div class="mt-2">
                                             <button type="button" class="btn btn-sm btn-primary rounded-pill add-repeat-line">
-                                                + Ajouter une ligne
+                                                + Ajouter une habilitation
                                             </button>
                                         </div>
                                     </div>
@@ -113,7 +118,12 @@
                         </tbody>
                     </table>
 
-                    <h4 class="mt-4">Projets, réalisations &amp; responsabilités</h4>
+                    <h4 class="mt-5 mb-3">
+                        Projets, réalisations &amp; responsabilités
+                        <small class="text-muted d-block mt-1">
+                            (Expériences — de la plus récente à la plus ancienne)
+                        </small>
+                    </h4>
 
 
                     <div class="repeat-section experiences-section"
@@ -127,7 +137,7 @@
 
         <t t-foreach="exp_list" t-as="exp">
 
-            <div class="experience-block repeat-line" t-att-data-index="exp_index">
+            <div class="experience-block repeat-line mb-5 pb-4 border-bottom" t-att-data-index="exp_index">
 
                 <!-- Header Projet -->
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -293,7 +303,7 @@
 
                                         </div>
 
-                                        <div class="mb-3">
+                                        <div class="mt-3 mb-4">
                                             <button type="button" class="btn btn-sm btn-primary rounded-pill add-competency-line">
                                                 + Ajouter une ligne
                                             </button>
@@ -428,18 +438,4 @@
             </div>
         </t>
     </template>
-
-
-    <record model="ir.actions.server" id="action_regenerate_dca_token">
-            <field name="name">Regenerate Dossier Token</field>
-            <field name="model_id" ref="model_hr_applicant"/>
-            <field name="group_ids" eval="[(4, ref('hr_recruitment.group_hr_recruitment_manager'))]"/>
-            <field name="binding_model_id" ref="hr_recruitment.model_hr_applicant" />
-            <field name="binding_view_types">form</field>
-            <field name="state">code</field>
-            <field name="code">
-if records:
-    action = records._regenerate_dca_token()
-            </field>
-        </record>
 </odoo>
