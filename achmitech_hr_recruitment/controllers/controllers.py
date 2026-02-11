@@ -383,10 +383,9 @@ class AchmitechHrRecruitment(http.Controller):
         limit = int(payload.get("limit") or kwargs.get("limit") or 40)
 
         # optional filters coming from JS
-        scope = (payload.get("scope") or kwargs.get("scope") or "").strip()
         skill_type_id = payload.get("skill_type_id") or kwargs.get("skill_type_id")
 
-        if not q:
+        if not q or len(q) < 2:
             return []
 
         domain = [("name", "ilike", q)]
@@ -409,7 +408,7 @@ class AchmitechHrRecruitment(http.Controller):
 
         return res
     
-    @http.route("/dossier/get-levels", type="http", auth="public", methods=['POST'], website=True, csrf=False)
+    @http.route("/dossier/get-levels", type="json2", auth="public", methods=['POST'], website=True, csrf=False)
     def dossier_get_levels(self, token=None, skill_id=None, **kw):
         candidate = request.env["hr.applicant"].sudo().search(
             [("dca_access_token", "=", token)],
@@ -430,7 +429,6 @@ class AchmitechHrRecruitment(http.Controller):
             )
 
         skill = request.env["hr.skill"].sudo().browse(int(skill_id))
-        _logger.info("DDDDDDDDDDDDDDD %s", skill)
         if not skill.exists() or not skill.skill_type_id:
             return Response(
                 json.dumps({"levels": []}),
@@ -441,8 +439,6 @@ class AchmitechHrRecruitment(http.Controller):
             [("skill_type_id", "=", skill.skill_type_id.id)],
             order="id"
         )
-
-        _logger.info("XXXXXXXXXXXXXXXXXXXXXXXXXXXXX %s", levels)
 
         return Response(
             json.dumps({"levels": [{"id": l.id, "name": l.name} for l in levels]}),
