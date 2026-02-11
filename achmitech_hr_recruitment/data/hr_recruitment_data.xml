@@ -12,7 +12,7 @@
             <field name="binding_model_id" ref="hr_recruitment.model_hr_applicant"/>
             <field name="binding_view_types">list,form,kanban</field>
             <field name="state">code</field>
-            <field name="code">action = records.move_to_new_stqge()</field>
+            <field name="code">action = records.move_to_new_stage()</field>
         </record>
     </data>
 </odoo>
