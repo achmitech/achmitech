@@ -83,6 +83,10 @@
                     </field>
                 </page>
             </xpath>
+
+            <xpath expr="/form//field[@name='user_id']" position="attributes">
+                <attribute name="string">Créé par</attribute>
+            </xpath>
         </field>
     </record>
 
