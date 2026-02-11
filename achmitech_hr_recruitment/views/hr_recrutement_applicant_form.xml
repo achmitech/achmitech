@@ -27,6 +27,7 @@
                     <!-- Submission info -->
                     <group>
                         <field name="dca_access_token" readonly="1" invisible="1" widget="CopyClipboardChar"/>
+                        <field name="applicant_dossier_url" widget="CopyClipboardChar"/>
                         <field name="dca_submitted"/>
                         <field name="dca_submitted_date"
                             readonly="1"
