@@ -75,6 +75,7 @@ class AchmitechHrRecruitment(http.Controller):
             "role": "...",
             "contexte": "...",
             "sujet": "...",
+            "responsabilites": "...",
             "travail": "...",
             "resultats": "...",
             "competencies": {
@@ -133,6 +134,7 @@ class AchmitechHrRecruitment(http.Controller):
                 "role": exp.role or "",
                 "contexte": exp.contexte or "",
                 "sujet": exp.sujet or "",
+                "responsabilites": exp.responsabilites or "",
                 "travail": exp.travail or "",
                 "resultats": exp.resultats or "",
                 "competencies": comp_by_code,
@@ -300,6 +302,7 @@ class AchmitechHrRecruitment(http.Controller):
             role = post.get(f"experiences_role_{exp_idx}", "")
             contexte = post.get(f"experiences_contexte_{exp_idx}", "")
             sujet = post.get(f"experiences_sujet_{exp_idx}", "")
+            responsabilites = post.get(f"experiences_responsabilites_{exp_idx}", "")
             travail = post.get(f"experiences_travail_{exp_idx}", "")
             resultats = post.get(f"experiences_resultats_{exp_idx}", "")
 
@@ -328,7 +331,7 @@ class AchmitechHrRecruitment(http.Controller):
                     }))
 
             has_any_field = any([
-                company, poste, role, start, end, contexte, sujet, travail, resultats
+                company, poste, role, start, end, contexte, sujet, responsabilites, travail, resultats
             ])
 
             if not has_any_field and not comp_vals:
@@ -345,6 +348,7 @@ class AchmitechHrRecruitment(http.Controller):
                 "role": role,
                 "contexte": contexte,
                 "sujet": sujet,
+                "responsabilites": responsabilites,
                 "travail": travail,
                 "resultats": resultats,
                 "competency_line_ids": comp_vals,
