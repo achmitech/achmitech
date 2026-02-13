@@ -112,16 +112,19 @@
 
                     <notebook>
                         <page string="Contexte">
-                            <field name="contexte" placeholder="Contexte général..."/>
+                            <field name="contexte" widget="html" placeholder="Contexte général..."/>
                         </page>
                         <page string="Sujet">
-                            <field name="sujet" placeholder="Sujet du projet..."/>
+                            <field name="sujet" widget="html" placeholder="Sujet du projet..."/>
                         </page>
                         <page string="Travail réalisé">
-                            <field name="travail" placeholder="Travail réalisé..."/>
+                            <field name="travail" widget="html" placeholder="Travail réalisé..."/>
+                        </page>
+                        <page string="Responsabilités occupées">
+                            <field name="responsabilites" widget="html" placeholder="Travail réalisé..."/>
                         </page>
                         <page string="Résultats">
-                            <field name="resultats" placeholder="Résultats obtenus..."/>
+                            <field name="resultats" widget="html" placeholder="Résultats obtenus..."/>
                         </page>
 
                         <page string="Compétences">
