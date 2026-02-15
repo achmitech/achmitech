@@ -34,7 +34,7 @@
                             invisible="not dca_submitted"/>
                     </group>
                     <!-- Formations -->
-                    <group invisible="not dca_submitted">
+                    <group>
                         <field name="dossier_formation_ids"
                             context="{'default_applicant_id': id}"
                             readonly="dca_submitted">
@@ -99,7 +99,7 @@
                     <group>
                         <field name="applicant_id" invisible="1"/>
                         <field name="sequence" invisible="1"/>
-                        <field name="name" invisible="not name"/>
+                        <field name="name"/>
                     </group>
 
                     <group string="Informations générales" col="2">
