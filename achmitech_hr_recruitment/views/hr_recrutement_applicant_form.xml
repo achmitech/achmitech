@@ -34,7 +34,7 @@
                             invisible="not dca_submitted"/>
                     </group>
                     <!-- Formations -->
-                    <group invisible="not dca_submitted">
+                    <group>
                         <field name="dossier_formation_ids"
                             context="{'default_applicant_id': id}"
                             readonly="dca_submitted">
@@ -99,7 +99,7 @@
                     <group>
                         <field name="applicant_id" invisible="1"/>
                         <field name="sequence" invisible="1"/>
-                        <field name="name" invisible="not name"/>
+                        <field name="name"/>
                     </group>
 
                     <group string="Informations générales" col="2">
@@ -112,16 +112,19 @@
 
                     <notebook>
                         <page string="Contexte">
-                            <field name="contexte" placeholder="Contexte général..."/>
+                            <field name="contexte" widget="html" placeholder="Contexte général..."/>
                         </page>
                         <page string="Sujet">
-                            <field name="sujet" placeholder="Sujet du projet..."/>
+                            <field name="sujet" widget="html" placeholder="Sujet du projet..."/>
                         </page>
                         <page string="Travail réalisé">
-                            <field name="travail" placeholder="Travail réalisé..."/>
+                            <field name="travail" widget="html" placeholder="Travail réalisé..."/>
+                        </page>
+                        <page string="Responsabilités occupées">
+                            <field name="responsabilites" widget="html" placeholder="Travail réalisé..."/>
                         </page>
                         <page string="Résultats">
-                            <field name="resultats" placeholder="Résultats obtenus..."/>
+                            <field name="resultats" widget="html" placeholder="Résultats obtenus..."/>
                         </page>
 
                         <page string="Compétences">

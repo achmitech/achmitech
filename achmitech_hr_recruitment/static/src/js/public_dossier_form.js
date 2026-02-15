@@ -490,6 +490,13 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
                     el.name = el.name.replace(/_\d+$/, "_" + nextIndex);
                 }
             });
+            newBlock.querySelectorAll("[id]").forEach((el) => {
+                if (!el.id) return;
+
+                if (/^experiences_[a-z_]+_\d+$/.test(el.id)) {
+                    el.id = el.id.replace(/_\d+$/, "_" + nextIndex);
+                }
+            });
 
             // 2) update experience index in nested competency scopes: experiences_0_* -> experiences_<nextIndex>_*
             newBlock.querySelectorAll(".competency-section").forEach((sec) => {
@@ -500,9 +507,11 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
             });
 
             // 3) reset values
-            newBlock.querySelectorAll("input, textarea, select, option").forEach((el) => {
+            newBlock.querySelectorAll("input, textarea, select, option, [contenteditable]").forEach((el) => {
                 if (el.tagName === "SELECT") {
                     el.selectedIndex = 0;
+                }else if (el.hasAttribute("contenteditable")) {
+                    el.innerHTML = "";
                 } else {
                     el.value = "";
                 }
@@ -589,9 +598,22 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
     }
 });
 
+function syncContenteditablesToTextareas(root) {
+    (root || document).querySelectorAll(".exp-html-editor[contenteditable]").forEach((ed) => {
+        const target = ed.dataset.target;
+        if (!target) return;
+
+        const ta = (root || document).querySelector(`textarea[name="${target}"]`);
+        if (!ta) return;
+
+        ta.value = (ed.innerHTML || "").trim();
+    });
+};
+
 $(document).ready(function () {
     $('#dossier_form').on('submit', function (e) {
         e.preventDefault();
+        syncContenteditablesToTextareas(this);
         let $form = $(this);
         let url = $form.attr('action');
         console.log('URL === %s', url);
