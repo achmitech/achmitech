@@ -23,7 +23,7 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
     },
 
     _attachSkillRemoteSearch: function (select, instance) {
-        const minChars = 3;
+        const minChars = 2;
         const endpoint = '/dossier/skills/search';
         const skillTypeId = parseInt(select.dataset.category); // We get the category of skills from the select attribute 'data-category'
         const token = this.el.querySelector('input[name="token"]')?.value || "";
@@ -99,18 +99,19 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
                 searchResultLimit: -1,
                 renderChoiceLimit: -1,
                 fuseOptions: { threshold: 0.3 , ignoreDiacritics: true },
-                noResultsText: 'Aucun résultat',
+                noResultsText: 'Chercher...',
                 noChoicesText: 'Aucun choix disponible',
                 placeholderValue: select.getAttribute("placeholder") || 'Sélectionner...',
             });
 
-            // Only product selects get the remote min-chars search
+            // Only skill selects get the remote min-chars search
             if (isSkillSelect) {
                 this._attachSkillRemoteSearch(select, instance);
             }
             select.choicesInstance = instance;
             select.classList.add("choices-initialized");
         });
+        
     },
 
     _destroyChoicesAll: function (rootEl) {
@@ -123,36 +124,6 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
         });
     },
 
-    // _reindexSectionLines: function (sectionKey) {
-    //     const $lines = $(this.el).find(`.${sectionKey}_line`);
-
-    //     $lines.each(function (newIndex) {
-    //         const row = this;
-
-    //         row.querySelectorAll("[name]").forEach((el) => {
-    //             if (!el.name) return;
-
-    //             // only reindex fields of this section
-    //             if (!el.name.startsWith(sectionKey + "_")) return;
-
-    //             el.name = el.name.replace(/_\d+$/, "_" + newIndex);
-    //         });
-
-    //         row.querySelectorAll("[id]").forEach((el) => {
-    //             if (!el.id) return;
-    //             // optional: only if your ids include sectionKey
-    //             if (!el.id.startsWith(sectionKey + "_")) return;
-
-    //             el.id = el.id.replace(/_\d+$/, "_" + newIndex);
-    //         });
-
-    //         row.dataset.index = newIndex;
-    //     });
-
-    //     // if you store per-section counter
-    //     this.sectionIndexes = this.sectionIndexes || {};
-    //     this.sectionIndexes[sectionKey] = $lines.length;
-    // },
 
     _reindexCompetencyLines: function (sectionEl, scope) {
         const lines = sectionEl.querySelectorAll(".competency_line");
@@ -176,6 +147,8 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
         // keep add-index consistent
         sectionEl.dataset.nextIndex = String(lines.length);
     },
+
+
     _reindexRepeatLines: function (sectionEl) {
         const lines = sectionEl.querySelectorAll(".repeat-line");
 
@@ -276,7 +249,7 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
             skillSelect.name = `${scope}_skill_id_${nextIndex}`;
             skillSelect.dataset.index = nextIndex;
             skillSelect.value = "";
-            skillSelect.innerHTML = '<option value="" disabled="true" selected="true">Choisir un niveau</option>';
+            skillSelect.innerHTML = '<option value="" disabled="true" selected="true">Choisir une compétence</option>';
             skillSelect.classList.remove("choices-initialized");
             delete skillSelect.choicesInstance;
 
@@ -293,7 +266,7 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
 
             // 7) Init Choices in cloned line
             this._initChoicesAll(newLine);
-
+            
             // 8) Increment section counter
             sectionEl.dataset.nextIndex = String(nextIndex + 1);
         });
@@ -356,15 +329,37 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
             levelEl.setAttribute("disabled", "disabled");
             if (instance.disable) instance.disable();
 
-            if (!skillId) return;
+            // If empty: make level not required, clear + disable
+            if (!skillId) {
+                levelEl.required = false;
+                if (levelEl.choicesInstance) {
+                    const inst = levelEl.choicesInstance;
+                    inst.clearStore();
+                    inst.setChoices(
+                        [{ value: "", label: "Choisir un niveau", disabled: true, selected: true }],
+                        "value",
+                        "label",
+                        true
+                    );
+                    if (inst.disable) inst.disable();
+                }
+                return;
+            }
+
+            // If skill selected: require level (after levels are loaded)
+            levelEl.required = true;
 
             const token = this.el.querySelector('input[name="token"]')?.value || "";
 
             $.ajax({
                 url: "/dossier/get-levels",
                 type: "POST",
+                contentType: "application/json",
                 dataType: "json",
-                data: { token: token, skill_id: skillId },
+                data: JSON.stringify({
+                    token: token,
+                    skill_id: skillId,
+                }),
                 success: function (response) {
                     const levels = response?.levels || [];
                     if (!levels.length) return;
@@ -401,10 +396,13 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
             const firstLine = container?.querySelector(".repeat-line");
             if (!container || !firstLine) return;
 
-            let nextIndex = parseInt(sectionEl.dataset.nextIndex || "1", 10);
+            let nextIndex = parseInt(sectionEl.dataset.nextIndex || "0", 10);
 
             const newLine = firstLine.cloneNode(true);
-
+            
+            // ✅ set line index
+            newLine.dataset.index = String(nextIndex);
+            
             // Update names + reset values in cloned line
             newLine.querySelectorAll("input, select, textarea").forEach((el) => {
                 if (el.name) {
@@ -492,6 +490,13 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
                     el.name = el.name.replace(/_\d+$/, "_" + nextIndex);
                 }
             });
+            newBlock.querySelectorAll("[id]").forEach((el) => {
+                if (!el.id) return;
+
+                if (/^experiences_[a-z_]+_\d+$/.test(el.id)) {
+                    el.id = el.id.replace(/_\d+$/, "_" + nextIndex);
+                }
+            });
 
             // 2) update experience index in nested competency scopes: experiences_0_* -> experiences_<nextIndex>_*
             newBlock.querySelectorAll(".competency-section").forEach((sec) => {
@@ -502,9 +507,11 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
             });
 
             // 3) reset values
-            newBlock.querySelectorAll("input, textarea, select").forEach((el) => {
+            newBlock.querySelectorAll("input, textarea, select, option, [contenteditable]").forEach((el) => {
                 if (el.tagName === "SELECT") {
                     el.selectedIndex = 0;
+                }else if (el.hasAttribute("contenteditable")) {
+                    el.innerHTML = "";
                 } else {
                     el.value = "";
                 }
@@ -532,6 +539,7 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
                 // Force correct names for line index 0
                 if (skillSelect) {
                     skillSelect.name = `${scope}_skill_id_0`;
+                    skillSelect.innerHTML = '<option value="" disabled="true" selected="true">Choisir une compétence</option>'
                     skillSelect.value = "";
                     skillSelect.classList.remove("choices-initialized");
                     delete skillSelect.choicesInstance;
@@ -587,35 +595,25 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
         });
 
 
-        function resetSelect(selector) {
-            const $el = $(selector);
-            const dom = $el[0];
-            if (!dom) return;
-
-            // If Choices.js is attached, clear the active items & input
-            if (dom.choicesInstance) {
-                const inst = dom.choicesInstance;
-                inst.clearInput();
-                inst.removeActiveItems();       // clears current selection in the UI
-                // If you keep a disabled placeholder as first option, reselect it:
-                const firstOpt = dom.querySelector('option');
-                if (firstOpt) {
-                    firstOpt.selected = true;
-                }
-            }
-
-            // Keep the native <select> in sync and notify listeners
-            $el.val('');
-            $el.trigger('change');
-        }
-
-
     }
 });
 
+function syncContenteditablesToTextareas(root) {
+    (root || document).querySelectorAll(".exp-html-editor[contenteditable]").forEach((ed) => {
+        const target = ed.dataset.target;
+        if (!target) return;
+
+        const ta = (root || document).querySelector(`textarea[name="${target}"]`);
+        if (!ta) return;
+
+        ta.value = (ed.innerHTML || "").trim();
+    });
+};
+
 $(document).ready(function () {
-    $('#controleForm').on('submit', function (e) {
+    $('#dossier_form').on('submit', function (e) {
         e.preventDefault();
+        syncContenteditablesToTextareas(this);
         let $form = $(this);
         let url = $form.attr('action');
         console.log('URL === %s', url);
@@ -625,6 +623,10 @@ $(document).ready(function () {
             type: 'POST',
             data: data,
             success: function (response) {
+                if (response && response.redirect) {
+                    window.location.href = response.redirect;
+                    return;
+                }
                 $('#controle-message').removeClass('d-none').text('Formulaire soumis avec succès.');
             },
             error: function (xhr) {

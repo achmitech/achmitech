@@ -35,6 +35,8 @@ pilotage des processus de recrutement.
     # always loaded
     'data': [
         'security/ir.model.access.csv',
+        'data/hr_recruitment_data.xml',
+        'data/server_actions.xml',
         'views/hr_recrutement_applicant_form.xml',
         'views/hr_recruitement_stage.xml',
         'views/hr_applicant_dossier_template.xml',
@@ -44,6 +46,9 @@ pilotage des processus de recrutement.
         'web.assets_frontend': [
             'achmitech_hr_recruitment/static/src/css/style.css',
             'achmitech_hr_recruitment/static/src/js/public_dossier_form.js',
+        ],
+        'web.report_assets_common': [
+            'achmitech_hr_recruitment/static/src/css/dossier_report_style.scss',
         ],
     },
     

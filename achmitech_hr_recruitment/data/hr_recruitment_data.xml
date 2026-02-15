@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<odoo>
+    <data noupdate="1">
+        <record model="hr.recruitment.stage" id="stage_job_custom">
+            <field name="name">Candidat sourcé</field>
+            <field name="sequence">-1</field>
+        </record>
+    </data>
+</odoo>
