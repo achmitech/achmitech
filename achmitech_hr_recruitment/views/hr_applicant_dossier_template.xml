@@ -2,7 +2,7 @@
 <odoo>
     <template id="dossier_form" name="Dossier de compétences">
         <t t-call="website.layout">
-            <div id="wrap" class="container my-5">
+            <div id="wrap" class="container my-5 portal_dossier">
                 <div class="d-flex align-items-center gap-3 mb-4">
                     <img t-att-src="image_data_uri(request.env.company.logo)"
                         class="o_company_logo_small"
@@ -200,35 +200,74 @@
                 <!-- TEXTES -->
                 <div class="mb-2">
                     <label t-att-for="'experiences_contexte_%s' % exp_index">Contexte général</label>
-                    <textarea class="form-control"
+                    <div class="form-control exp-html-editor"
+                        contenteditable="plaintext-only"
+                        t-att-data-target="'experiences_contexte_%s' % exp_index">
+                        <t t-out="exp.get('contexte') or ''"/>
+                    </div>
+                    <textarea class="d-none"
                               t-att-id="'experiences_contexte_%s' % exp_index"
-                              t-att-name="'experiences_contexte_%s' % exp_index"
-                              rows="2"><t t-esc="exp.get('contexte') or ''"/></textarea>
+                              t-att-name="'experiences_contexte_%s' % exp_index"><t t-out="exp.get('contexte') or ''"/></textarea>
                 </div>
 
                 <div class="mb-2">
                     <label t-att-for="'experiences_sujet_%s' % exp_index">Sujet du projet</label>
-                    <textarea class="form-control"
-                              t-att-id="'experiences_sujet_%s' % exp_index"
-                              t-att-name="'experiences_sujet_%s' % exp_index"
-                              rows="2"><t t-esc="exp.get('sujet') or ''"/></textarea>
+
+                    <div class="form-control exp-html-editor"
+                        contenteditable="plaintext-only"
+                        t-att-data-target="'experiences_sujet_%s' % exp_index">
+                        <t t-out="exp.get('sujet') or ''"/>
+                    </div>
+                    <textarea class="d-none"
+                            t-att-id="'experiences_sujet_%s' % exp_index"
+                            t-att-name="'experiences_sujet_%s' % exp_index"><t t-out="exp.get('sujet') or ''"/></textarea>
                 </div>
+
+
+                <div class="mb-2">
+                    <label t-att-for="'experiences_responsabilites_%s' % exp_index">Responsabilités occupées</label>
+
+                    <div class="form-control exp-html-editor"
+                        contenteditable="plaintext-only"
+                        t-att-data-target="'experiences_responsabilites_%s' % exp_index">
+                        <t t-out="exp.get('responsabilites') or ''"/>
+                    </div>
+
+                    <textarea class="d-none"
+                            t-att-id="'experiences_responsabilites_%s' % exp_index"
+                            t-att-name="'experiences_responsabilites_%s' % exp_index"><t t-out="exp.get('responsabilites') or ''"/></textarea>
+                </div>
+
 
                 <div class="mb-2">
                     <label t-att-for="'experiences_travail_%s' % exp_index">Travail réalisé</label>
-                    <textarea class="form-control"
-                              t-att-id="'experiences_travail_%s' % exp_index"
-                              t-att-name="'experiences_travail_%s' % exp_index"
-                              rows="3"><t t-esc="exp.get('travail') or ''"/></textarea>
+
+                    <div class="form-control exp-html-editor"
+                        contenteditable="plaintext-only"
+                        t-att-data-target="'experiences_travail_%s' % exp_index">
+                        <t t-out="exp.get('travail') or ''"/>
+                    </div>
+
+                    <textarea class="d-none"
+                            t-att-id="'experiences_travail_%s' % exp_index"
+                            t-att-name="'experiences_travail_%s' % exp_index"><t t-out="exp.get('travail') or ''"/></textarea>
                 </div>
+
 
                 <div class="mb-3">
                     <label t-att-for="'experiences_resultats_%s' % exp_index">Résultats obtenus</label>
-                    <textarea class="form-control"
-                              t-att-id="'experiences_resultats_%s' % exp_index"
-                              t-att-name="'experiences_resultats_%s' % exp_index"
-                              rows="2"><t t-esc="exp.get('resultats') or ''"/></textarea>
+
+                    <div class="form-control exp-html-editor"
+                        contenteditable="plaintext-only"
+                        t-att-data-target="'experiences_resultats_%s' % exp_index">
+                        <t t-out="exp.get('resultats') or ''"/>
+                    </div>
+
+                    <textarea class="d-none"
+                            t-att-id="'experiences_resultats_%s' % exp_index"
+                            t-att-name="'experiences_resultats_%s' % exp_index"><t t-out="exp.get('resultats') or ''"/></textarea>
                 </div>
+
 
                 <!-- Environnement technique -->
                 <h6 class="mt-3">Environnement technique</h6>
@@ -330,7 +369,7 @@
 
 
                     <div class="mt-4 text-end">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="dossier-submit btn btn-primary">
                                         Soumettre mon dossier
                         </button>
                     </div>
@@ -438,4 +477,321 @@
             </div>
         </t>
     </template>
+
+    <template id="print_report_alten">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <t t-set="company" t-value="env.company"/>
+                <t t-set="rows" t-value="get_rows(docs[0])"/>
+
+                <div class="page">
+                    <div class="alten-section-header">
+                        <div class="alten-section-title fw-bold fs-3">
+                            Compétences, technologies &amp; secteurs d'intervention
+                        </div>
+
+                        <div class="alten-stripes" aria-hidden="true">
+                            <span class="s-red"></span>
+                            <span class="s-blue"></span>
+                            <span class="s-yellow"></span>
+                        </div>
+                    </div>
+                    <table class="alten-table">
+                        <t t-foreach="rows" t-as="r">
+                            <tr>
+                                <td class="alten-label"><t t-esc="r['label']"/></td>
+                                <td class="alten-value"><t t-esc="r['value']"/></td>
+                            </tr>
+                        </t>
+                    </table>
+
+
+
+                    <div class="alten-section-header">
+                        <div class="alten-section-title fw-bold fs-3">
+                            Formation, habilitations &amp; langues
+                        </div>
+
+                        <div class="alten-stripes" aria-hidden="true">
+                            <span class="s-red"></span>
+                            <span class="s-blue"></span>
+                            <span class="s-yellow"></span>
+                        </div>
+                    </div>
+
+                    <table class="alten-table">
+                        <!-- FORMATION -->
+                        <tr>
+                            <td class="alten-label">Formation</td>
+
+                            <!-- VALUE CELL -->
+                            <td class="alten-value">
+                                <ul class="alten-list">
+                                    <t t-foreach="docs[0].dossier_formation_ids" t-as="f">
+                                        <li>
+                                            <t t-esc="f.title" />
+                                        </li>
+                                    </t>
+                                </ul>
+                            </td>
+
+                            <!-- DATE CELL -->
+                            <td class="alten-value alten-date">
+                                <ul class="alten-list">
+                                    <t t-foreach="docs[0].dossier_formation_ids" t-as="f">
+                                        <li>
+                                            <t t-if="f.start">
+                                                <t t-esc="f.start.strftime('%b %Y')" />
+                                            </t>
+                                            <t t-if="f.start or f.end"> - </t>
+                                            <t t-if="f.end">
+                                                <t t-esc="f.end.strftime('%b %Y')" />
+                                            </t>
+                                        </li>
+                                    </t>
+                                </ul>
+                            </td>
+                        </tr>
+
+                        <!-- HABILITATIONS -->
+                        <tr>
+                            <td class="alten-label">Habilitations</td>
+
+                            <td class="alten-value">
+                                <ul class="alten-list">
+                                    <t t-foreach="docs[0].dossier_habilitation_ids" t-as="h">
+                                        <li>
+                                            <t t-esc="h.title" />
+                                        </li>
+                                    </t>
+                                </ul>
+                            </td>
+
+                            <td class="alten-value alten-date">
+                                <!-- empty (as template) -->
+                            </td>
+                        </tr>
+                    </table>
+                    
+
+
+                    <div class="alten-section-header">
+                        <div class="alten-section-title fw-bold fs-3">
+                            Projets, réalisations &amp; responsabilités
+                        </div>
+
+                        <div class="alten-stripes" aria-hidden="true">
+                            <span class="s-red"></span>
+                            <span class="s-blue"></span>
+                            <span class="s-yellow"></span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <t t-foreach="docs[0].dossier_experience_ids.sorted('sequence')" t-as="exp">
+                            <div class="exp-block mb-5">
+                                <!-- EXPERIENCE TITLE LINE -->
+                                <div class="d-flex justify-content-between align-items-baseline mb-2 exp-header">
+                                    <div class="fw-bold fs-5">
+                                        <t t-esc="exp.company or ''"/>
+                                    </div>
+
+                                    <div class="fw-bold fs-5">
+                                        <t t-if="exp.start">
+                                            <t t-esc="exp.start.strftime('%b %Y')"/>
+                                        </t>
+                                        <t t-if="exp.start or exp.end"> – </t>
+                                        <t t-if="exp.end">
+                                            <t t-esc="exp.end.strftime('%b %Y')"/>
+                                        </t>
+                                        <t t-if="not exp.end">Aujourd’hui</t>
+                                    </div>
+                                </div>
+
+                                <hr class="hr"/>
+                                
+                                <div class="d-flex align-items-start exp-inline">
+                                        <div class="fw-bold me-2">
+                                            Contexte général :
+                                        </div>
+                                    <t t-if="exp.contexte"><div class="exp-inline-value flex-grow-1"><t t-out="exp.contexte"/></div>
+                                    </t>
+                                </div>
+
+                                <div class="d-flex align-items-start exp-inline">
+                                    <div class="fw-bold me-2 flex-shrink-0">
+                                        Sujet du projet :
+                                    </div>
+                                    <t t-if="exp.sujet">
+                                        <div class="exp-inline-value flex-grow-1">
+                                            <t t-out="exp.sujet" />
+                                        </div>
+                                    </t>
+                                </div>
+
+                                <div class="d-flex align-items-start exp-inline">
+                                    <div class="fw-bold me-2 flex-shrink-0">
+                                        Responsabilités occupées :
+                                    </div>
+                                    <t t-if="exp.responsabilites">
+
+                                        <div class="exp-inline-value flex-grow-1">
+                                            <t t-out="exp.responsabilites" />
+                                        </div>
+                                    </t>
+                                </div>
+
+                                <div class="d-flex align-items-start exp-inline">
+                                    <div class="fw-bold me-2 flex-shrink-0">
+                                        Travail réalisé :
+                                    </div>
+                                    <t t-if="exp.travail">
+
+                                        <div class="exp-inline-value flex-grow-1">
+                                            <t t-out="exp.travail" />
+                                        </div>
+                                    </t>
+                                </div>
+
+                                <div class="d-flex align-items-start exp-inline">
+                                    <div class="fw-bold me-2 flex-shrink-0">
+                                        Résultats obtenus :
+                                    </div>
+                                    <t t-if="exp.resultats">
+
+                                        <div class="exp-inline-value flex-grow-1">
+                                            <t t-out="exp.resultats" />
+                                        </div>
+                                    </t>
+                                </div>
+                                
+                                <div class="exp-inline">
+                                    <!-- ========================= -->
+                                    <!-- Environnement technique -->
+                                    <!-- ========================= -->
+
+                                    <t t-set="all_types"
+                                        t-value="env['hr.skill.type'].search([], order='sequence, name')"/>
+
+                                    <t t-set="lines" t-value="exp.competency_line_ids"/>
+
+                                    <t t-set="first_type" t-value="all_types[:1]"/>
+                                    <t t-set="rest_types" t-value="all_types[1:]"/>
+
+                                    <table class="table table-sm mt-2 exp-envtech-table">
+
+                                        <!-- First row (contains the rowspan cell) -->
+                                        <t t-foreach="first_type" t-as="st">
+                                            <tr>
+                                                <td class="alten-label envtech-cell" style="width: 22%;" t-att-rowspan="len(all_types) or 1">
+                                                    Environnement<br/>technique
+                                                </td>
+
+                                                <td class="alten-label" style="width: 28%;">
+                                                    <t t-esc="st.name"/>
+                                                </td>
+
+                                                <td class="alten-value" style="width: 50%;">
+                                                    <t t-set="matched"
+                                                    t-value="lines.filtered(lambda l: l.skill_id and l.skill_id.skill_type_id == st)"/>
+
+                                                    <t t-if="matched">
+                                                        <t t-foreach="matched" t-as="ln">
+                                                            <t t-esc="ln.skill_id.name"/>
+                                                            <!-- <t t-if="ln.skill_level_id">
+                                                                (<t t-esc="ln.skill_level_id.name"/>)
+                                                            </t> -->
+                                                            <t t-if="ln_index != len(matched) - 1">, </t>
+                                                        </t>
+                                                    </t>
+                                                    <t t-else="">&#8212;</t>
+                                                </td>
+                                            </tr>
+                                        </t>
+
+                                        <!-- Remaining rows -->
+                                        <t t-foreach="rest_types" t-as="st">
+                                            <tr>
+                                                <td class="alten-label">
+                                                    <t t-esc="st.name"/>
+                                                </td>
+
+                                                <td class="alten-value">
+                                                    <t t-set="matched"
+                                                    t-value="lines.filtered(lambda l: l.skill_id and l.skill_id.skill_type_id == st)"/>
+
+                                                    <t t-if="matched">
+                                                        <t t-foreach="matched" t-as="ln">
+                                                            <t t-esc="ln.skill_id.name"/>
+                                                            <!-- <t t-if="ln.skill_level_id">
+                                                                (<t t-esc="ln.skill_level_id.name"/>)
+                                                            </t> -->
+                                                            <t t-if="ln_index != len(matched) - 1">, </t>
+                                                        </t>
+                                                    </t>
+                                                    <t t-else="">&#8212;</t>
+                                                </td>
+                                            </tr>
+                                        </t>
+
+                                    </table>
+
+
+
+                                </div>
+                                
+                            </div>
+                        </t>
+                    </div>
+
+                </div>
+
+            </t>
+        </t>
+    </template>
+
+    <template id="alten_header_footer">
+        <div t-attf-class="header o_company_#{company.id}_layout" style="width:100%;">
+            <table style="width:100%; border-collapse:collapse; border-color: white;">
+                <tr>
+                    <!-- LEFT logo -->
+                    <td style="width:50%; text-align:left; vertical-align:middle;">
+                        <!-- <img t-att-src="'/achmitech_hr_recruitment/static/src/img/service_empower.png'" alt="Service Empower" style="max-height:70px; width:auto;"/> -->
+                    </td>
+                    <!-- RIGHT logo -->
+                    <td style="width:50%; text-align:right; vertical-align:middle;">
+                        <!-- <img t-att-src="'/achmitech_hr_recruitment/static/src/img/alten.png'" alt="ALTEN" style="max-height:70px; width:auto;"/> -->
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <t t-set="layout_background_url" t-value="'data:image/png;base64,%s' % company.layout_background_image.decode('utf-8') if company.layout_background_image and company.layout_background == 'Custom' else
+                '/base/static/img/demo_logo_report.png' if company.layout_background == 'Demo logo' else ''" />
+        <div t-attf-class="article o_report_layout_standard o_table_standard o_company_#{company.id}_layout o_snail_mail {{'o_report_layout_background' if company.layout_background != 'Blank' else ''}}" t-attf-style="{{ 'background-image: url(%s);' % layout_background_url if layout_background_url else '' }}" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
+            <t t-call="web.address_layout"/>
+            <h2 t-out="layout_document_title"/>
+            <t t-out="0"/>
+        </div>
+    </template>
+
+    <template id="report_alten_with_custom_header" inherit_id="achmitech_hr_recruitment.print_report_alten">
+        <xpath expr="//t[@t-call='web.external_layout']" position="attributes">
+            <attribute name="t-call">achmitech_hr_recruitment.alten_header_footer</attribute>
+        </xpath>
+    </template>
+
+
+    <record id="action_report_hr_applicant_report_alten" model="ir.actions.report">
+            <field name="name">Dossier de compétences</field>
+            <field name="model">hr.applicant</field>
+            <field name="report_type">qweb-pdf</field>
+            <!-- must match the wrapper template id below -->
+            <field name="report_name">achmitech_hr_recruitment.print_report_alten</field>
+            <field name="report_file">achmitech_hr_recruitment.print_report_alten</field>
+            <!-- Safe filename -->
+            <field name="print_report_name">'DC-%s-%s' % (object.partner_name or object.display_name or '', object.job_id.name or '')</field>
+            <field name="binding_model_id" ref="hr_recruitment.model_hr_applicant"/>
+            <field name="binding_type">report</field>
+        </record>
 </odoo>

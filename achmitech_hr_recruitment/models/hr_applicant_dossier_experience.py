@@ -23,10 +23,11 @@ class HrApplicantDossierExperience(models.Model):
     start = fields.Date(string="Date début")
     end = fields.Date(string="Date fin")
 
-    contexte = fields.Text(string="Contexte général")
-    sujet = fields.Text(string="Sujet du projet")
-    travail = fields.Text(string="Travail réalisé")
-    resultats = fields.Text(string="Résultats obtenus")
+    contexte = fields.Html(string="Contexte général", sanitize=True)
+    sujet = fields.Html(string="Sujet du projet", sanitize=True)
+    responsabilites = fields.Html(string="Responsabilités occupées", sanitize=True)
+    travail = fields.Html(string="Travail réalisé", sanitize=True)
+    resultats = fields.Html(string="Résultats obtenus", sanitize=True)
 
     competency_line_ids = fields.One2many(
         "hr.applicant.dossier.competency",

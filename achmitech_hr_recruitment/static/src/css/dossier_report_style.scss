@@ -1,0 +1,138 @@
+
+/* ALTEN rapport styling */
+
+.alten-section-header {
+  display: table;
+  width: 100%;
+  margin: 22mm 0 10mm 0; // pushes it down like the PDF
+}
+
+.alten-section-title {
+  display: table-cell;
+  width: 1%;
+  vertical-align: bottom;
+  font-size: 26px;
+  font-weight: 700;
+  color: #1d8bcf;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.alten-stripes {
+  display: table-cell;
+  vertical-align: bottom;
+  width: auto;
+  padding-left: 12px;
+  padding-bottom: 1px;     // aligns with title baseline
+}
+
+.alten-stripes span {
+  display: block;
+  height: 2px;
+  margin: 5px 0;
+  width: 100%;
+}
+
+.alten-stripes .s-blue   { background: #1d8bcf; }
+.alten-stripes .s-red    { background: #d92b2b; }
+.alten-stripes .s-yellow { background: #f0c04a; }
+
+
+
+.alten-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11.5px;
+    margin-top: 10mm;
+
+    td {
+        border: 1px solid #6c6c6c;
+        padding: 10px;
+        vertical-align: middle;
+        word-wrap: break-word;
+    }
+}
+
+
+.alten-label {
+    width: 42%;
+    background: #d9dee2;
+    font-weight: 700;
+    color: #1b1b1b;
+    padding-left: 10px !important;
+}
+
+.alten-value {
+    width: 58%;
+    background: #ffffff;
+}
+
+
+.alten-list {
+  list-style: none;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.alten-list li {
+  margin: 0 !important;
+  padding: 6px 0 !important;  // same line spacing as nested table
+  border: none !important;
+}
+
+.alten-date .alten-list li {
+  font-weight: 800 !important; // bold dates
+  text-align: center;
+  white-space: nowrap;
+}
+
+.exp-block {
+  margin-bottom: 3mm;
+  page-break-inside: avoid;
+}
+
+.exp-inline {
+  page-break-inside: avoid;
+  margin-bottom: 15px;
+}
+
+/* Only for the experience env-tech table */
+.exp-envtech-table {
+    border-collapse: collapse;
+    font-size: 11px;              /* optional */
+}
+
+.exp-envtech-table td {
+    padding: 2px 6px !important;  /* compact */
+    line-height: 1.2;
+    vertical-align: top;
+}
+
+/* Compact your existing cell styles without touching global .alten-label/.alten-value */
+.exp-envtech-table td.alten-label {
+    background: #d9dee2 !important;
+    font-weight: 700;
+    color: #1b1b1b;
+}
+
+.exp-envtech-table td.alten-value {
+    background: #ffffff !important;
+    color: #1b1b1b;
+}
+
+/* Make the rowspan “Environnement technique” cell align nicely */
+.exp-envtech-table td.alten-label[rowspan] {
+    width: 22% !important; /* match the colgroup width */
+    vertical-align: middle;
+    padding-top: 4px !important;
+}
+
+/* First row: type + value are 2nd and 3rd td */
+.exp-envtech-table tr:first-child td:nth-child(2) { width: 28% !important; }
+.exp-envtech-table tr:first-child td:nth-child(3) { width: 50% !important; }
+
+/* Other rows: type + value are 1st and 2nd td */
+.exp-envtech-table tr:not(:first-child) td:nth-child(1) { width: 28% !important; }
+.exp-envtech-table tr:not(:first-child) td:nth-child(2) { width: 50% !important; }

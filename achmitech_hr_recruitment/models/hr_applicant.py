@@ -50,8 +50,6 @@ class HrApplicant(models.Model):
     @api.depends("dca_access_token", "stage_id")
     def _construct_dossier_url(self):
         for applicant in self:
-            _logger.info("XXXXXXXXXXXXXXXXXXXX stqge of applicant currently is : %s", applicant.stage_id.name)
-
             if applicant.dca_access_token:
                 base_url = applicant.get_base_url()
                 applicant.applicant_dossier_url = urljoin(
@@ -112,3 +110,52 @@ class HrApplicant(models.Model):
             f"Moved {len(applicants)} applicants from stage '{old_stage.name}' "
             f"to new stage '{new_stage.name}'."
         )
+
+    def _get_alten_table_rows_from_experiences(self):
+        """
+        Returns:
+        [
+          {"label": "Logiciels", "value": "AutoCAD, QGIS, ..."},
+          {"label": "Langages", "value": "Python, Java, ..."},
+          ...
+        ]
+
+        - skill types are NOT hardcoded
+        - rows come from types present in experience competency lines
+        - skills deduplicated across experiences (by skill_id)
+        - stable ordering by skill type sequence then name (if those fields exist)
+        """
+        self.ensure_one()
+
+        # type_id -> {"type": record, "skills": ordered dict {skill_id: name}}
+        buckets = {}
+        type_order = []  # first-seen ordering fallback
+
+        def _ensure_bucket(t):
+            if t.id not in buckets:
+                buckets[t.id] = {"type": t, "skills": {}}
+                type_order.append(t.id)
+            return buckets[t.id]
+
+        # collect
+        for exp in self.dossier_experience_ids.sorted(lambda r: getattr(r, "sequence", 0)):
+            for line in exp.competency_line_ids.sorted(lambda r: getattr(r, "sequence", 0)):
+                t = line.skill_type_id
+                s = line.skill_id
+                if not t or not s:
+                    continue
+                b = _ensure_bucket(t)
+                if s.id not in b["skills"]:
+                    b["skills"][s.id] = s.name
+
+
+        all_types = self.env["hr.skill.type"].search([], order="sequence, name")
+
+        rows = []
+        for t in all_types:
+            skills = list(buckets.get(t.id, {"skills": {}})["skills"].values())
+            rows.append({
+                "label": t.display_name,
+                "value": ", ".join(skills),   # will be "" if none
+            })
+        return rows
