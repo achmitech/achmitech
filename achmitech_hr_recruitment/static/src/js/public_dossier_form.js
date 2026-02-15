@@ -497,6 +497,24 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
                     el.id = el.id.replace(/_\d+$/, "_" + nextIndex);
                 }
             });
+            // rename data-target="experiences_xxx_<n>" (needed for contenteditable sync)
+            newBlock.querySelectorAll("[data-target]").forEach((el) => {
+                const t = el.getAttribute("data-target");
+                if (!t) return;
+
+                if (/^experiences_[a-z_]+_\d+$/.test(t)) {
+                    el.setAttribute("data-target", t.replace(/_\d+$/, "_" + nextIndex));
+                }
+            });
+            // rename label for="experiences_xxx_<n>"
+            newBlock.querySelectorAll("label[for]").forEach((lb) => {
+                const f = lb.getAttribute("for");
+                if (!f) return;
+
+                if (/^experiences_[a-z_]+_\d+$/.test(f)) {
+                    lb.setAttribute("for", f.replace(/_\d+$/, "_" + nextIndex));
+                }
+            });
 
             // 2) update experience index in nested competency scopes: experiences_0_* -> experiences_<nextIndex>_*
             newBlock.querySelectorAll(".competency-section").forEach((sec) => {
@@ -599,39 +617,58 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
 });
 
 function syncContenteditablesToTextareas(root) {
-    (root || document).querySelectorAll(".exp-html-editor[contenteditable]").forEach((ed) => {
+    const scope = root || document;
+
+    scope.querySelectorAll(".exp-html-editor[contenteditable]").forEach((ed) => {
         const target = ed.dataset.target;
-        if (!target) return;
+        console.log("[SYNC] editor target=", target, "text=", ed.textContent);
 
-        const ta = (root || document).querySelector(`textarea[name="${target}"]`);
-        if (!ta) return;
+        const ta = scope.querySelector(`textarea[name="${CSS.escape(target || '')}"]`);
+        if (!ta) {
+            console.warn("[SYNC] missing textarea for", target, ed);
+            return;
+        }
 
-        ta.value = (ed.innerHTML || "").trim();
+        ta.value = (ed.textContent || "").replace(/\u00A0/g, " ").trim();
     });
-};
+}
+
 
 $(document).ready(function () {
     $('#dossier_form').on('submit', function (e) {
         e.preventDefault();
-        syncContenteditablesToTextareas(this);
-        let $form = $(this);
-        let url = $form.attr('action');
-        console.log('URL === %s', url);
-        let data = $form.serialize();
-        $.ajax({
-            url: url,
-            type: 'POST',
-            data: data,
-            success: function (response) {
-                if (response && response.redirect) {
-                    window.location.href = response.redirect;
-                    return;
+
+        const form = this;
+
+        // sync editors immediately
+        syncContenteditablesToTextareas(form);
+
+        console.log('Waiting 30 seconds before submitting…');
+
+        setTimeout(function () {
+            let $form = $(form);
+            let url = $form.attr('action');
+            let data = $form.serialize();
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: data,
+                success: function (response) {
+                    if (response && response.redirect) {
+                        window.location.href = response.redirect;
+                        return;
+                    }
+                    $('#controle-message')
+                        .removeClass('d-none')
+                        .text('Formulaire soumis avec succès.');
+                },
+                error: function () {
+                    alert("Une erreur s'est produite : ");
                 }
-                $('#controle-message').removeClass('d-none').text('Formulaire soumis avec succès.');
-            },
-            error: function (xhr) {
-                alert("Une erreur s'est produite : ");
-            }
-        });
+            });
+
+        }, 30000); // ⏱ 30 seconds
     });
 });
+
