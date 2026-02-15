@@ -649,11 +649,8 @@ function syncContenteditablesToTextareas(root) {
 
     scope.querySelectorAll(".exp-html-editor[contenteditable]").forEach((ed) => {
         const target = ed.dataset.target;
-        console.log("[SYNC] editor target=", target, "text=", ed.textContent);
-
         const ta = scope.querySelector(`textarea[name="${CSS.escape(target || '')}"]`);
         if (!ta) {
-            console.warn("[SYNC] missing textarea for", target, ed);
             return;
         }
 
@@ -665,38 +662,26 @@ function syncContenteditablesToTextareas(root) {
 $(document).ready(function () {
     $('#dossier_form').on('submit', function (e) {
         e.preventDefault();
-
-        const form = this;
-
-        // sync editors immediately
-        syncContenteditablesToTextareas(form);
-
-        console.log('Waiting 30 seconds before submitting…');
-
-        setTimeout(function () {
-            let $form = $(form);
-            let url = $form.attr('action');
-            let data = $form.serialize();
-
-            $.ajax({
-                url: url,
-                type: 'POST',
-                data: data,
-                success: function (response) {
-                    if (response && response.redirect) {
-                        window.location.href = response.redirect;
-                        return;
-                    }
-                    $('#controle-message')
-                        .removeClass('d-none')
-                        .text('Formulaire soumis avec succès.');
-                },
-                error: function () {
-                    alert("Une erreur s'est produite : ");
+        syncContenteditablesToTextareas(this);
+        let $form = $(this);
+        let url = $form.attr('action');
+        //console.log('URL === %s', url);
+        let data = $form.serialize();
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: data,
+            success: function (response) {
+                if (response && response.redirect) {
+                    window.location.href = response.redirect;
+                    return;
                 }
-            });
-
-        }, 30000); // ⏱ 30 seconds
+                $('#controle-message').removeClass('d-none').text('Formulaire soumis avec succès.');
+            },
+            error: function (xhr) {
+                alert("Une erreur s'est produite : ");
+            }
+        });
     });
 });
 
