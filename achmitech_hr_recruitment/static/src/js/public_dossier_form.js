@@ -176,6 +176,34 @@ publicWidget.registry.WebsiteCustomerContactRequestForm = publicWidget.Widget.ex
                     el.name = el.name.replace(/_\d+$/, "_" + expIndex);
                 }
             });
+            // ✅ rename ids ending with _<digits> => _expIndex
+            block.querySelectorAll("[id]").forEach((el) => {
+                if (!el.id) return;
+
+                if (/^experiences_[a-z_]+_\d+$/.test(el.id)) {
+                    el.id = el.id.replace(/_\d+$/, "_" + expIndex);
+                }
+            });
+
+            // ✅ rename label for="experiences_xxx_<digits>"
+            block.querySelectorAll("label[for]").forEach((lb) => {
+                const f = lb.getAttribute("for");
+                if (!f) return;
+
+                if (/^experiences_[a-z_]+_\d+$/.test(f)) {
+                    lb.setAttribute("for", f.replace(/_\d+$/, "_" + expIndex));
+                }
+            });
+
+            // ✅ rename data-target="experiences_xxx_<digits>" (CRITICAL for contenteditable sync)
+            block.querySelectorAll("[data-target]").forEach((el) => {
+                const t = el.getAttribute("data-target");
+                if (!t) return;
+
+                if (/^experiences_[a-z_]+_\d+$/.test(t)) {
+                    el.setAttribute("data-target", t.replace(/_\d+$/, "_" + expIndex));
+                }
+            });
 
             // update nested competency scopes + ALSO rename their input names
             block.querySelectorAll(".competency-section").forEach((sec) => {
