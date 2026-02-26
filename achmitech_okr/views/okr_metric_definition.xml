@@ -6,10 +6,12 @@
     <field name="model">okr.metric.definition</field>
     <field name="arch" type="xml">
       <list open_form_view="True" delete="1">
-        <field name="name"/>
-        <field name="model_id"/>
-        <field name="aggregation"/>
-        <field name="value_field_id" invisible="aggregation == 'count'"/>
+        <field name="name" string="Intitulé"/>
+        <field name="definition_type" string="Type d'indicateur"/>
+        <field name="predefined_kpi" string="KPI prédéfini" invisible="definition_type != 'predefined'"/>
+        <field name="model_id" string="Modèle" invisible="definition_type != 'domain'"/>
+        <field name="aggregation" string="Methode d'agrégation" invisible="definition_type != 'domain'"/>
+        <field name="value_field_id" string="Champ de valeur" invisible="definition_type != 'domain' or aggregation == 'count'"/>
         <field name="active" invisible="1"/>
       </list>
     </field>
@@ -24,8 +26,8 @@
             <sheet>
                 <!-- Basic -->
                 <group>
-                    <field name="name"/>
-                    <field name="definition_type"/>
+                    <field name="name" string="Intitulé"/>
+                    <field name="definition_type" string="Type d'indicateur"/>
                     <field name="active" invisible="1"/>
                 </group>
 
@@ -37,28 +39,28 @@
                         invisible="definition_type != 'domain'">
 
                     <group>
-                        <field name="model_id" options="{'no_create': True}"/>
+                        <field name="model_id" string="Modèle" options="{'no_create': True}"/>
                         <field name="model_name" invisible="1"/>
-                        <field name="aggregation"/>
+                        <field name="aggregation" string="Agrégation"/>
                         <field name="value_field_id"
+                            string="Champ de valeur"
                             invisible="aggregation == 'count'"
                             options="{'no_create': True}"/>
                     </group>
 
-                    <separator string="Domaines"/>
+                    <separator string="Filtre (Domaine)"/>
 
                     <group>
                         <field name="domain"
+                                string="Domaine"
                                 widget="domain"
                                 options="{'model': 'model_name'}"/>
-                        
                     </group>
                     <group>
                         <div class="alert alert-info" role="alert">
-                            Domaines are evaluated with a safe context containing:
-                            <b>uid</b>, <b>user</b>, <b>env</b>, <b>context</b>,
-                            and node helpers: <b>company_id</b>, <b>okr_user_id</b>,
-                            <b>date_start</b>, <b>date_end</b>.
+                            Utilisez uniquement des champs du modèle pour construire le filtre.
+                            Les variables contextuelles (société, utilisateur, période) sont injectées
+                            automatiquement côté serveur lors du calcul de l'indicateur.
                         </div>
                     </group>
                 </group>
@@ -70,10 +72,13 @@
                 <group string="Indicateur Prédéfini"
                         invisible="definition_type != 'predefined'">
 
-                    <field name="predefined_kpi"/>
+                    <group>
+                        <field name="predefined_kpi" string="KPI prédéfini"/>
+                    </group>
 
-                    <div class="alert alert-success" role="alert">Ce KPI utilise un calcul Python prédéfini.
-                    Aucun domaine ou modèle n'est nécessaire.
+                    <div class="alert alert-success" role="alert">
+                        Ce KPI utilise un calcul Python prédéfini.
+                        Aucun domaine ou modèle n'est nécessaire.
                     </div>
                 </group>
 
@@ -81,10 +86,11 @@
                 <!-- CUSTOM CODE MODE -->
                 <!-- ===================== -->
 
-                <group string="Code Python"
+                <group string="Code Python Personnalisé"
                         invisible="definition_type != 'code'">
 
                     <field name="python_code"
+                        string="Code Python"
                         class="w-50" widget="code" options="{'mode': 'python'}"/>
                 </group>
 
