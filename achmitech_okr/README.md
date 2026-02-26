@@ -148,7 +148,7 @@ Reusable metric templates. Can use a **predefined KPI** (code-based, auto-comput
 
 | Code | Description |
 |---|---|
-| `recruitment.need_covered_under_5d_rate` | Besoins couverts sous 5 jours (ratio 0–1) |
+| `recruitment.need_covered_under_5d_rate` | Besoins couverts durant la période (ratio 0–1) |
 | `recruitment.ec_pass_rate` | Taux EC terminé / présentés (ratio 0–1) |
 | `recruitment.nok_treated_period_rate` | NOK traités durant la période (ratio 0–1, 1.0 if no NOK) |
 | `recruitment.pool_recontacted_rate` | Taux recontact vivier (ratio 0–1) |
