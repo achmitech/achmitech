@@ -1,0 +1,336 @@
+<odoo>
+    <record id="view_okr_node_list" model="ir.ui.view">
+        <field name="name">okr.node.list</field>
+        <field name="model">okr.node</field>
+        <field name="arch" type="xml">
+            <list string="Objectifs">
+                <field name="name"/>
+				<field name="parent_id" string="Objetif Parent"/>
+				<field name="weight" string="Poids (%)" optional="hide"/>
+				<field name="progress" widget="progressbar"/>
+				<field name="result" string="Résultat"/>
+                <field name="activity_ids" widget="list_activity" optional="show"/>
+				<field name="state"/>
+				<field name="company_id" optional="hide" groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_okr_node_hierarchy" model="ir.actions.act_window">
+        <field name="name">Charte Hiérarchique</field>
+        <field name="res_model">okr.node</field>
+        <field name="view_mode">hierarchy,form</field>
+        <field name="context">{'hierarchy_res_id': context.get('hierarchy_res_id')}</field>
+    </record>
+
+        <!-- OBJECTIVE FORM VIEW -->
+    <record id="view_okr_node_form_base" model="ir.ui.view">
+        <field name="name">okr.node.form.base</field>
+        <field name="model">okr.node</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <form string="Objectif" class="o_okr_node_form">
+                <header>
+                    <button name="action_set_to_draft"
+                            string="Brouillon" type="object"
+                            groups="achmitech_okr.group_okr_manager"
+                            invisible="state == 'draft'"/>
+                    <button name="button_confirm"
+                            string="Confirmer" type="object"
+                            class="oe_highlight"
+                            groups="achmitech_okr.group_okr_manager"
+                            invisible="state != 'draft'"/>
+                    <button name="button_cancel"
+                            string="Annuler" type="object"
+                            groups="achmitech_okr.group_okr_manager"
+                            invisible="state not in ('draft','confirmed')"/>
+                    <field name="state" widget="statusbar"
+                        statusbar_visible="draft,confirmed,cancelled"
+                        readonly="1"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button"
+                                name="%(action_okr_node_hierarchy)d"
+                                icon="fa-sitemap"
+                                type="action"
+                                context="{'hierarchy_res_id': id}"
+                                invisible="not parent_id and not child_ids">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Charte Hiérarchique</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <group>
+                        <group>
+                           <field name="name" readonly="state in ('confirmed','cancelled')"/>
+                            <field name="description"
+                                placeholder="Description about this objective"
+                                readonly="state in ('confirmed','cancelled')"/>
+
+                            <!-- stays hidden in base; inherit view will show it -->
+                            <field name="parent_id"
+                                string="Est un résultat clé de"
+                                domain="[('id','not in',child_ids),('id','!=',id)]"
+                                readonly="state in ('confirmed','cancelled')"/>
+
+                            <label for="weight" invisible="not parent_id"/>
+                            <div class="o_row" invisible="not parent_id">
+                                <field name="weight"/>
+                                <span>%</span>
+                            </div>
+                        </group>
+
+                        <group>
+                            <field name="company_id"
+                                groups="base.group_multi_company"
+                                force_save="1"
+                                invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="user_id" readonly="state in ('confirmed', 'cancelled')"/>
+                        </group>
+
+                        <!-- KR list stays in base (it’s core) -->
+                        <separator string="Résultats Clés" invisible="progress_source == 'metric'"/>
+                        <field name="child_ids"
+                            readonly="state != 'draft'"
+                            invisible="progress_source == 'metric'"
+                            context="{
+                                'default_parent_id': id,
+                                'default_company_id': company_id,
+                                'default_user_id': user_id,
+                                'default_period_type': period_type,
+                                'default_custom_date_start': custom_date_start,
+                                'default_custom_date_end': custom_date_end,
+                            }">
+                            <list string="Résultats Clés" open_form_view="True">
+                                <field name="name"/>
+                                <field name="weight" string="Poids (%)" sum="Total Poids"/>
+                                <field name="progress_source" force_save="1" invisible="0"/>
+                                <field name="progress_manual" force_save="1" invisible="progress_source != 'manual'"/>
+                                <field name="progress" widget="progressbar"/>
+                                <field name="result"/>
+                                <field name="state"/>
+                            </list>
+                        </field>
+                    </group>
+
+                    <!-- ✅ put a notebook placeholder in base so extensions hook cleanly -->
+                    <notebook>
+                        <page string="Vue Générale">
+                            <group>
+                                <group string="Progression">
+                                    <field name="success_threshold" readonly="state in ('confirmed', 'cancelled')"/>
+                                    <field name="progress" widget="progressbar" readonly="1"/>
+                                    <field name="result" widget="radio" readonly="1"/>
+                                </group>
+
+                                <group string="Période">
+                                    <field name="period_type" readonly="state in ('confirmed', 'cancelled')"/>
+
+                                    <!-- Quarter inputs -->
+                                    <field name="year" invisible="period_type != 'quarter'" readonly="state in ('confirmed', 'cancelled')"/>
+                                    <field name="quarter" invisible="period_type != 'quarter'" readonly="state in ('confirmed', 'cancelled')"/>
+
+                                    <!-- Custom range inputs -->
+                                    <field name="custom_date_start" invisible="period_type != 'custom'" readonly="state in ('confirmed', 'cancelled')"/>
+                                    <field name="custom_date_end" invisible="period_type != 'custom'" readonly="state in ('confirmed', 'cancelled')"/>
+
+                                    <!-- Computed effective dates -->
+                                    <field name="date_start" readonly="1" invisible="period_type == 'none'"/>
+                                    <field name="date_end" readonly="1" invisible="period_type == 'none'"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+
+                </sheet>
+
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+
+    <!-- <record id="view_okr_node_form" model="ir.ui.view">
+        <field name="name">okr.node.form</field>
+        <field name="model">okr.node</field>
+        <field name="inherit_id" ref="view_okr_node_form_base" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='parent_id']" position="attributes">
+                <attribute name="invisible">0</attribute>
+                <attribute name="required">0</attribute>
+            </xpath>
+        </field>
+    </record> -->
+
+    <record id="action_okr_nodes" model="ir.actions.act_window">
+        <field name="name">Objectifs</field>
+        <field name="res_model">okr.node</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_okr_node_list"/>
+        <field name="context">{'search_default_grp_objective': 1}</field>
+    </record>
+
+    <!-- <record id="res_config_settings_view_form_okr" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.okr</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="OKR" string="OKR" name="achmitech_okr" groups="achmitech_okr.group_okr_admin">
+					<block Titre="OKR" name="ork_general_setting_container">
+						<setting string="OKR Success Points Threshold" Titre="Set standard value for OKR success point threshold" company_dependent="1" help="The standard value for evaluate OKR successful or failed">
+							<div class="content-group">
+								<div class="mt16">
+									<field name="okr_success_points_threshold"/>
+								</div>
+							</div>
+						</setting>
+					</block>
+				</app>
+            </xpath>
+        </field>
+    </record> -->
+
+    <record id="okr_node_hierarchy_view" model="ir.ui.view">
+        <field name="name">okr.node.hierarchy</field>
+        <field name="model">okr.node</field>
+        <field name="arch" type="xml">
+            <hierarchy child_field="child_ids" js_class="okr_node_hierarchy" icon="fa-bullseye" edit="1">
+				<field name="name"/>
+				<field name="quarter"/>
+				<field name="year"/>
+				<field name="progress"/>
+				<field name="result"/>
+                <field name="company_id"/>
+				<templates>
+					<t t-name="hierarchy-box">
+						<div class="o_hierarchy_node_header o_hierarchy_okr_node_header flex-column">
+							<div class="o_hierarchy_okr_node_Titre w-100 position-relative text-center">
+								<field name="name"/>
+								<t t-if="record.date_start and record.date_end">
+                                    (
+                                    <t t-esc="record.date_start.value"/>
+                                    -
+                                    <t t-esc="record.date_end.value"/>
+                                    )
+                                </t>
+								<span>
+									<t t-if="record.result.raw_value == 'new'">
+                                        <i class="fa fa-fw fa-circle-o" t-att-Titre="record.result.value" aria-label="Result" role="img"/>
+                                    </t>
+                                    <t t-elif="record.result.raw_value == 'inprogress'">
+                                        <i class="fa fa-fw fa-circle text-info" t-att-Titre="record.result.value" aria-label="Result" role="img"/>
+                                    </t>
+                                    <t t-elif="record.result.raw_value == 'successful'">
+                                        <i class="fa fa-fw fa-circle text-success" t-att-Titre="record.result.value" aria-label="Result" role="img"/>
+                                    </t>
+                                    <t t-elif="record.result.raw_value == 'failed'">
+                                        <i class="fa fa-fw fa-circle text-danger" t-att-Titre="record.result.value" aria-label="Result" role="img"/>
+                                    </t>
+								</span>
+							</div>
+						</div>
+						<!-- <div class="o_hierarchy_node_body o_hierarchy_okr_node_body flex-column">
+							<div class="o_hierarchy_okr_node_department w-100 position-relative text-center">
+								<span t-if="record.mode.raw_value == 'company'" t-att-Titre="record.mode.value">
+									<span groups="!base.group_multi_company">
+										Company Objectifs
+									</span>
+									<span groups="base.group_multi_company">
+										<field name="company_id"/>
+									</span>
+								</span>
+								<span t-if="record.mode.raw_value == 'department'" t-att-Titre="record.mode.value">
+									<span t-if="!record.allow_access_hierarchy_node.raw_value">
+										Department Objectifs
+									</span>
+								</span>
+								<span t-if="record.mode.raw_value == 'employee'" t-att-Titre="record.mode.value">
+									<span t-if="!record.allow_access_hierarchy_node.raw_value">
+										Employee Objectifs
+									</span>
+									<span t-if="record.allow_access_hierarchy_node.raw_value">
+										<field name="employee_id"/>
+									</span>
+								</span>
+							</div>
+						</div> -->
+						<div class="o_hierarchy_okr_node_footer flex-column">
+							<div class="o_okr_node_result_container">
+								<div class="o_okr_node_result d-flex">
+									<t t-if="record.create_uid">
+                                        <img class="rounded"
+                                            t-attf-src="/web/image/res.users/#{record.create_uid}/avatar_128"
+                                            t-att-Titre="record.create_uid"
+                                            alt="Owner"/>
+                                    </t>
+								</div>
+								<div class="o_okr_node_result d-flex">
+									<field name="progress"/>
+									<span>%</span>
+								</div>
+							</div>
+							<div t-if="record.progress.value || record.progress.value == 0" class="progress o_okr_node_progress_bar" t-att-Titre="record.progress.value + '%'">
+								<t t-set="background_progress" t-value="'bg-secondary'"/>
+								<t t-if="record.result.raw_value == 'inprogress'">
+									<t t-set="background_progress" t-value="'bg-info'"/>
+								</t>
+								<t t-if="record.result.raw_value == 'successful'">
+									<t t-set="background_progress" t-value="'bg-success'"/>
+								</t>
+								<t t-if="record.result.raw_value == 'failed'">
+									<t t-set="background_progress" t-value="'bg-danger'"/>
+								</t>
+								<!-- <div t-attf-class="progress-bar #{background_progress}" role="progressbar" t-att-style="'width:' + record.progress.raw_value + '%'"/> -->
+                                 <t t-set="p" t-value="record.progress.raw_value or 0"/>
+                                <t t-set="bar_width" t-value="p &gt; 100 and 100 or p"/>
+
+                                <div t-attf-class="progress-bar #{background_progress}"
+                                    role="progressbar"
+                                    t-att-style="'width:' + bar_width + '%'"/>
+							</div>
+						</div>
+					</t>
+				</templates>
+			</hierarchy>
+        </field>
+    </record>
+
+    <record id="okr_node_view_search" model="ir.ui.view">
+        <field name="name">okr.node.search</field>
+        <field name="model">okr.node</field>
+        <field eval="16" name="priority"/>
+        <field name="arch" type="xml">
+            <search string="Recherche OKR">
+				<field name="name"/>
+				<field name="company_id" groups="base.group_multi_company"/>
+				<field name="year"/>
+				<separator/>
+				<filter name="ftr_this_year" string="Cette année" domain="[('year','=', context_today().year)]"/>
+				<separator/>
+				<filter name="ftr_draft" string="Brouillon" domain="[('state','=', 'draft')]"/>
+				<filter name="ftr_confirmed" string="Confirmé" domain="[('state','=', 'confirmed')]"/>
+				<filter name="ftr_cancelled" string="Annulé" domain="[('state','=', 'cancelled')]"/>
+				<separator/>
+				<filter name="ftr_quarter_1" string="Trimestre 1" domain="[('quarter','=', '0')]"/>
+				<filter name="ftr_quarter_2" string="Trimestre 2" domain="[('quarter','=', '1')]"/>
+				<filter name="ftr_quarter_3" string="Trimestre 3" domain="[('quarter','=', '2')]"/>
+				<filter name="ftr_quarter_4" string="Trimestre 4" domain="[('quarter','=', '3')]"/>
+				<group>
+					<filter string="Objectif" name="grp_objective" domain="[]" context="{'group_by':'parent_id'}"/>
+					<filter string="Année" name="grp_year" domain="[]" context="{'group_by':'year'}"/>
+					<filter string="Trimestre" name="grp_quarter" domain="[]" context="{'group_by':'quarter'}"/>
+					<filter string="Résultat" name="grp_result" domain="[]" context="{'group_by':'result'}"/>
+				</group>
+				<searchpanel>
+					<field name="company_id" groups="base.group_multi_company" icon="fa-building"/>
+					<field name="parent_id" icon="fa-bullseye" string="Objectif"/>
+				</searchpanel>
+			</search>
+        </field>
+    </record>
+</odoo>

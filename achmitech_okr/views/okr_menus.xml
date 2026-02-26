@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<odoo>
+    <menuitem
+        id="menu_okr"
+        name="OKR"
+        web_icon="achmitech_okr,static/description/icon.png"
+        sequence="55"
+        groups="achmitech_okr.group_okr_user"/>
+
+    <menuitem
+        id="menu_okr_nodes"
+        name="Objectifs"
+        parent="menu_okr"
+        action="action_okr_nodes"
+        sequence="1"
+        groups="achmitech_okr.group_okr_user"/>
+
+    <menuitem
+        id="menu_okr_config"
+        name="Configuration"
+        parent="menu_okr"
+        sequence="2"
+        groups="achmitech_okr.group_okr_manager"/>
+
+    <menuitem
+        id="menu_okr_metric_definitions"
+        name="Metric Definitions"
+        parent="menu_okr_config"
+        action="action_okr_metric_definition"
+        sequence="1"
+        groups="achmitech_okr.group_okr_manager"/>
+
+    <menuitem
+        id="menu_staffing_root"
+        name="Staffing Plans"
+        parent="hr_recruitment.menu_hr_recruitment_root"
+        sequence="70"
+        action="action_staffing_plan"
+        groups="achmitech_okr.group_okr_user"
+    />
+</odoo>

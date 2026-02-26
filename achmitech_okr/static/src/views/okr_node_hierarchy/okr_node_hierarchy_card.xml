@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="achmitech_okr.OkrHierarchyCard" t-inherit="web_hierarchy.HierarchyCard" owl="1">
+        <!-- Add OKR class to node -->
+        <xpath expr="//div[hasclass('o_hierarchy_node_container')]" position="attributes">
+            <attribute name="class" separator=" " add="o_hierarchy_okr_node_container"/>
+        </xpath>
+
+        <xpath expr="//div[hasclass('o_hierarchy_node')]" position="attributes">
+            <attribute name="class" separator=" " add="o_hierarchy_okr_node"/>
+        </xpath>
+
+        <!-- Button tweaks exactly like hr_org_chart -->
+        <xpath expr="//button[@name='hierarchy_search_subsidiaries']" position="attributes">
+            <attribute name="class" separator=" " remove="d-grid"/>
+            <attribute name="class" separator=" " remove="rounded-0"/>
+        </xpath>
+
+        <xpath expr="//button[@name='hierarchy_search_subsidiaries']" position="inside">
+            <t t-out="props.node.childResIds.length"/> OKR Nodes
+        </xpath>
+        <xpath expr="//button[@name='hierarchy_search_subsidiaries']/t[@t-if]" position="replace">
+            <t t-if="!props.node.nodes.length">
+                <i class="fa fa-fw fa-caret-right"/>
+            </t>
+        </xpath>
+        <xpath expr="//button[@name='hierarchy_search_subsidiaries']/t[@t-else]" position="replace">
+            <t t-else="">
+                <i class="fa fa-fw fa-caret-down"/>
+            </t>
+        </xpath>
+    </t>
+
+
+</templates>
