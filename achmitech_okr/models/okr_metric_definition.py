@@ -18,7 +18,7 @@ class OkrMetricDefinition(models.Model):
     ], default="domain", required=True)
     
     predefined_kpi = fields.Selection([
-        ("recruitment.need_covered_under_5d_rate", "Besoins couverts sous 5 jours (%)"),
+        ("recruitment.need_covered_under_5d_rate", "Besoins couverts durant la période (%)"),
         ("recruitment.ec_pass_rate", "Taux EC terminé / présentés (%)"),
         ("recruitment.nok_treated_period_rate", "NOK traités durant la période (%)"),
         ("recruitment.pool_recontacted_rate", "Taux recontact vivier (%)"),
