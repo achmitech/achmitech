@@ -24,7 +24,7 @@
 
     <menuitem
         id="menu_okr_metric_definitions"
-        name="Metric Definitions"
+        name="Définitions d'indicateurs"
         parent="menu_okr_config"
         action="action_okr_metric_definition"
         sequence="1"
