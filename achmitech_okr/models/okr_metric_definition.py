@@ -47,6 +47,22 @@ class OkrMetricDefinition(models.Model):
         ("sum", "Sum"),
     ], default="count")
 
+    @api.onchange("definition_type")
+    def _onchange_definition_type(self):
+        if self.definition_type == "predefined":
+            self.model_id = False
+            self.domain = False
+            self.value_field_id = False
+            self.python_code = False
+        elif self.definition_type == "domain":
+            self.predefined_kpi = False
+            self.python_code = False
+        elif self.definition_type == "code":
+            self.predefined_kpi = False
+            self.model_id = False
+            self.domain = False
+            self.value_field_id = False
+
     @api.constrains("aggregation", "value_field_id", "definition_type")
     def _check_value_field(self):
         for rec in self:
