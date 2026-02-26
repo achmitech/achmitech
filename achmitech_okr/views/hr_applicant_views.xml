@@ -1,0 +1,72 @@
+<odoo>
+  <record id="hr_applicant_view_form_inherited_okr" model="ir.ui.view">
+        <field name="name">hr.applicant.view.form.inherited</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_applicant_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="header" position="inside">
+                <button
+                    name="action_open_recontact_wizard"
+                    type="object"
+                    string="Recontacter"
+                    class="btn-primary"
+                    invisible="not is_applicant_in_pool"/>
+
+                <button
+                    name="action_present_to_client"
+                    type="object"
+                    string="Présenter au client"
+                    class="btn-primary"
+                    invisible="application_status != 'ongoing' or presented_to_client_date"/>
+
+                <button name="action_client_interview_done" type="object"
+                    string="EC Passé"
+                    class="btn btn-success"
+                    invisible="not is_client_interview_stage or client_interview_status == 'passed'"/>
+
+                <button name="action_client_interview_cancel" type="object"
+                    string="EC Annulé"
+                    class="btn btn-danger"
+                    invisible="not is_client_interview_stage or client_interview_status != 'pending'"/>
+                <button
+                    name="action_mark_retour_done"
+                    type="object"
+                    string="Marquer retour fait"
+                    class="btn-primary"
+                    invisible="application_status not in ('refused','hired') or retour_done"
+                />
+            </xpath>
+            <xpath expr="/form//field[@name='linkedin_profile']/ancestor::group" position="inside">
+                <group>
+                    <field name="staffing_need_id" domain="[
+                        ('state', '!=', 'closed'),
+                        '|', ('company_id', '=', False), ('company_id', '=', company_id)
+                        ]"
+                        readonly="presented_to_client_date"
+                        options="{'no_create': True}"/>
+                    <field name="rejection_source" invisible="application_status != 'refused'" readonly="1"/>
+                    <field name="presented_to_client_date" readonly="1" invisible="not presented_to_client_date"/>
+                    <field name="client_interview_status" readonly="1" invisible="not is_client_interview_stage"/>
+                    <field name="refuse_date" readonly="1" invisible="application_status != 'refused'"/>
+                    <field name="retour_done" readonly="1" invisible="application_status not in ('refused', 'hired')"/>
+                    <field name="last_recontact_date" readonly="1" invisible="not is_applicant_in_pool"/>
+                </group>
+            </xpath>
+            <xpath expr="//page[@name='application_details']" position="after">
+                <page string="Recontacts Vivier" name="recontact_pool" invisible="not is_applicant_in_pool and not recontact_log_ids">
+                    <field name="recontact_log_ids" readonly="1">
+                        <list>
+                            <field name="date"/>
+                            <field name="user_id"/>
+                            <field name="outcome"/>
+                            <field name="note"/>
+                            <field name="referral_name"/>
+                            <field name="referral_contact"/>
+                            <field name="next_contact_date"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

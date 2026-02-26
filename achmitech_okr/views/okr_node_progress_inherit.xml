@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+ <record id="view_okr_node_form_inherit_progress" model="ir.ui.view">
+    <field name="name">okr.node.form.inherit.progress</field>
+    <field name="model">okr.node</field>
+    <field name="inherit_id" ref="view_okr_node_form_base"/>
+    <field name="arch" type="xml">
+        <!-- Add a clean page inside existing notebook -->
+        <xpath expr="//notebook" position="inside">
+            <page string="Progression &amp; Indicateurs" invisible="child_ids">
+
+                <group string="Progression">
+                    <field name="progress_source" invisible="child_ids" readonly="state in ('confirmed', 'cancelled')"/>
+                    <!-- Leaf + manual -->
+                    <field name="progress_manual"
+                        invisible="child_ids or progress_source != 'manual'"
+                        readonly="state in ('confirmed', 'cancelled')"
+                        force_save="1"/>
+                    
+                    <!-- Everything else
+                    <field name="progress"
+                        widget="progressbar"
+                        readonly="1"
+                        invisible="progress_source == 'manual' and not child_ids"
+                        decoration-success="result == 'successful'"
+                        decoration-danger="result == 'failed'"
+                        decoration-info="result == 'inprogress'"
+                        decoration-muted="result == 'new'"/> -->
+
+                    <!-- ✅ FIXED: recompute only when leaf AND metric -->
+                    <button name="action_recompute_metrics"
+                            type="object"
+                            class="btn btn-secondary"
+                            string="Recompute"
+                            invisible="child_ids or progress_source != 'metric'"/>
+                </group>
+                <group string="Indicateurs" invisible="child_ids or progress_source != 'metric'">
+                    <field name="metric_ids" context="{'default_node_id': id}" readonly="state in ('confirmed', 'cancelled')"  create="state == 'draft'" delete="state == 'draft'">
+                        <list editable="bottom" open_form_view="True" create="1">
+                            <field name="sequence" widget="handle"/>
+                            <field name="definition_id"/>
+                            <field name="target"/>
+                            <field name="current" readonly="1"/>
+                            <field name="progress" readonly="1"/>
+                        </list>
+                    </field>
+
+                    <div class="text-muted">
+                        Progression is computed as <b>current / target</b>.
+                    </div>
+                </group>
+            </page>
+        </xpath>
+
+    </field>
+</record>
+
+</odoo>

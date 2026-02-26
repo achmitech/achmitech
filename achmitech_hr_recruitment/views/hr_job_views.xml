@@ -1,0 +1,13 @@
+
+<odoo>
+  <record id="hr_view_hr_job_form_inherited" model="ir.ui.view">
+        <field name="name">hr.recruitment.stage.form.inherited</field>
+        <field name="model">hr.job</field>
+        <field name="inherit_id" ref="hr.view_hr_job_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="/form//field[@name='company_id']" position="before">
+                <field name="seniority_level"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
