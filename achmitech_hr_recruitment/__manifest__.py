@@ -40,6 +40,7 @@ pilotage des processus de recrutement.
         'views/hr_recrutement_applicant_form.xml',
         'views/hr_recruitement_stage.xml',
         'views/hr_applicant_dossier_template.xml',
+        'views/hr_job_views.xml',
         'reports/hr_candidate_report.xml'
     ],
     'assets': {
