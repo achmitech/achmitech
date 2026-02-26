@@ -38,5 +38,7 @@ Manage staffing plans, staffing needs, and KPI metrics linked to recruitment act
             'achmitech_okr/static/src/views/**/*',
         ],
     },
+    
+    'license': 'OPL-1',
 }
 
