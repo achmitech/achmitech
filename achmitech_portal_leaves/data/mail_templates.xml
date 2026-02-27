@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- 1. Client approval request (sent when leave enters client_validate) -->
+    <record id="mail_template_leave_client_approval" model="mail.template">
+        <field name="name">Absence intérimaire: demande d'approbation client</field>
+        <field name="model_id" ref="hr_holidays.model_hr_leave"/>
+        <field name="subject">Demande d'approbation de congé — {{ object.employee_id.name }}</field>
+        <field name="partner_to">{{ object.client_partner_id.id }}</field>
+        <field name="body_html" type="html">
+<div style="margin:0; padding:0; font-family:Arial,sans-serif; color:#374874;">
+    <p>Bonjour,</p>
+    <p>
+        <strong><t t-out="object.employee_id.name or ''">Prénom Nom</t></strong>
+        a soumis une demande de congé nécessitant votre approbation :
+    </p>
+    <table style="border-collapse:collapse; width:100%; max-width:520px; margin-bottom:20px;">
+        <tr>
+            <td style="padding:8px 14px; font-weight:bold; background:#f5f5f5; border:1px solid #ddd; width:40%;">Type de congé</td>
+            <td style="padding:8px 14px; border:1px solid #ddd;"><t t-out="object.holiday_status_id.name or ''">Congés payés</t></td>
+        </tr>
+        <tr>
+            <td style="padding:8px 14px; font-weight:bold; background:#f5f5f5; border:1px solid #ddd;">Date de début</td>
+            <td style="padding:8px 14px; border:1px solid #ddd;"><t t-out="format_date(object.request_date_from) or ''">01/01/2025</t></td>
+        </tr>
+        <tr>
+            <td style="padding:8px 14px; font-weight:bold; background:#f5f5f5; border:1px solid #ddd;">Date de fin</td>
+            <td style="padding:8px 14px; border:1px solid #ddd;"><t t-out="format_date(object.request_date_to) or ''">05/01/2025</t></td>
+        </tr>
+        <tr>
+            <td style="padding:8px 14px; font-weight:bold; background:#f5f5f5; border:1px solid #ddd;">Durée</td>
+            <td style="padding:8px 14px; border:1px solid #ddd;"><t t-out="object.number_of_days or ''">5</t> jour(s)</td>
+        </tr>
+        <t t-if="object.name">
+            <tr>
+                <td style="padding:8px 14px; font-weight:bold; background:#f5f5f5; border:1px solid #ddd;">Motif</td>
+                <td style="padding:8px 14px; border:1px solid #ddd;"><t t-out="object.name or ''">Motif</t></td>
+            </tr>
+        </t>
+    </table>
+    <p>
+        <a t-att-href="'%s/my/team-leaves/%s' % (object.get_base_url(), object.id)"
+           style="background:#374874; color:#fff; padding:10px 22px; border-radius:4px; text-decoration:none; font-size:14px;">
+            Approuver ou refuser
+        </a>
+    </p>
+    <p style="color:#888; font-size:12px; margin-top:20px;">
+        Délai de réponse souhaité :
+        <t t-if="object.client_deadline">
+            <t t-out="format_date(object.client_deadline) or ''">01/01/2025</t>.
+        </t>
+        <t t-else="">non défini.</t>
+        Passé ce délai, un rappel vous sera envoyé automatiquement.
+    </p>
+</div>
+        </field>
+        <field name="auto_delete" eval="True"/>
+    </record>
+
+    <!-- 2. Client notification only (notify-only types: sick, parental) -->
+    <record id="mail_template_leave_client_notify" model="mail.template">
+        <field name="name">Absence intérimaire: notification client (informatif)</field>
+        <field name="model_id" ref="hr_holidays.model_hr_leave"/>
+        <field name="subject">Notification de congé — {{ object.employee_id.name }}</field>
+        <field name="partner_to">{{ object.client_partner_id.id }}</field>
+        <field name="body_html" type="html">
+<div style="margin:0; padding:0; font-family:Arial,sans-serif; color:#374874;">
+    <p>Bonjour,</p>
+    <p>
+        Nous vous informons que
+        <strong><t t-out="object.employee_id.name or ''">Prénom Nom</t></strong>
+        a déclaré une absence :
+    </p>
+    <table style="border-collapse:collapse; width:100%; max-width:520px; margin-bottom:20px;">
+        <tr>
+            <td style="padding:8px 14px; font-weight:bold; background:#f5f5f5; border:1px solid #ddd; width:40%;">Type de congé</td>
+            <td style="padding:8px 14px; border:1px solid #ddd;"><t t-out="object.holiday_status_id.name or ''">Congé maladie</t></td>
+        </tr>
+        <tr>
+            <td style="padding:8px 14px; font-weight:bold; background:#f5f5f5; border:1px solid #ddd;">Date de début</td>
+            <td style="padding:8px 14px; border:1px solid #ddd;"><t t-out="format_date(object.request_date_from) or ''">01/01/2025</t></td>
+        </tr>
+        <tr>
+            <td style="padding:8px 14px; font-weight:bold; background:#f5f5f5; border:1px solid #ddd;">Date de fin</td>
+            <td style="padding:8px 14px; border:1px solid #ddd;"><t t-out="format_date(object.request_date_to) or ''">05/01/2025</t></td>
+        </tr>
+        <tr>
+            <td style="padding:8px 14px; font-weight:bold; background:#f5f5f5; border:1px solid #ddd;">Durée</td>
+            <td style="padding:8px 14px; border:1px solid #ddd;"><t t-out="object.number_of_days or ''">5</t> jour(s)</td>
+        </tr>
+    </table>
+    <p style="color:#555; margin-top:8px;">
+        Ce type de congé ne nécessite pas votre approbation. Ce message est purement informatif.
+    </p>
+</div>
+        </field>
+        <field name="auto_delete" eval="True"/>
+    </record>
+
+    <!-- 3. Reminder (sent by cron after deadline) -->
+    <record id="mail_template_leave_client_reminder" model="mail.template">
+        <field name="name">Absence intérimaire: rappel approbation client</field>
+        <field name="model_id" ref="hr_holidays.model_hr_leave"/>
+        <field name="subject">Rappel — Demande de congé en attente de votre réponse</field>
+        <field name="partner_to">{{ object.client_partner_id.id }}</field>
+        <field name="body_html" type="html">
+<div style="margin:0; padding:0; font-family:Arial,sans-serif; color:#374874;">
+    <p>Bonjour,</p>
+    <p>
+        Ce message est un rappel : une demande de congé de
+        <strong><t t-out="object.employee_id.name or ''">Prénom Nom</t></strong>
+        attend toujours votre réponse.
+    </p>
+    <table style="border-collapse:collapse; width:100%; max-width:520px; margin-bottom:20px;">
+        <tr>
+            <td style="padding:8px 14px; font-weight:bold; background:#f5f5f5; border:1px solid #ddd; width:40%;">Type de congé</td>
+            <td style="padding:8px 14px; border:1px solid #ddd;"><t t-out="object.holiday_status_id.name or ''">Congés payés</t></td>
+        </tr>
+        <tr>
+            <td style="padding:8px 14px; font-weight:bold; background:#f5f5f5; border:1px solid #ddd;">Date de début</td>
+            <td style="padding:8px 14px; border:1px solid #ddd;"><t t-out="format_date(object.request_date_from) or ''">01/01/2025</t></td>
+        </tr>
+        <tr>
+            <td style="padding:8px 14px; font-weight:bold; background:#f5f5f5; border:1px solid #ddd;">Date de fin</td>
+            <td style="padding:8px 14px; border:1px solid #ddd;"><t t-out="format_date(object.request_date_to) or ''">05/01/2025</t></td>
+        </tr>
+    </table>
+    <p>
+        <a t-att-href="'%s/my/team-leaves/%s' % (object.get_base_url(), object.id)"
+           style="background:#374874; color:#fff; padding:10px 22px; border-radius:4px; text-decoration:none; font-size:14px;">
+            Répondre maintenant
+        </a>
+    </p>
+</div>
+        </field>
+        <field name="auto_delete" eval="True"/>
+    </record>
+
+    <!-- 4. Employee notification: approved by client -->
+    <record id="mail_template_leave_approved_by_client" model="mail.template">
+        <field name="name">Absence intérimaire: approuvée par le client</field>
+        <field name="model_id" ref="hr_holidays.model_hr_leave"/>
+        <field name="subject">Votre demande de congé a été approuvée</field>
+        <field name="partner_to">{{ object.employee_id.user_id.partner_id.id }}</field>
+        <field name="body_html" type="html">
+<div style="margin:0; padding:0; font-family:Arial,sans-serif; color:#374874;">
+    <p>Bonjour <t t-out="object.employee_id.name or ''">Prénom Nom</t>,</p>
+    <p>
+        Votre demande de congé a été
+        <strong style="color:#28a745;">approuvée</strong>
+        par votre client.
+    </p>
+    <table style="border-collapse:collapse; width:100%; max-width:520px; margin-bottom:20px;">
+        <tr>
+            <td style="padding:8px 14px; font-weight:bold; background:#f5f5f5; border:1px solid #ddd; width:40%;">Type de congé</td>
+            <td style="padding:8px 14px; border:1px solid #ddd;"><t t-out="object.holiday_status_id.name or ''">Congés payés</t></td>
+        </tr>
+        <tr>
+            <td style="padding:8px 14px; font-weight:bold; background:#f5f5f5; border:1px solid #ddd;">Date de début</td>
+            <td style="padding:8px 14px; border:1px solid #ddd;"><t t-out="format_date(object.request_date_from) or ''">01/01/2025</t></td>
+        </tr>
+        <tr>
+            <td style="padding:8px 14px; font-weight:bold; background:#f5f5f5; border:1px solid #ddd;">Date de fin</td>
+            <td style="padding:8px 14px; border:1px solid #ddd;"><t t-out="format_date(object.request_date_to) or ''">05/01/2025</t></td>
+        </tr>
+    </table>
+</div>
+        </field>
+        <field name="auto_delete" eval="True"/>
+    </record>
+
+    <!-- 5. Employee notification: refused by client -->
+    <record id="mail_template_leave_refused_by_client" model="mail.template">
+        <field name="name">Absence intérimaire: refusée par le client</field>
+        <field name="model_id" ref="hr_holidays.model_hr_leave"/>
+        <field name="subject">Votre demande de congé a été refusée</field>
+        <field name="partner_to">{{ object.employee_id.user_id.partner_id.id }}</field>
+        <field name="body_html" type="html">
+<div style="margin:0; padding:0; font-family:Arial,sans-serif; color:#374874;">
+    <p>Bonjour <t t-out="object.employee_id.name or ''">Prénom Nom</t>,</p>
+    <p>
+        Votre demande de congé a été
+        <strong style="color:#dc3545;">refusée</strong>
+        par votre client.
+    </p>
+    <table style="border-collapse:collapse; width:100%; max-width:520px; margin-bottom:20px;">
+        <tr>
+            <td style="padding:8px 14px; font-weight:bold; background:#f5f5f5; border:1px solid #ddd; width:40%;">Type de congé</td>
+            <td style="padding:8px 14px; border:1px solid #ddd;"><t t-out="object.holiday_status_id.name or ''">Congés payés</t></td>
+        </tr>
+        <tr>
+            <td style="padding:8px 14px; font-weight:bold; background:#f5f5f5; border:1px solid #ddd;">Date de début</td>
+            <td style="padding:8px 14px; border:1px solid #ddd;"><t t-out="format_date(object.request_date_from) or ''">01/01/2025</t></td>
+        </tr>
+        <tr>
+            <td style="padding:8px 14px; font-weight:bold; background:#f5f5f5; border:1px solid #ddd;">Date de fin</td>
+            <td style="padding:8px 14px; border:1px solid #ddd;"><t t-out="format_date(object.request_date_to) or ''">05/01/2025</t></td>
+        </tr>
+        <t t-if="object.client_refuse_reason">
+            <tr>
+                <td style="padding:8px 14px; font-weight:bold; background:#f5f5f5; border:1px solid #ddd;">Motif du refus</td>
+                <td style="padding:8px 14px; border:1px solid #ddd;"><t t-out="object.client_refuse_reason or ''">Motif</t></td>
+            </tr>
+        </t>
+    </table>
+    <p style="color:#555; margin-top:8px;">
+        Veuillez contacter votre responsable pour toute question.
+    </p>
+</div>
+        </field>
+        <field name="auto_delete" eval="True"/>
+    </record>
+
+</odoo>

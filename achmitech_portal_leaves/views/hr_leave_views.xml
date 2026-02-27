@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_leave_view_form_client_approval" model="ir.ui.view">
+        <field name="name">hr.leave.view.form.client.approval</field>
+        <field name="model">hr.leave</field>
+        <field name="inherit_id" ref="hr_holidays.hr_leave_view_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Add client_validate to status bar (single validation types) -->
+            <xpath expr="//field[@name='state'][@statusbar_visible='confirm,validate']"
+                   position="attributes">
+                <attribute name="statusbar_visible">confirm,client_validate,validate</attribute>
+            </xpath>
+
+            <!-- Add client_validate to status bar (double validation types) -->
+            <xpath expr="//field[@name='state'][@statusbar_visible='confirm,validate,validate1']"
+                   position="attributes">
+                <attribute name="statusbar_visible">confirm,client_validate,validate1,validate</attribute>
+            </xpath>
+
+            <!-- HR override buttons (visible only in client_validate, manager only) -->
+            <xpath expr="//button[@name='action_refuse']" position="after">
+                <button string="Forcer la validation"
+                        name="action_hr_force_validate"
+                        type="object"
+                        class="btn-warning"
+                        invisible="state != 'client_validate'"
+                        groups="hr_holidays.group_hr_holidays_manager"
+                        confirm="Valider cette absence sans l'approbation du client ?"/>
+                <button string="Forcer le refus"
+                        name="action_hr_force_refuse"
+                        type="object"
+                        class="btn-danger"
+                        invisible="state != 'client_validate'"
+                        groups="hr_holidays.group_hr_holidays_manager"
+                        confirm="Refuser cette absence sans l'approbation du client ?"/>
+            </xpath>
+
+            <!-- Client info group in the sheet -->
+            <xpath expr="//sheet" position="inside">
+                <group name="client_approval_info"
+                       string="Approbation client"
+                       invisible="not client_partner_id">
+                    <field name="client_partner_id" readonly="1"/>
+                    <field name="client_deadline" readonly="1"
+                           invisible="state != 'client_validate'"/>
+                    <field name="client_reminded" readonly="1"
+                           invisible="state != 'client_validate'"/>
+                    <field name="client_refuse_reason" readonly="1"
+                           invisible="state != 'refuse' or not client_refuse_reason"/>
+                </group>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>
