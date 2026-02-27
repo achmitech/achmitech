@@ -79,12 +79,20 @@ class PortalLeaves(CustomerPortal):
 
     _TEAM_LEAVES_STEP = 20
 
+    # Shared sortings used by both the client list and the interim list.
+    # Client-specific keys (employee, deadline) are appended below.
+    _LEAVES_SORTINGS = {
+        'create_desc': {'label': "Date de demande (récent en premier)", 'order': 'create_date desc'},
+        'create_asc':  {'label': "Date de demande (ancien en premier)", 'order': 'create_date asc'},
+        'start_desc':  {'label': "Date de début (décroissant)",         'order': 'date_from desc'},
+        'start_asc':   {'label': "Date de début (croissant)",           'order': 'date_from asc'},
+        'type':        {'label': "Type de congé",                       'order': 'holiday_status_id'},
+    }
+
     _TEAM_LEAVES_SORTINGS = {
-        'date_asc':  {'label': "Date de début (croissant)",  'order': 'date_from asc'},
-        'date_desc': {'label': "Date de début (décroissant)", 'order': 'date_from desc'},
-        'employee':  {'label': "Intérimaire",                'order': 'employee_id'},
-        'type':      {'label': "Type de congé",             'order': 'holiday_status_id'},
-        'deadline':  {'label': "Délai de réponse",          'order': 'client_deadline asc'},
+        **_LEAVES_SORTINGS,
+        'employee': {'label': "Intérimaire",       'order': 'employee_id'},
+        'deadline': {'label': "Délai de réponse",  'order': 'client_deadline asc'},
     }
 
     _TEAM_LEAVES_GROUPBY = {
@@ -114,8 +122,8 @@ class PortalLeaves(CustomerPortal):
         ])
 
         # ── Default sort per tab ───────────────────────────────────────────
-        if not sortby:
-            sortby = 'date_asc' if tab == 'pending' else 'date_desc'
+        if not sortby or sortby not in self._TEAM_LEAVES_SORTINGS:
+            sortby = 'create_desc'
         order = self._TEAM_LEAVES_SORTINGS[sortby]['order']
         if groupby != 'none':
             order = f'{groupby}, {order}'
@@ -239,16 +247,53 @@ class PortalLeaves(CustomerPortal):
     # Interim-side portal  (/my/leaves)
     # ════════════════════════════════════════════════════════════════════════
 
-    @http.route('/my/leaves', type='http', auth='user', website=True)
-    def my_leaves_list(self, **kw):
+    _MY_LEAVES_STEP = 20
+
+    _MY_LEAVES_FILTERBY = {
+        'all':        {'label': "Toutes",                 'domain': []},
+        'pending':    {'label': "En attente du client",   'domain': [('state', '=', 'client_validate')]},
+        'processing': {'label': "En cours de traitement", 'domain': [('state', '=', 'confirm')]},
+        'approved':   {'label': "Approuvées",             'domain': [('state', 'in', ['validate', 'validate1'])]},
+        'refused':    {'label': "Refusées",               'domain': [('state', '=', 'refuse')]},
+    }
+
+    @http.route(['/my/leaves', '/my/leaves/page/<int:page>'], type='http', auth='user', website=True)
+    def my_leaves_list(self, page=1, sortby='create_desc', filterby='all', **kw):
         employee = self._get_interim_employee()
         if not employee:
             return request.redirect('/my')
 
-        leaves = request.env['hr.leave'].sudo().search([
+        sortings = self._LEAVES_SORTINGS
+        filterby_options = self._MY_LEAVES_FILTERBY
+
+        if sortby not in sortings:
+            sortby = 'create_desc'
+        if filterby not in filterby_options:
+            filterby = 'all'
+
+        order = sortings[sortby]['order']
+        filter_domain = filterby_options[filterby]['domain']
+
+        base_domain = [
             ('employee_id', '=', employee.id),
             ('state', 'not in', ['draft', 'cancel']),
-        ], order='date_from desc', limit=50)
+        ] + filter_domain
+
+        Leave = request.env['hr.leave'].sudo()
+        total = Leave.search_count(base_domain)
+
+        pager = portal_pager(
+            url='/my/leaves',
+            url_args={'sortby': sortby, 'filterby': filterby},
+            total=total,
+            page=page,
+            step=self._MY_LEAVES_STEP,
+        )
+
+        leaves = Leave.search(
+            base_domain, order=order,
+            limit=self._MY_LEAVES_STEP, offset=pager['offset'],
+        )
 
         # Only show leave types the employee can actually request:
         # - must be part of our client-workflow (approval or notification)
@@ -272,6 +317,12 @@ class PortalLeaves(CustomerPortal):
             'leave_types': leave_types,
             'page_name': 'my_leaves',
             'flash': flash,
+            'pager': pager,
+            'sortby': sortby,
+            'filterby': filterby,
+            'searchbar_sortings': {k: v['label'] for k, v in sortings.items()},
+            'searchbar_filters': {k: v['label'] for k, v in filterby_options.items()},
+            'default_url': '/my/leaves',
         })
         return request.render('achmitech_portal_leaves.portal_my_leaves_list', values)
 
