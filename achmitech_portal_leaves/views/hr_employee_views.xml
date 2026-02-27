@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Add client_project_id to employee Work Information tab, after parent_id -->
+    <record id="hr_employee_view_form_client_project" model="ir.ui.view">
+        <field name="name">hr.employee.form.client.project</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='parent_id']" position="after">
+                <field name="client_project_id"
+                       string="Mission client actuelle"
+                       options="{'no_create': True}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
