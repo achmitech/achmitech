@@ -121,6 +121,7 @@
                         <table class="table table-striped table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
+                                    <th>Date de demande</th>
                                     <t t-if="groupby != 'employee_id'">
                                         <th>Intérimaire</th>
                                     </t>
@@ -142,6 +143,10 @@
                             <tbody>
                                 <t t-foreach="group" t-as="leave">
                                     <tr>
+                                        <td class="text-nowrap">
+                                            <t t-out="leave.create_date"
+                                               t-options='{"widget": "date"}'/>
+                                        </td>
                                         <t t-if="groupby != 'employee_id'">
                                             <td><strong t-out="leave.employee_id.name"/></td>
                                         </t>
@@ -385,10 +390,40 @@
                 </button>
             </div>
 
+            <!-- Sort / filter bar -->
+            <div class="row mb-3 g-2">
+                <div class="col-auto">
+                    <div class="input-group input-group-sm">
+                        <label class="input-group-text">Trier par</label>
+                        <select class="form-select form-select-sm"
+                                onchange="window.location.href=this.value">
+                            <t t-foreach="searchbar_sortings" t-as="key">
+                                <option t-att-value="'/my/leaves?sortby=%s&amp;filterby=%s' % (key, filterby)"
+                                        t-att-selected="key == sortby"
+                                        t-out="searchbar_sortings[key]"/>
+                            </t>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <div class="input-group input-group-sm">
+                        <label class="input-group-text">Statut</label>
+                        <select class="form-select form-select-sm"
+                                onchange="window.location.href=this.value">
+                            <t t-foreach="searchbar_filters" t-as="key">
+                                <option t-att-value="'/my/leaves?sortby=%s&amp;filterby=%s' % (sortby, key)"
+                                        t-att-selected="key == filterby"
+                                        t-out="searchbar_filters[key]"/>
+                            </t>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             <!-- Leave list -->
             <t t-if="not leaves">
                 <div class="alert alert-info" role="alert">
-                    Vous n'avez aucune demande de congé enregistrée.
+                    Aucune demande de congé pour ce filtre.
                 </div>
             </t>
             <t t-else="">
@@ -396,6 +431,7 @@
                     <table class="table table-striped table-hover align-middle">
                         <thead class="table-light">
                             <tr>
+                                <th>Date de demande</th>
                                 <th>Type de congé</th>
                                 <th>Du</th>
                                 <th>Au</th>
@@ -406,6 +442,10 @@
                         <tbody>
                             <t t-foreach="leaves" t-as="leave">
                                 <tr>
+                                    <td class="text-nowrap">
+                                        <t t-out="leave.create_date"
+                                           t-options='{"widget": "date"}'/>
+                                    </td>
                                     <td t-out="leave.holiday_status_id.name"/>
                                     <td>
                                         <t t-out="leave.request_date_from"
@@ -445,6 +485,7 @@
                         </tbody>
                     </table>
                 </div>
+                <t t-call="portal.pager"/>
             </t>
 
             <!-- New leave modal -->
