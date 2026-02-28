@@ -16,11 +16,24 @@ class StaffingNeed(models.Model):
     job_id = fields.Many2one("hr.job", string="Poste")
     applicant_ids = fields.One2many("hr.applicant", "staffing_need_id", string="Candidats")
 
+    positions_filled = fields.Integer(
+        string="Postes pourvus",
+        compute="_compute_positions_filled",
+        store=True,
+    )
+
     state = fields.Selection([
         ("draft", "Brouillon"),
         ("assigned", "Affecté"),
         ("closed", "Clôturé"),
     ], default="draft", string="Statut")
+
+    @api.depends("applicant_ids.stage_id")
+    def _compute_positions_filled(self):
+        for need in self:
+            need.positions_filled = sum(
+                1 for app in need.applicant_ids if app.stage_id.hired_stage
+            )
 
     @api.constrains("number_of_positions")
     def _check_positions(self):
