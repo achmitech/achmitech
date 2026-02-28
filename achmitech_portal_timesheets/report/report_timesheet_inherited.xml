@@ -36,10 +36,10 @@
                         <div class="col-5 text-center" style="background:#0B2A5B; color:#FFFFFF; font-weight:700; padding:8px 12px;">
                             <span>
                             De
-                                <t t-if="period_start" t-esc="period_start.strftime('%d/%m/%Y')"/>
+                                <t t-if="period_start" t-out="period_start.strftime('%d/%m/%Y')"/>
                                 <t t-else="">--/--/----</t>
                             à
-                                <t t-if="period_end" t-esc="period_end.strftime('%d/%m/%Y')"/>
+                                <t t-if="period_end" t-out="period_end.strftime('%d/%m/%Y')"/>
                                 <t t-else="">--/--/----</t>
                             </span>
                         </div>
@@ -57,7 +57,7 @@
                         <!-- Col 1 (40%) -->
                         <div class="col-5" style="border:1px solid #0B2A5B; font-weight:700; padding:8px 12px;">
                             <strong>Nom complet : </strong>
-                            <span style="font-weight:500" t-esc="employee_name"/>
+                            <span style="font-weight:500" t-out="employee_name"/>
                         </div>
 
                         <!-- Col 2 (20%) vide -->
@@ -66,7 +66,7 @@
                         <!-- Col 3 (40%) -->
                         <div class="col-5" style="border:1px solid #0B2A5B; font-weight:700; padding:8px 12px;">
                             <strong>N° Commande : </strong>
-                            <span t-esc="cra_order_number" style="font-weight:500"/>
+                            <span t-out="cra_order_number" style="font-weight:500"/>
                         </div>
                     </div>
 
@@ -113,16 +113,16 @@
                                 <t t-foreach="days_local" t-as="day">
                                     <tr>
                                         <td style="border:1px solid #000; padding:6px;">
-                                            <t t-esc="day.get('label')"/>
+                                            <t t-out="day.get('label')"/>
                                         </td>
 
                                         <td class="text-center" t-att-style="'border:1px solid #000; padding:6px; background: %s;' % (day.get('bg') or '#b4b4b4')">
                                             <!-- if overlay (leave/holiday) show code, else show cra_value -->
                                             <t t-if="day.get('status_code')">
-                                                <t t-esc="day.get('status_code')"/>
+                                                <t t-out="day.get('status_code')"/>
                                             </t>
                                             <t t-else="">
-                                                <t t-esc="day.get('cra_value')"/>
+                                                <t t-out="day.get('cra_value')"/>
                                             </t>
                                         </td>
                                     </tr>
@@ -134,7 +134,7 @@
                             TOTAL
                                     </td>
                                     <td class="text-center" style="border:1px solid #000; padding:6px; font-weight:700;">
-                                        <t t-esc="total_cra_local"/>
+                                        <t t-out="total_cra_local"/>
                                     </td>
                                 </tr>
                             </tbody>
@@ -154,18 +154,18 @@
 
                                     <!-- months comes from python: months = [{name, year}, {name, year}, {name, year}] -->
                                     <th style="background-color: #93aacf; border:1px solid #000;" class="text-center">
-                                        <t t-esc="months_local[0]['name'] if len(months_local) &gt; 0 else ''"/>
-                                        <t t-esc="months_local[0]['year'] if len(months_local) &gt; 0 else ''"/>
+                                        <t t-out="months_local[0]['name'] if len(months_local) &gt; 0 else ''"/>
+                                        <t t-out="months_local[0]['year'] if len(months_local) &gt; 0 else ''"/>
                                     </th>
 
                                     <th style="background-color: #93aacf; border:1px solid #000;" class="text-center">
-                                        <t t-esc="months_local[1]['name'] if len(months_local) &gt; 1 else ''"/>
-                                        <t t-esc="months_local[1]['year'] if len(months_local) &gt; 1 else ''"/>
+                                        <t t-out="months_local[1]['name'] if len(months_local) &gt; 1 else ''"/>
+                                        <t t-out="months_local[1]['year'] if len(months_local) &gt; 1 else ''"/>
                                     </th>
 
                                     <th style="background-color: #93aacf; border:1px solid #000;" class="text-center">
-                                        <t t-esc="months_local[2]['name'] if len(months_local) &gt; 2 else ''"/>
-                                        <t t-esc="months_local[2]['year'] if len(months_local) &gt; 2 else ''"/>
+                                        <t t-out="months_local[2]['name'] if len(months_local) &gt; 2 else ''"/>
+                                        <t t-out="months_local[2]['year'] if len(months_local) &gt; 2 else ''"/>
                                     </th>
 
                                 </tr>
@@ -175,13 +175,13 @@
                                 <tr>
                                     <!-- empty cells (for manual / Sign fill) -->
                                     <td class="text-center" style="border:1px solid #000; padding:6px;">
-                                        <t t-esc="conges_previsionnels[0]['planned_days'] if conges_previsionnels else ''"/>
+                                        <t t-out="conges_previsionnels[0]['planned_days'] if conges_previsionnels else ''"/>
                                     </td>
                                     <td class="text-center" style="border:1px solid #000; padding:6px;">
-                                        <t t-esc="conges_previsionnels[1]['planned_days'] if conges_previsionnels else ''"/>
+                                        <t t-out="conges_previsionnels[1]['planned_days'] if conges_previsionnels else ''"/>
                                     </td>
                                     <td class="text-center" style="border:1px solid #000; padding:6px;">
-                                        <t t-esc="conges_previsionnels[2]['planned_days'] if conges_previsionnels else ''"/>
+                                        <t t-out="conges_previsionnels[2]['planned_days'] if conges_previsionnels else ''"/>
                                     </td>
                                 </tr>
                             </tbody>
@@ -209,28 +209,28 @@
 
                 <!-- SIGNATURES BLOCK -->
                 <div class="row mt16">
-                    <!-- SIGNATURES BLOCK (stick to bottom without forcing a new page) -->
-                    <table style="width:100%; border-collapse:collapse; page-break-inside:avoid;">
+                    <table style="width:100%; border-collapse:collapse; border:1px solid #fff; page-break-inside:avoid;">
 
                         <!-- Spacer that pushes the signature block down -->
-                        <tr>
-                            <td style="height:260px;">&amp;nbsp;</td>
+                        <tr style="border:1px solid #fff;">
+                            <td style="height:260px; border:1px solid #fff;">&amp;nbsp;</td>
                         </tr>
 
                         <!-- Actual signatures content -->
-                        <tr>
-                            <td>
-                                <table class="table table-sm table-borderless" style="width:100%; margin:0;">
+                        <tr style="border:1px solid #fff;">
+                            <td style="border:1px solid #fff;">
+                                <!-- No Bootstrap table classes: inline styles only to avoid phantom borders -->
+                                <table style="width:100%; margin:0; border-collapse:collapse; border:1px solid #fff;">
                                     <!-- ROW 1: À / Le -->
-                                    <tr style="border:none;">
-                                        <td style="width:50%; vertical-align:top; padding-right:10mm; border:none;">
+                                    <tr style="border:1px solid #fff;">
+                                        <td style="width:50%; vertical-align:top; padding-right:10mm; border:1px solid #fff;">
                                             <div>
                                                 <strong>À :</strong>
-                                                <span style="display:inline-block; width:220px; background:#d9eef7;">&amp;nbsp;RABAT</span>
+                                                <span style="display:inline-block; width:220px; background:#d9eef7;">&amp;nbsp;<t t-out="company.city or ''"/></span>
                                             </div>
                                         </td>
 
-                                        <td style="width:50%; vertical-align:top; padding-left:10mm; text-align:left; border:none;">
+                                        <td style="width:50%; vertical-align:top; padding-left:10mm; text-align:left; border:1px solid #fff;">
                                             <div>
                                                 <strong>Le :</strong>
                                                 <span style="display:inline-block; width:220px; background:#d9eef7;">&amp;nbsp;</span>
@@ -239,38 +239,38 @@
                                     </tr>
 
                                     <!-- ROW 2: (blank left) / Informations Responsable -->
-                                    <tr style="border:none;">
-                                        <td style="width:50%; padding-right:10mm; border:none;"></td>
-                                        <td style="width:50%; padding-left:10mm; text-align:left; padding-top:6px; border:none;">
+                                    <tr style="border:1px solid #fff;">
+                                        <td style="width:50%; padding-right:10mm; border:1px solid #fff;"></td>
+                                        <td style="width:50%; padding-left:10mm; text-align:left; padding-top:6px; border:1px solid #fff;">
                                             <strong>Informations du Responsable UM6P</strong>
                                         </td>
                                     </tr>
 
                                     <!-- ROW 3: (blank left) / NOM Prénom -->
-                                    <tr style="border:none;">
-                                        <td style="width:50%; padding-right:10mm; border:none;"></td>
-                                        <td style="width:50%; padding-left:10mm; text-align:left; padding-top:4px; border:none;">
+                                    <tr style="border:1px solid #fff;">
+                                        <td style="width:50%; padding-right:10mm; border:1px solid #fff;"></td>
+                                        <td style="width:50%; padding-left:10mm; text-align:left; padding-top:4px; border:1px solid #fff;">
                                             <strong>NOM Prénom :</strong>
                                             <span style="display:inline-block; width:220px; background:#d9eef7;">&amp;nbsp;</span>
                                         </td>
                                     </tr>
 
                                     <!-- ROW 4: Signature labels -->
-                                    <tr style="border:none;">
-                                        <td style="padding-top:14px; border:none;">
+                                    <tr style="border:1px solid #fff;">
+                                        <td style="padding-top:14px; border:1px solid #fff;">
                                             <strong>Signature Collaborateur :</strong>
                                         </td>
-                                        <td style="padding-top:14px; border:none;">
+                                        <td style="padding-top:14px; border:1px solid #fff;">
                                             <strong>Signature Client final :</strong>
                                         </td>
                                     </tr>
 
                                     <!-- ROW 5: Signature boxes -->
-                                    <tr style="border:none;">
-                                        <td style="padding-right:10mm; border:none;">
+                                    <tr style="border:1px solid #fff;">
+                                        <td style="padding-right:10mm; border:1px solid #fff;">
                                             <div style="border:1px solid #000; height:120px;"></div>
                                         </td>
-                                        <td style="padding-left:10mm; border:none;">
+                                        <td style="padding-left:10mm; border:1px solid #fff;">
                                             <div style="border:1px solid #000; height:120px;"></div>
                                         </td>
                                     </tr>
@@ -287,15 +287,15 @@
 
     <template id="cra_custom_report_header_footer">
         <div t-attf-class="header o_company_#{company.id}_layout" style="width:100%;">
-            <table style="width:100%; border-collapse:collapse;">
-                <tr>
-                    <!-- LEFT logo -->
-                    <td style="width:50%; text-align:left; vertical-align:middle;">
-                        <img t-att-src="'/achmitech_portal_timesheets/static/src/img/service_empower.png'" alt="Service Empower" style="max-height:70px; width:auto;"/>
+            <table style="width:100%; border-collapse:collapse; border:1px solid #fff;">
+                <tr style="border:1px solid #fff;">
+                    <!-- LEFT logo: current company logo -->
+                    <td style="width:50%; text-align:left; vertical-align:middle; border:1px solid #fff;">
+                        <img t-if="company.logo" t-att-src="image_data_uri(company.logo)" t-att-alt="company.name" style="max-height:70px; width:auto;"/>
                     </td>
 
-                    <!-- RIGHT logo -->
-                    <td style="width:50%; text-align:right; vertical-align:middle;">
+                    <!-- RIGHT logo: client logo -->
+                    <td style="width:50%; text-align:right; vertical-align:middle; border:1px solid #fff;">
                         <img t-if="client and client.image_1920" t-att-src="image_data_uri(client.image_1920)" alt="Logo Client" style="max-height:70px; width:auto;"/>
                     </td>
                 </tr>
@@ -324,7 +324,7 @@
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">achmitech_portal_timesheets.cra_report</field>
         <field name="report_file">achmitech_portal_timesheets.cra_report</field>
-        <field name="print_report_name">(object._get_cra_report_filename())</field>
+        <field name="print_report_name">(object._get_report_base_filename())</field>
         <field name="binding_type">report</field>
 
     </record>

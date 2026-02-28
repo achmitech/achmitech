@@ -7,12 +7,23 @@ class EmployeeTimesheetWizard(models.TransientModel):
     _name = "employee.timesheet.wizard"
     _description = "Assistant - CRA client (feuille de temps)"
 
-    employee_id = fields.Many2one("hr.employee", string="Employé")
+    company_id = fields.Many2one(
+        "res.company",
+        string="Société",
+        default=lambda self: self.env.company,
+    )
+
+    employee_id = fields.Many2one(
+        "hr.employee",
+        string="Employé",
+        domain="[('company_id', '=', company_id)]",
+    )
 
     project_id = fields.Many2one(
         "project.project",
         string="Projet client",
         required=True,
+        domain="[('company_id', '=', company_id)]",
     )
 
     allowed_task_ids = fields.Many2many(
