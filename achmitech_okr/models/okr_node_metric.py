@@ -69,7 +69,6 @@ class OkrNodeMetric(models.Model):
                         raise ValueError(f"Unknown predefined KPI: {d.predefined_kpi}")
 
                     current = float(fn(env, node))
-                    _logger.error("KPI returned current=%s for line=%s", current, line.id)
 
                 elif d.definition_type == "code":
                     current = 0.0
@@ -102,11 +101,6 @@ class OkrNodeMetric(models.Model):
             target = line.target or 0.0
             progress = (current / target * 100.0) if target > 0 else 0.0
             progress = max(0.0, progress)
-
-            _logger.error(
-                "FINAL current for line=%s def=%s => current=%s target=%s progress=%s",
-                line.id, d.name, current, target, progress
-            )
 
             line.current = round(current, 4)
             line.progress = round(progress, 2)
