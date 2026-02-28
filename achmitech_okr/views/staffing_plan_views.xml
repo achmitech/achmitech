@@ -13,8 +13,12 @@
 
           <!-- Title -->
           <div class="oe_title pe-0 w-100 mw-100" name="title">
-            <h1 class="d-flex flex-row justify-content-between">
+            <h1 class="d-flex flex-row justify-content-between align-items-center">
               <field name="name" readonly="1"/>
+              <field name="state" widget="badge"
+                     decoration-success="state == 'active'"
+                     decoration-warning="state == 'expired'"
+                     decoration-info="state == 'draft'"/>
             </h1>
           </div>
 
@@ -46,6 +50,7 @@
                   <field name="name" string="Désignation"/>
                   <field name="job_id"/>
                   <field name="number_of_positions"/>
+                  <field name="positions_filled" readonly="1"/>
                   <field name="assigned_to"
                          domain="[('company_id', '=', parent.company_id), ('share', '=', False)]"/>
                   <field name="assigned_date"/>
@@ -87,6 +92,10 @@
         <field name="department_id"/>
         <field name="date_from"/>
         <field name="date_to"/>
+        <field name="state" widget="badge"
+               decoration-success="state == 'active'"
+               decoration-warning="state == 'expired'"
+               decoration-info="state == 'draft'"/>
         <field name="presented_sum" string="Présentés" optional="show"/>
         <field name="client_interview_pass_rate" widget="percentage" string="Taux EC (%)" optional="show"/>
         <field name="company_id" groups="base.group_multi_company"/>

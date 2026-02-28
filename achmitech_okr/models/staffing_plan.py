@@ -13,6 +13,12 @@ class StaffingPlan(models.Model):
     date_from = fields.Date("Date de début", required=True)
     date_to = fields.Date("Date de fin", required=True)
 
+    state = fields.Selection([
+        ("draft", "Brouillon"),
+        ("active", "En cours"),
+        ("expired", "Expiré"),
+    ], string="Statut", compute="_compute_state")
+
     presented_sum = fields.Integer(
         string="Nb candidats présentés (total)",
         compute="_compute_client_interview_kpis",
@@ -28,6 +34,18 @@ class StaffingPlan(models.Model):
         compute="_compute_client_interview_kpis",
         store=True,
     )
+
+    def _compute_state(self):
+        today = fields.Date.today()
+        for plan in self:
+            if not plan.date_from or not plan.date_to:
+                plan.state = "draft"
+            elif plan.date_from > today:
+                plan.state = "draft"
+            elif plan.date_to >= today:
+                plan.state = "active"
+            else:
+                plan.state = "expired"
 
     @api.depends(
         "date_from", "date_to",
