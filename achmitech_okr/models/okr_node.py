@@ -197,6 +197,7 @@ class OKRNode(models.Model):
 
     def button_confirm(self):
         self.state = 'confirmed'
+        self.child_ids.filtered(lambda c: c.state == 'draft').button_confirm()
 
     def button_cancel(self):
         self.state = 'cancelled'
