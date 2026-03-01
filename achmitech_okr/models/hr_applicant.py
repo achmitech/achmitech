@@ -51,23 +51,45 @@ class HrApplicant(models.Model):
         string="Date ajout vivier", readonly=True, copy=False
     )
 
-    recontact_log_ids = fields.One2many(
-        "okr.recontact.log", "applicant_id", string="Recontacts vivier"
+    recontact_log_ids = fields.Many2many(
+        "okr.recontact.log",
+        string="Recontacts vivier",
+        compute="_compute_recontact_log_ids",
     )
     last_recontact_date = fields.Date(
         string="Dernier recontact",
         compute="_compute_last_recontact_date",
-        store=True,
     )
 
-    @api.depends("recontact_log_ids.date")
-    def _compute_last_recontact_date(self):
+    @api.depends('partner_id')
+    def _compute_recontact_log_ids(self):
+        OkrLog = self.env['okr.recontact.log']
         for rec in self:
-            dates = rec.recontact_log_ids.mapped("date")
-            rec.last_recontact_date = max(dates) if dates else False
+            if not rec.id or not rec.partner_id:
+                rec.recontact_log_ids = OkrLog
+                continue
+            rec.recontact_log_ids = OkrLog.search(
+                [('partner_id', '=', rec.partner_id.id)], order='date desc, id desc'
+            )
+
+    @api.depends('partner_id')
+    def _compute_last_recontact_date(self):
+        OkrLog = self.env['okr.recontact.log']
+        for rec in self:
+            if not rec.id or not rec.partner_id:
+                rec.last_recontact_date = False
+                continue
+            last = OkrLog.search(
+                [('partner_id', '=', rec.partner_id.id)], order='date desc, id desc', limit=1
+            )
+            rec.last_recontact_date = last.date if last else False
 
     def action_open_recontact_wizard(self):
         self.ensure_one()
+        if not self.partner_id:
+            raise UserError(
+                "Veuillez renseigner l'email du candidat avant d'enregistrer un recontact."
+            )
         wizard = self.env["okr.recontact.wizard"].sudo().create({"applicant_id": self.id})
         return {
             "type": "ir.actions.act_window",

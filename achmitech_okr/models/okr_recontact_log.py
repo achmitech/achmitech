@@ -18,6 +18,9 @@ class OkrRecontactLog(models.Model):
     applicant_id = fields.Many2one(
         "hr.applicant", required=True, ondelete="cascade", index=True
     )
+    partner_id = fields.Many2one(
+        "res.partner", string="Candidat", index=True, ondelete="set null"
+    )
     date = fields.Date(string="Date", required=True, default=fields.Date.context_today)
     user_id = fields.Many2one(
         "res.users", string="Recruteur", default=lambda self: self.env.user
