@@ -21,6 +21,7 @@ class OkrRecontactWizard(models.TransientModel):
         self.ensure_one()
         self.env["okr.recontact.log"].create({
             "applicant_id": self.applicant_id.id,
+            "partner_id": self.applicant_id.partner_id.id or False,
             "date": self.date,
             "user_id": self.env.uid,
             "outcome": self.outcome,
