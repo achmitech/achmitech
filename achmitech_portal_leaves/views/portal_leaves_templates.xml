@@ -390,6 +390,17 @@
                 </button>
             </div>
 
+            <!-- Leave balance -->
+            <t t-if="allocation_total and allocation_total != '0'">
+                <div class="alert alert-info d-flex align-items-center gap-2 py-2 mb-3" role="status">
+                    <i class="fa fa-calendar-check-o fa-fw"/>
+                    <span>
+                        Solde de congés restant :
+                        <strong><t t-out="allocation_remaining"/> / <t t-out="allocation_total"/> jours</strong>
+                    </span>
+                </div>
+            </t>
+
             <!-- Sort / filter bar -->
             <div class="row mb-3 g-2">
                 <div class="col-auto">
