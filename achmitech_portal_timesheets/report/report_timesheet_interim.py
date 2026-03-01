@@ -227,12 +227,10 @@ class ReportTimesheetInterim(models.AbstractModel):
                     cur += timedelta(days=1)
 
         # Render-friendly list for QWeb
-        day_names = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche']
         days = []
         total_cra = 0
 
         for d in all_dates:
-            weekday = day_names[d.weekday()]
             is_weekend = d.weekday() in (5, 6)
 
             h = hours_by_date[d]
@@ -260,7 +258,7 @@ class ReportTimesheetInterim(models.AbstractModel):
                 bg = "#ed3a3a"
 
             days.append({
-                "label": f"{weekday}-{d.day}",
+                "label": str(d.day),
                 "cra_value": cra,
                 "bg": bg,
                 "status_code": status_code,  # or (overlay["code"] if overlay and h <= 0 else "")
@@ -279,7 +277,28 @@ class ReportTimesheetInterim(models.AbstractModel):
             yy = p_year + ((p_month + i - 1) // 12)
             months.append({"name": month_names_fr[mn], "year": yy})
 
-        return {"days": days, "months": months, "total_cra": total_cra}
+        # Month groups for the CRA table header: one colspan block per calendar month
+        month_names_fr_full = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+                               'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
+        month_groups = []
+        for d in all_dates:
+            label = f"{month_names_fr_full[d.month]} {d.year}"
+            if not month_groups or month_groups[-1]['label'] != label:
+                month_groups.append({'label': label, 'count': 1})
+            else:
+                month_groups[-1]['count'] += 1
+
+        # Week groups: one colspan block per ISO week number within the period
+        week_groups = []
+        for d in all_dates:
+            label = f"S{d.isocalendar()[1]}"
+            if not week_groups or week_groups[-1]['label'] != label:
+                week_groups.append({'label': label, 'count': 1})
+            else:
+                week_groups[-1]['count'] += 1
+
+        return {"days": days, "months": months, "total_cra": total_cra,
+                "month_groups": month_groups, "week_groups": week_groups}
     
 
     def _compute_conges_previsionnels(self, employee, period_start):
