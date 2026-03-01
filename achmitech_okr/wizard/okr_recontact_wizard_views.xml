@@ -6,7 +6,7 @@
         <field name="arch" type="xml">
             <form string="Enregistrer un recontact">
                 <group>
-                    <field name="applicant_id" readonly="1"/>
+                    <field name="applicant_id" readonly="1" invisible="1"/>
                     <field name="date" required="1"/>
                     <field name="outcome" required="1"/>
                     <field name="note" placeholder="Notes sur l'appel..."/>

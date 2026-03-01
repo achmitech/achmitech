@@ -13,6 +13,8 @@ _logger = logging.getLogger(__name__)
 class HrApplicant(models.Model):
     _inherit = "hr.applicant"
 
+    availability_negotiable = fields.Boolean(string="Négociable", default=False)
+
     evaluation_ids = fields.One2many(
         comodel_name="hr.applicant.evaluation",
         inverse_name="applicant_id",

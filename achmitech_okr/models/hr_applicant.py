@@ -4,10 +4,6 @@ from odoo.exceptions import UserError
 
 from odoo import models, fields, api, _
 
-import logging
-
-_logger = logging.getLogger(__name__)
-
 class HrApplicant(models.Model):
     _inherit = "hr.applicant"
 
@@ -51,9 +47,6 @@ class HrApplicant(models.Model):
         readonly=True,
     )
     
-    retour_done = fields.Boolean(string="Retour candidat fait", default=False, copy=False)
-    retour_date = fields.Datetime(string="Date retour candidat", copy=False, readonly=True)
-
     pool_added_date = fields.Date(
         string="Date ajout vivier", readonly=True, copy=False
     )
@@ -75,7 +68,7 @@ class HrApplicant(models.Model):
 
     def action_open_recontact_wizard(self):
         self.ensure_one()
-        wizard = self.env["okr.recontact.wizard"].create({"applicant_id": self.id})
+        wizard = self.env["okr.recontact.wizard"].sudo().create({"applicant_id": self.id})
         return {
             "type": "ir.actions.act_window",
             "name": "Enregistrer un recontact",
@@ -85,19 +78,6 @@ class HrApplicant(models.Model):
             "target": "new",
         }
 
-    def action_mark_retour_done(self):
-        for rec in self:
-            # Only allowed when refused or hired
-            if rec.application_status not in ("refused", "hired"):
-                raise UserError(_("Le retour ne peut être marqué que si le candidat est Refusé ou Recruté."))
-
-            if not rec.retour_done:
-                rec.write({
-                    "retour_done": True,
-                    "retour_date": fields.Datetime.now(),
-                })
-        return True
-    
     def reset_applicant(self):
        """ Reset the applicant state to progress """
        super().reset_applicant()
@@ -108,6 +88,8 @@ class HrApplicant(models.Model):
         for applicant in self:
             if not applicant.staffing_need_id:
                 raise UserError("Le candidat doit être lié à un besoin pour être présenté au client.")
+            if not applicant.availability:
+                raise UserError("La disponibilité du candidat doit être renseignée avant de le présenter au client.")
             applicant.write({
                 "presented_to_client_date": fields.Datetime.now(),
             })
@@ -146,4 +128,21 @@ class HrApplicant(models.Model):
                 super(HrApplicant, already_pooled).write(vals)
             return True
 
-        return super().write(vals)
+        result = super().write(vals)
+
+        # Auto-close staffing needs when all positions are filled
+        if "stage_id" in vals:
+            new_stage = self.env["hr.recruitment.stage"].browse(vals["stage_id"])
+            if new_stage.hired_stage:
+                needs = self.mapped("staffing_need_id").filtered(
+                    lambda n: n.state == "assigned"
+                )
+                for need in needs:
+                    hired = self.env["hr.applicant"].search_count([
+                        ("staffing_need_id", "=", need.id),
+                        ("stage_id.hired_stage", "=", True),
+                    ])
+                    if hired >= need.number_of_positions:
+                        need.sudo().action_close()
+
+        return result

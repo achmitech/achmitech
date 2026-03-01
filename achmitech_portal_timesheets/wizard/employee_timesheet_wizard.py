@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import calendar
+from datetime import date
+
 from odoo import models, fields, api
-from odoo.exceptions import ValidationError
 
 class EmployeeTimesheetWizard(models.TransientModel):
     _name = "employee.timesheet.wizard"
@@ -35,6 +37,7 @@ class EmployeeTimesheetWizard(models.TransientModel):
     task_id = fields.Many2one(
         "project.task",
         string="Tâche du projet",
+        required=True,
         domain="[('id', 'in', allowed_task_ids)]",
     )
 
@@ -67,26 +70,35 @@ class EmployeeTimesheetWizard(models.TransientModel):
         self.task_id = False
     
     
-    date_from = fields.Date(string="Du", required=True)
-    date_to = fields.Date(string="Au", required=True)
+    period_month = fields.Selection(
+        selection=[
+            ('1', 'Janvier'), ('2', 'Février'), ('3', 'Mars'), ('4', 'Avril'),
+            ('5', 'Mai'), ('6', 'Juin'), ('7', 'Juillet'), ('8', 'Août'),
+            ('9', 'Septembre'), ('10', 'Octobre'), ('11', 'Novembre'), ('12', 'Décembre'),
+        ],
+        string="Mois",
+        required=True,
+        default=lambda self: str(fields.Date.today().month),
+    )
 
-    @api.constrains("date_from", "date_to")
-    def _check_dates(self):
-        for w in self:
-            if w.date_from and w.date_to and w.date_from > w.date_to:
-                raise ValidationError("La date 'Du' doit être antérieure à la date 'Au'.")
+    period_year = fields.Integer(
+        string="Année",
+        required=True,
+        default=lambda self: fields.Date.today().year,
+    )
 
-            # optional: limit to <= 31 days (keep if you want)
-            if w.date_from and w.date_to and (w.date_to - w.date_from).days > 31:
-                raise ValidationError("La période ne doit pas dépasser 31 jours.")
-    
     def action_print_report(self):
         self.ensure_one()
 
+        month = int(self.period_month)
+        year = self.period_year
+        date_from = fields.Date.to_string(date(year, month, 1))
+        date_to = fields.Date.to_string(date(year, month, calendar.monthrange(year, month)[1]))
+
         data = {
             "employee_id": self.employee_id.id,
-            "date_from": fields.Date.to_string(self.date_from),
-            "date_to": fields.Date.to_string(self.date_to),
+            "date_from": date_from,
+            "date_to": date_to,
             "project_id": self.project_id.id,
             "task_id": self.task_id.id,
         }
@@ -94,7 +106,9 @@ class EmployeeTimesheetWizard(models.TransientModel):
         return self.env.ref(
             "achmitech_portal_timesheets.timesheet_report_interim"
         ).report_action(self, data=data)
-    
+
     def _get_report_base_filename(self):
         self.ensure_one()
-        return f"CRA_{self.project_id.name}_{self.employee_id.name}_Du_{self.date_from}_Au_{self.date_to}"
+        month_names_fr = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+                          'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
+        return f"CRA_{self.project_id.name}_{self.employee_id.name}_{month_names_fr[int(self.period_month)]}_{self.period_year}"

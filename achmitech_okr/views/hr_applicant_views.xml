@@ -17,7 +17,7 @@
                     type="object"
                     string="Présenter au client"
                     class="btn-primary"
-                    invisible="application_status != 'ongoing' or presented_to_client_date"/>
+                    invisible="application_status != 'ongoing' or presented_to_client_date or is_applicant_in_pool"/>
 
                 <button name="action_client_interview_done" type="object"
                     string="EC Passé"
@@ -28,13 +28,6 @@
                     string="EC Annulé"
                     class="btn btn-danger"
                     invisible="not is_client_interview_stage or client_interview_status != 'pending'"/>
-                <button
-                    name="action_mark_retour_done"
-                    type="object"
-                    string="Marquer retour fait"
-                    class="btn-primary"
-                    invisible="application_status not in ('refused','hired') or retour_done"
-                />
             </xpath>
             <xpath expr="/form//field[@name='linkedin_profile']/ancestor::group" position="inside">
                 <group>
@@ -48,7 +41,6 @@
                     <field name="presented_to_client_date" readonly="1" invisible="not presented_to_client_date"/>
                     <field name="client_interview_status" readonly="1" invisible="not is_client_interview_stage"/>
                     <field name="refuse_date" readonly="1" invisible="application_status != 'refused'"/>
-                    <field name="retour_done" readonly="1" invisible="application_status not in ('refused', 'hired')"/>
                     <field name="last_recontact_date" readonly="1" invisible="not is_applicant_in_pool"/>
                 </group>
             </xpath>

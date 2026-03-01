@@ -17,3 +17,4 @@ access_staffing_need_manager,staffing.need manager,model_staffing_need,achmitech
 access_okr_recontact_log_user,okr.recontact.log user,model_okr_recontact_log,achmitech_okr.group_okr_user,1,1,1,0
 access_okr_recontact_log_manager,okr.recontact.log manager,model_okr_recontact_log,achmitech_okr.group_okr_manager,1,1,1,1
 access_okr_recontact_wizard_user,okr.recontact.wizard user,model_okr_recontact_wizard,achmitech_okr.group_okr_user,1,1,1,0
+access_okr_recontact_wizard_manager,okr.recontact.wizard manager,model_okr_recontact_wizard,achmitech_okr.group_okr_manager,1,1,1,1

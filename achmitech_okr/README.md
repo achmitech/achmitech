@@ -44,17 +44,19 @@ erDiagram
     }
 
     STAFFING_PLAN {
-        char    name
-        date    date_from
-        date    date_to
-        integer presented_sum
-        float   client_interview_pass_rate
+        char        name
+        date        date_from
+        date        date_to
+        selection   state                       "draft | active | expired"
+        integer     presented_sum
+        float       client_interview_pass_rate
     }
 
     STAFFING_NEED {
         char        name
-        selection   state           "draft | assigned | closed"
+        selection   state               "draft | assigned | closed"
         integer     number_of_positions
+        integer     positions_filled
         datetime    assigned_date
     }
 
@@ -125,8 +127,8 @@ Key fields:
 - `progress`: float (0.0–1.0), computed from metrics
 
 State transitions (manager only in the UI):
-- `action_confirm` — draft → confirmed
-- `action_cancel` — confirmed → cancelled
+- `button_confirm` — draft → confirmed (cascades recursively to all draft children)
+- `button_cancel` — confirmed → cancelled
 - `action_set_to_draft` — any → draft
 
 ### `okr.node.metric` — Metric Line
@@ -170,6 +172,7 @@ Represents a hiring plan for a department over a period.
 Key fields:
 - `department_id`, `date_from`, `date_to`, `company_id`
 - `staffing_need_ids`: One2many to `staffing.need`
+- `state`: computed (non-stored) from dates — `draft` (not started yet), `active` (within period), `expired` (past end date). No manual action required; updates automatically at read time.
 - `presented_sum`, `client_interview_passed_sum`, `client_interview_pass_rate`: computed KPIs, scoped to applicants linked to this plan's needs within the plan period
 
 Name is auto-generated from a sequence (`staffing.plan`).
@@ -182,8 +185,11 @@ Key fields:
 - `staffing_plan_id`, `company_id` (related), `job_id`
 - `assigned_to`: recruiter responsible
 - `assigned_date`: set automatically on `action_assign`
-- `number_of_positions`
+- `number_of_positions`: target headcount
+- `positions_filled`: computed count of applicants currently in a hired stage
 - `state`: `draft` → `assigned` → `closed`
+
+**Auto-close**: when an applicant moves to a hired stage (`hr.recruitment.stage.hired_stage = True`), the system checks if `positions_filled >= number_of_positions`. If so, the need is automatically closed (only if currently `assigned`).
 
 State transitions (manager only in the UI):
 - `action_assign` — sets state to `assigned`, auto-fills `assigned_date`
@@ -251,6 +257,18 @@ When an applicant is in the talent pool, the "Recontacter" button opens a wizard
   --db_host=db --db_port=5432 --db_user=odoo --db_password=odoo \
   --stop-after-init
 ```
+
+---
+
+## Scheduled Actions
+
+Defined in `data/ir_cron_data.xml` (`noupdate="1"`).
+
+| Cron | Interval | Description |
+|---|---|---|
+| OKR: Recompute Indicateurs | Every 1 hour | Re-runs `_compute_current()` on all metric lines belonging to `metric`-sourced OKR nodes, then invalidates the `progress` cache so dashboards refresh. |
+
+> To force an immediate recalculation: Technical → Scheduled Actions → run manually, or call `okr.node.metric._compute_current()` from a shell.
 
 ---
 
