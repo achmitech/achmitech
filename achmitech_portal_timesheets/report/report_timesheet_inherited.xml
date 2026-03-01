@@ -18,267 +18,230 @@
                 <t t-set="days_local" t-value="values.get('days', [])"/>
                 <t t-set="months_local" t-value="values.get('months', [])"/>
                 <t t-set="total_cra_local" t-value="values.get('total_cra', 0)"/>
+                <t t-set="month_groups_local" t-value="values.get('month_groups', [])"/>
+                <t t-set="week_groups_local" t-value="values.get('week_groups', [])"/>
 
-
-                <div class="page">
+                <div class="page" style="font-size:10px;">
                     <div class="oe_structure"/>
-                    <!-- CRA/Congés et Periode -->
-                    <div class="row">
-                        <!-- Col 1 (40%) -->
-                        <div class="col-5 text-center" style="background:#0B2A5B; color:#FFFFFF; font-weight:700; padding:8px 12px;">
-                            <span>CRA et Congés</span>
+
+                    <!-- ===== TITLE BAR ===== -->
+                    <div class="row mb-2">
+                        <div class="col-5 text-center" style="background:#0B2A5B; color:#FFFFFF; font-weight:700; padding:6px 12px;">
+                            CRA et Congés
                         </div>
-
-                        <!-- Col 2 (20%) vide -->
-                        <div class="col-2"></div>
-
-                        <!-- Col 3 (40%) -->
-                        <div class="col-5 text-center" style="background:#0B2A5B; color:#FFFFFF; font-weight:700; padding:8px 12px;">
-                            <span>
+                        <div class="col-2"/>
+                        <div class="col-5 text-center" style="background:#0B2A5B; color:#FFFFFF; font-weight:700; padding:6px 12px;">
                             De
-                                <t t-if="period_start" t-out="period_start.strftime('%d/%m/%Y')"/>
-                                <t t-else="">--/--/----</t>
+                            <t t-if="period_start" t-out="period_start.strftime('%d/%m/%Y')"/>
+                            <t t-else="">--/--/----</t>
                             à
-                                <t t-if="period_end" t-out="period_end.strftime('%d/%m/%Y')"/>
-                                <t t-else="">--/--/----</t>
-                            </span>
+                            <t t-if="period_end" t-out="period_end.strftime('%d/%m/%Y')"/>
+                            <t t-else="">--/--/----</t>
                         </div>
                     </div>
 
-                    <!-- INFORMATIONS PERSONNELLES-->
-                    <div class="row mt8">
-                        <!-- Col 1 (40%) -->
-                        <div class="col-5 text-center" style="font-weight:500; border: 2px solid orange">
-                            <span>Informations personnelles Collaborateur</span>
+                    <!-- ===== PERSONAL INFO ===== -->
+                    <div class="row mb-3">
+                        <div class="col-5" style="border:1px solid #0B2A5B; font-weight:700; padding:5px 10px;">
+                            <strong>Nom Collaborateur :</strong>
+                            <span style="font-weight:500;" t-out="employee_name"/>
+                        </div>
+                        <div class="col-2"/>
+                        <div class="col-5" style="border:1px solid #0B2A5B; font-weight:700; padding:5px 10px;">
+                            <strong>N° Commande :</strong>
+                            <span style="font-weight:500;" t-out="cra_order_number"/>
                         </div>
                     </div>
 
-                    <div class="row mt8">
-                        <!-- Col 1 (40%) -->
-                        <div class="col-5" style="border:1px solid #0B2A5B; font-weight:700; padding:8px 12px;">
-                            <strong>Nom complet : </strong>
-                            <span style="font-weight:500" t-out="employee_name"/>
-                        </div>
-
-                        <!-- Col 2 (20%) vide -->
-                        <div class="col-2"></div>
-
-                        <!-- Col 3 (40%) -->
-                        <div class="col-5" style="border:1px solid #0B2A5B; font-weight:700; padding:8px 12px;">
-                            <strong>N° Commande : </strong>
-                            <span t-out="cra_order_number" style="font-weight:500"/>
-                        </div>
-                    </div>
-
-
-                    <div class="row mt8">
+                    <!-- ===== CRA TABLE — one column per exported day ===== -->
+                    <div class="row mb-3 mt-4">
                         <div class="col-lg-12">
-                            <div class="mt-2 mb-2">
-                                <div class="fw-bold mb-1" style="color: orange;">À faire :</div>
-                                <ol class="mb-0 ps-3">
-                                    <li>
-    <strong>Signature Collaborateur :</strong> signature du <strong>Collaborateur</strong> requise sur la <strong>2ᵉ page</strong>.
-</li>
-<li>
-    <strong>Signature Client final :</strong> indication de la <strong>date</strong> suivie de la <strong>signature</strong> du <strong>Client final</strong> sur la <strong>2ᵉ page</strong>.
-</li>
-                                </ol>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row mt16">
-                    <!-- 60% width -->
-                    <div class="col-5">
-                        <div class="text-center" style="font-weight:500; border: 2px solid orange; margin-bottom: 15px;">
-                            <span>CRA</span>
-                        </div>
-
-                        <table class="table table-sm" style="width:100%; border:1px solid #000; font-size:12px;">
-                            <thead>
-                                <tr style="padding:6px;">
-                                    <th class="text-center" style="background-color: #93aacf; border:1px solid #000;">
-                            Jour
-                                    </th>
-                                    <th class="text-center" style="background-color: #93aacf; border:1px solid #000;">
-                            Temps travaillé
-                                    </th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
-
-                                <!-- loop comes from python: days = [{label, cra_value, bg, status_code, ...}] -->
-                                <t t-foreach="days_local" t-as="day">
+                            <!-- <div class="text-center mb-1" style="font-weight:500; border:2px solid #0B2A5B; padding:3px;">
+                                CRA
+                            </div> -->
+                            <!-- table-layout:fixed lets day columns share remaining space equally -->
+                            <table style="width:100%; border-collapse:collapse; border:1px solid #000; table-layout:fixed;">
+                                <thead>
+                                    <!-- Row 1: Month group headers -->
                                     <tr>
-                                        <td style="border:1px solid #000; padding:6px;">
-                                            <t t-out="day.get('label')"/>
+                                        <th rowspan="3" style="border:1px solid #000; padding:3px 5px; background-color:#93aacf; width:90px; text-align:center; vertical-align:middle;">
+                                            Temps travaillé
+                                        </th>
+                                        <t t-foreach="month_groups_local" t-as="mg">
+                                            <th t-att-colspan="mg['count']" style="border:1px solid #000; padding:3px 5px; background-color:#0B2A5B; color:#FFFFFF; text-align:center; font-size:10px;">
+                                                <t t-out="mg['label']"/>
+                                            </th>
+                                        </t>
+                                        <th rowspan="3" style="border:1px solid #000; padding:3px 5px; background-color:#93aacf; width:45px; text-align:center; vertical-align:middle;">
+                                            TOTAL
+                                        </th>
+                                    </tr>
+                                    <!-- Row 2: ISO week numbers -->
+                                    <tr>
+                                        <t t-foreach="week_groups_local" t-as="wg">
+                                            <th t-att-colspan="wg['count']" style="border:1px solid #000; padding:2px 3px; background-color:#4a6fa5; color:#FFFFFF; text-align:center; font-size:9px;">
+                                                <t t-out="wg['label']"/>
+                                            </th>
+                                        </t>
+                                    </tr>
+                                    <!-- Row 3: Individual day numbers -->
+                                    <tr>
+                                        <t t-foreach="days_local" t-as="day">
+                                            <th style="border:1px solid #000; padding:2px; background-color:#93aacf; text-align:center; vertical-align:middle; font-size:9px; font-weight:600;">
+                                                <t t-out="day.get('label')"/>
+                                            </th>
+                                        </t>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="border:1px solid #000; padding:5px; font-weight:700; text-align:center;">
+                                            Jours
                                         </td>
 
-                                        <td class="text-center" t-att-style="'border:1px solid #000; padding:6px; background: %s;' % (day.get('bg') or '#b4b4b4')">
-                                            <!-- if overlay (leave/holiday) show code, else show cra_value -->
-                                            <t t-if="day.get('status_code')">
-                                                <t t-out="day.get('status_code')"/>
-                                            </t>
-                                            <t t-else="">
-                                                <t t-out="day.get('cra_value')"/>
-                                            </t>
+                                        <!-- One <td> per day, color-coded; only show value when worked -->
+                                        <t t-foreach="days_local" t-as="day">
+                                            <td class="text-center" t-att-style="'border:1px solid #000; padding:5px 2px; font-size:9px; background:%s;' % (day.get('bg') or '#b4b4b4')">
+                                                <t t-if="day.get('cra_value')" t-out="day.get('cra_value')"/>
+                                            </td>
+                                        </t>
+
+                                        <td style="border:1px solid #000; padding:5px; font-weight:700; text-align:center;">
+                                            <t t-out="total_cra_local"/>
                                         </td>
                                     </tr>
-                                </t>
-
-                                <!-- TOTAL row -->
-                                <tr>
-                                    <td class="text-end" style="border:1px solid #000; padding:6px; font-weight:700;">
-                            TOTAL
-                                    </td>
-                                    <td class="text-center" style="border:1px solid #000; padding:6px; font-weight:700;">
-                                        <t t-out="total_cra_local"/>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="col-2"/>
-
-                    <div class="col-5">
-                        <div class="text-center" style="font-weight:500; border: 2px solid orange; margin-bottom: 15px;">
-                            <span>Nombre de jours de congés prévisionnel</span>
-                        </div>
-
-                        <table class="table table-sm" style="width:100%; border:1px solid #000; font-size:12px;">
-                            <thead>
-                                <tr style="background:#93aacf; color:#FFFFFF;">
-
-                                    <!-- months comes from python: months = [{name, year}, {name, year}, {name, year}] -->
-                                    <th style="background-color: #93aacf; border:1px solid #000;" class="text-center">
-                                        <t t-out="months_local[0]['name'] if len(months_local) &gt; 0 else ''"/>
-                                        <t t-out="months_local[0]['year'] if len(months_local) &gt; 0 else ''"/>
-                                    </th>
-
-                                    <th style="background-color: #93aacf; border:1px solid #000;" class="text-center">
-                                        <t t-out="months_local[1]['name'] if len(months_local) &gt; 1 else ''"/>
-                                        <t t-out="months_local[1]['year'] if len(months_local) &gt; 1 else ''"/>
-                                    </th>
-
-                                    <th style="background-color: #93aacf; border:1px solid #000;" class="text-center">
-                                        <t t-out="months_local[2]['name'] if len(months_local) &gt; 2 else ''"/>
-                                        <t t-out="months_local[2]['year'] if len(months_local) &gt; 2 else ''"/>
-                                    </th>
-
-                                </tr>
-                            </thead>
-
-                            <tbody>
-                                <tr>
-                                    <!-- empty cells (for manual / Sign fill) -->
-                                    <td class="text-center" style="border:1px solid #000; padding:6px;">
-                                        <t t-out="conges_previsionnels[0]['planned_days'] if conges_previsionnels else ''"/>
-                                    </td>
-                                    <td class="text-center" style="border:1px solid #000; padding:6px;">
-                                        <t t-out="conges_previsionnels[1]['planned_days'] if conges_previsionnels else ''"/>
-                                    </td>
-                                    <td class="text-center" style="border:1px solid #000; padding:6px;">
-                                        <t t-out="conges_previsionnels[2]['planned_days'] if conges_previsionnels else ''"/>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        <div style="margin-top:12px; width:170px; border:1px solid #000;">
-                            <div class="text-center" style="background:#B4B4B4; font-weight:700; padding:6px; border-bottom:1px solid #000;">
-                    Week-End
-                            </div>
-                            <div class="text-center" style="background:#FFD966; font-weight:700; padding:6px; border-bottom:1px solid #000;">
-                    Férié
-                            </div>
-                            <div class="text-center" style="background:#F4B183; font-weight:700; padding:6px; border-bottom:1px solid #000;">
-                    Maladie
-                            </div>
-                            <div class="text-center" style="background:#78DB7D; font-weight:700; padding:6px; border-bottom:1px solid #000;">
-                    Travaillé
-                            </div>
-                            <div class="text-center" style="background:#00B0F0; color:#FFFFFF; font-weight:700; padding:6px;">
-                    Congés
-                            </div>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                </div>
 
-                <!-- SIGNATURES BLOCK -->
-                <div class="row mt16">
-                    <table style="width:100%; border-collapse:collapse; border:1px solid #fff; page-break-inside:avoid;">
+                    <!-- ===== ROW 2: Congés | Légende | À faire ===== -->
+                    <div class="row mt-3 justify-content-between">
+                        
+                        <!-- À faire -->
+                        <div class="col-3">
+                            <div class="fw-bold mb-1" style="color:#0B2A5B;">À faire :</div>
+                            <ol class="mb-0 ps-3">
+                                <li style="margin-bottom:5px;">
+                                    <strong>Signature Collaborateur :</strong> signature du <strong>Collaborateur</strong> requise.
+                                </li>
+                                <li>
+                                    <strong>Signature Client final :</strong> indiquer la <strong>date</strong> puis signer.
+                                </li>
+                            </ol>
+                    
+                        </div>
 
-                        <!-- Spacer that pushes the signature block down -->
-                        <tr style="border:1px solid #fff;">
-                            <td style="height:260px; border:1px solid #fff;">&amp;nbsp;</td>
-                        </tr>
-
-                        <!-- Actual signatures content -->
-                        <tr style="border:1px solid #fff;">
-                            <td style="border:1px solid #fff;">
-                                <!-- No Bootstrap table classes: inline styles only to avoid phantom borders -->
-                                <table style="width:100%; margin:0; border-collapse:collapse; border:1px solid #fff;">
-                                    <!-- ROW 1: À / Le -->
-                                    <tr style="border:1px solid #fff;">
-                                        <td style="width:50%; vertical-align:top; padding-right:10mm; border:1px solid #fff;">
-                                            <div>
-                                                <strong>À :</strong>
-                                                <span style="display:inline-block; width:220px; background:#d9eef7;">&amp;nbsp;<t t-out="company.city or ''"/></span>
-                                            </div>
+                        <!-- Congés prévisionnel -->
+                        <div class="col-3">
+                            <div class="fw-bold mb-1" style="color: #0B2A5B; padding:3px;">
+                                Nombre de jours de congés prévisionnel
+                            </div>
+                            <table style="width:100%; border:1px solid #000; font-size:10px;">
+                                <thead>
+                                    <tr>
+                                        <th style="background-color:#93aacf; border:1px solid #000; text-align:center; padding:3px;">
+                                            <t t-out="months_local[0]['name'] if len(months_local) &gt; 0 else ''"/>
+                                            <br/>
+                                            <t t-out="months_local[0]['year'] if len(months_local) &gt; 0 else ''"/>
+                                        </th>
+                                        <th style="background-color:#93aacf; border:1px solid #000; text-align:center; padding:3px;">
+                                            <t t-out="months_local[1]['name'] if len(months_local) &gt; 1 else ''"/>
+                                            <br/>
+                                            <t t-out="months_local[1]['year'] if len(months_local) &gt; 1 else ''"/>
+                                        </th>
+                                        <th style="background-color:#93aacf; border:1px solid #000; text-align:center; padding:3px;">
+                                            <t t-out="months_local[2]['name'] if len(months_local) &gt; 2 else ''"/>
+                                            <br/>
+                                            <t t-out="months_local[2]['year'] if len(months_local) &gt; 2 else ''"/>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="border:1px solid #000; text-align:center; padding:5px;">
+                                            <t t-out="conges_previsionnels[0]['planned_days'] if conges_previsionnels else ''"/>
                                         </td>
-
-                                        <td style="width:50%; vertical-align:top; padding-left:10mm; text-align:left; border:1px solid #fff;">
-                                            <div>
-                                                <strong>Le :</strong>
-                                                <span style="display:inline-block; width:220px; background:#d9eef7;">&amp;nbsp;</span>
-                                            </div>
+                                        <td style="border:1px solid #000; text-align:center; padding:5px;">
+                                            <t t-out="conges_previsionnels[1]['planned_days'] if conges_previsionnels else ''"/>
+                                        </td>
+                                        <td style="border:1px solid #000; text-align:center; padding:5px;">
+                                            <t t-out="conges_previsionnels[2]['planned_days'] if conges_previsionnels else ''"/>
                                         </td>
                                     </tr>
+                                </tbody>
+                            </table>
+                        </div>
 
-                                    <!-- ROW 2: (blank left) / Informations Responsable -->
-                                    <tr style="border:1px solid #fff;">
-                                        <td style="width:50%; padding-right:10mm; border:1px solid #fff;"></td>
-                                        <td style="width:50%; padding-left:10mm; text-align:left; padding-top:6px; border:1px solid #fff;">
-                                            <strong>Informations du Responsable UM6P</strong>
-                                        </td>
-                                    </tr>
+                        <!-- Légende -->
+                        <div class="col-3">
+                            <div class="fw-bold mb-1" style="color:#0B2A5B;">Légende</div>
+                            <!-- No Bootstrap table classes: inline styles only to avoid phantom borders -->
+                            <table style="border-collapse:collapse; border:1px solid #fff; font-size:9px;">
+                                <tr style="border:1px solid #fff;">
+                                    <td style="border:1px solid #fff; padding:2px 8px 2px 0; white-space:nowrap;">
+                                        <span style="display:inline-block; width:14px; height:14px; background:#B4B4B4; vertical-align:middle; margin-right:4px;"></span>Week-End
+                                    </td>
+                                    <td style="border:1px solid #fff; padding:2px 0; white-space:nowrap;">
+                                        <span style="display:inline-block; width:14px; height:14px; background:#FFD966; vertical-align:middle; margin-right:4px;"></span>Férié
+                                    </td>
+                                </tr>
+                                <tr style="border:1px solid #fff;">
+                                    <td style="border:1px solid #fff; padding:2px 8px 2px 0; white-space:nowrap;">
+                                        <span style="display:inline-block; width:14px; height:14px; background:#F4B183; vertical-align:middle; margin-right:4px;"></span>Maladie
+                                    </td>
+                                    <td style="border:1px solid #fff; padding:2px 0; white-space:nowrap;">
+                                        <span style="display:inline-block; width:14px; height:14px; background:#78DB7D; vertical-align:middle; margin-right:4px;"></span>Travaillé
+                                    </td>
+                                </tr>
+                                <tr style="border:1px solid #fff;">
+                                    <td style="border:1px solid #fff; padding:2px 8px 2px 0; white-space:nowrap;">
+                                        <span style="display:inline-block; width:14px; height:14px; background:#00B0F0; vertical-align:middle; margin-right:4px;"></span>Congés
+                                    </td>
+                                    <td style="border:1px solid #fff; padding:2px 0; white-space:nowrap;">
+                                        <span style="display:inline-block; width:14px; height:14px; background:#ed3a3a; vertical-align:middle; margin-right:4px;"></span>Non renseigné
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
 
-                                    <!-- ROW 3: (blank left) / NOM Prénom -->
-                                    <tr style="border:1px solid #fff;">
-                                        <td style="width:50%; padding-right:10mm; border:1px solid #fff;"></td>
-                                        <td style="width:50%; padding-left:10mm; text-align:left; padding-top:4px; border:1px solid #fff;">
-                                            <strong>NOM Prénom :</strong>
-                                            <span style="display:inline-block; width:220px; background:#d9eef7;">&amp;nbsp;</span>
-                                        </td>
-                                    </tr>
+                    </div>
 
-                                    <!-- ROW 4: Signature labels -->
-                                    <tr style="border:1px solid #fff;">
-                                        <td style="padding-top:14px; border:1px solid #fff;">
-                                            <strong>Signature Collaborateur :</strong>
-                                        </td>
-                                        <td style="padding-top:14px; border:1px solid #fff;">
-                                            <strong>Signature Client final :</strong>
-                                        </td>
-                                    </tr>
+                    <!-- ===== ROW 3: Signatures (spaced between) ===== -->
+                    <div class="row mt-4">
 
-                                    <!-- ROW 5: Signature boxes -->
-                                    <tr style="border:1px solid #fff;">
-                                        <td style="padding-right:10mm; border:1px solid #fff;">
-                                            <div style="border:1px solid #000; height:120px;"></div>
-                                        </td>
-                                        <td style="padding-left:10mm; border:1px solid #fff;">
-                                            <div style="border:1px solid #000; height:120px;"></div>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </td>
-                        </tr>
-                    </table>
+                        <!-- Left: Signature Collaborateur -->
+                        <div class="col-5">
+                            <div class="mt-3">
+                                <strong>À :</strong>
+                                <span style="display:inline-block; min-width:120px; background:#d9eef7; padding:2px 6px; margin-left:4px;">
+                                    <t t-out="company.city or ''"/>
+                                </span>
+                            </div>
+                            <div class="mt-2">
+                                <strong>Le :</strong>
+                                <span style="display:inline-block; min-width:120px; background:#d9eef7; padding:2px 6px; margin-left:4px;">&amp;nbsp;</span>
+                            </div>
+                            <div style="font-weight:700; margin-bottom:4px;">Signature Collaborateur :</div>
+                            <div style="border:1px solid #000; height:90px;"></div>
+                        </div>
 
+                        <div class="col-2"/>
+
+                        <!-- Right: Responsable info + Signature Client final -->
+                        <div class="col-5">
+                            <div class="mb-1"><strong>Informations du Responsable UM6P</strong></div>
+                            <div class="mb-2">
+                                <strong>NOM Prénom :</strong>
+                                <span style="display:inline-block; width:60%; background:#d9eef7; padding:2px 4px; margin-left:4px;">&amp;nbsp;</span>
+                            </div>
+                            <div style="font-weight:700; margin-bottom:4px;">Signature Client final :</div>
+                            <div style="border:1px solid #000; height:90px;"></div>
+                        </div>
+
+                    </div>
+
+                    <div class="oe_structure"/>
                 </div>
             </t>
         </t>
@@ -305,8 +268,6 @@
         <t t-set="layout_background_url" t-value="'data:image/png;base64,%s' % company.layout_background_image.decode('utf-8') if company.layout_background_image and company.layout_background == 'Custom' else
                 '/base/static/img/demo_logo_report.png' if company.layout_background == 'Demo logo' else ''" />
         <div t-attf-class="article o_report_layout_standard o_table_standard o_company_#{company.id}_layout o_snail_mail {{'o_report_layout_background' if company.layout_background != 'Blank' else ''}}" t-attf-style="{{ 'background-image: url(%s);' % layout_background_url if layout_background_url else '' }}" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
-            <t t-call="web.address_layout"/>
-            <h2 t-out="layout_document_title"/>
             <t t-out="0"/>
         </div>
     </template>
@@ -317,6 +278,20 @@
         </xpath>
     </template>
 
+    <record id="paperformat_timesheets_interim" model="report.paperformat">
+        <field name="name">Format papier personnalisé pour l'état des feuilles de temps Intérim</field>
+        <field name="default" eval="False"/>
+        <field name="disable_shrinking" eval="True"/>
+        <field name="format">A4</field>
+        <field name="page_height">0</field>
+        <field name="page_width">0</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">50</field>
+        <field name="margin_bottom">10</field>
+        <field name="margin_left">5</field>
+        <field name="margin_right">5</field>
+        <field name="dpi">96</field>
+    </record>
 
     <record id="timesheet_report_interim" model="ir.actions.report">
         <field name="name">Rapport Feuilles de temps</field>
@@ -326,7 +301,7 @@
         <field name="report_file">achmitech_portal_timesheets.cra_report</field>
         <field name="print_report_name">(object._get_report_base_filename())</field>
         <field name="binding_type">report</field>
-
+        <field name="paperformat_id" ref="paperformat_timesheets_interim"/>
     </record>
 
 </odoo>

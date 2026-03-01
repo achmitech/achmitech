@@ -98,32 +98,39 @@ def kpi_ec_pass_rate(env, node):
 @kpi("recruitment.nok_treated_period_rate")
 def kpi_nok_treated_period_rate(env, node):
     """
-    KR: 100% des retours candidats NOK traités durant la période.
+    Pipeline resolution rate: % of candidates created during the period that have
+    reached a final state (refused or hired).
 
-    Denominator: Applicants refused during the node period (active=False, refuse_reason_id set).
-    Numerator:   Among them, those where retour_done = True.
+    Denominator: All candidates where user_id = recruiter, created during the node period.
+    Numerator:   Among them, those refused (active=False + refuse_reason_id set)
+                 OR hired (date_closed != False).
 
-    Governance rule: if no NOK in period → returns 1.0 (nothing to treat = achieved).
+    Governance rule: if no candidates in period → returns 1.0 (nothing to resolve = achieved).
     """
     if not node.date_start or not node.date_end or not node.user_id or not node.company_id:
         return 0.0
 
-    Applicant = env["hr.applicant"].sudo()
+    Applicant = env["hr.applicant"].with_context(active_test=False).sudo()
 
     base_domain = [
         ("company_id", "=", node.company_id.id),
         ("user_id", "=", node.user_id.id),
-        ("active", "=", False),
-        ("refuse_reason_id", "!=", False),
-        ("refuse_date", ">=", node.date_start),
-        ("refuse_date", "<=", node.date_end),
+        ("create_date", ">=", node.date_start),
+        ("create_date", "<", node.date_end),
     ]
 
     denom = Applicant.search_count(base_domain)
     if not denom:
         return 1.0
 
-    num = Applicant.search_count(base_domain + [("retour_done", "=", True)])
+    # refused: archived with a refuse reason (excludes plain archives)
+    # hired:   date_closed set (populated automatically when entering a hired_stage)
+    resolved_domain = base_domain + [
+        "|",
+        "&", ("active", "=", False), ("refuse_reason_id", "!=", False),
+        ("date_closed", "!=", False),
+    ]
+    num = Applicant.search_count(resolved_domain)
     return num / denom
 
 @kpi("recruitment.pool_active_count")

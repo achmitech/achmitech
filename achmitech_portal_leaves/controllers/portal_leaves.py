@@ -313,6 +313,8 @@ class PortalLeaves(CustomerPortal):
         values = self._prepare_portal_layout_values()
         values.update({
             'employee': employee,
+            'allocation_remaining': employee.allocation_remaining_display,
+            'allocation_total': employee.allocation_display,
             'leaves': leaves,
             'leave_types': leave_types,
             'page_name': 'my_leaves',

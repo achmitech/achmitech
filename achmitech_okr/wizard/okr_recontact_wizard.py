@@ -11,7 +11,7 @@ class OkrRecontactWizard(models.TransientModel):
     date = fields.Date(
         string="Date du contact", default=fields.Date.context_today
     )
-    outcome = fields.Selection(OUTCOME_SELECTION, string="Résultat", required=True)
+    outcome = fields.Selection(OUTCOME_SELECTION, string="Résultat")
     note = fields.Text(string="Notes")
     referral_name = fields.Char(string="Nom du recommandé")
     referral_contact = fields.Char(string="Contact du recommandé")
