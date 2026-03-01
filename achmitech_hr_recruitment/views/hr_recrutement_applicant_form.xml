@@ -84,6 +84,15 @@
                 </page>
             </xpath>
 
+            <xpath expr="//field[@name='availability']" position="replace">
+                <label for="availability"/>
+                <div class="o_row">
+                    <field name="availability" nolabel="1" placeholder="Directement"/>
+                    <span class="o_form_label ms-3">Négociable ?</span>
+                    <field name="availability_negotiable" nolabel="1"/>
+                </div>
+            </xpath>
+
             <xpath expr="/form//field[@name='user_id']" position="attributes">
                 <attribute name="string">Créé par</attribute>
             </xpath>

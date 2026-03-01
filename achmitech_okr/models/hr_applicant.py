@@ -88,6 +88,8 @@ class HrApplicant(models.Model):
         for applicant in self:
             if not applicant.staffing_need_id:
                 raise UserError("Le candidat doit être lié à un besoin pour être présenté au client.")
+            if not applicant.availability:
+                raise UserError("La disponibilité du candidat doit être renseignée avant de le présenter au client.")
             applicant.write({
                 "presented_to_client_date": fields.Datetime.now(),
             })
