@@ -1,0 +1,69 @@
+  .o_hierarchy_okr_node_container {
+    min-width: 400px;
+  }
+
+.o_hierarchy_okr_node {
+  display: flex;
+  flex-direction: column;
+
+  // Header / body / footer blocks (keeps layout consistent)
+  .o_hierarchy_okr_node_header {
+    display: flex;
+    align-items: center;          // vertically center
+    justify-content: center;      // horizontally center
+    font-weight: 600;
+    font-size: 1.05rem;
+    padding: 6px 10px;
+    min-height: 48px;             // better than fixed height
+    border-top-left-radius: 0.25rem;
+    border-top-right-radius: 0.25rem;
+    box-sizing: border-box;
+  }
+  .o_hierarchy_okr_node_Titre {
+    max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  }
+
+  .o_hierarchy_okr_node_body {
+    padding: 0 10px;
+  }
+
+  .o_hierarchy_okr_node_footer {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 6px;
+    padding: 8px 10px 10px;
+    height: auto;
+  }
+
+  .o_okr_node_result_container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .o_okr_node_result {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: auto; // IMPORTANT: don't force 20px
+  }
+
+  // Don't style .rounded globally — scope it to your avatar only
+  img.rounded {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    object-fit: cover;
+    display: block;
+  }
+
+  // Progression bar baseline
+  .o_okr_node_progress_bar {
+    margin: 0;
+  }
+}

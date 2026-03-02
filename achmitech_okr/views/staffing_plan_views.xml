@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- =========================
+       Staffing Plan - Form View
+       ========================= -->
+  <record id="view_staffing_plan_form" model="ir.ui.view">
+    <field name="name">staffing.plan.form</field>
+    <field name="model">staffing.plan</field>
+    <field name="arch" type="xml">
+      <form string="Staffing Plan">
+        <sheet>
+
+          <!-- Title -->
+          <div class="oe_title pe-0 w-100 mw-100" name="title">
+            <h1 class="d-flex flex-row justify-content-between align-items-center">
+              <field name="name" readonly="1"/>
+              <field name="state" widget="badge"
+                     decoration-success="state == 'active'"
+                     decoration-warning="state == 'expired'"
+                     decoration-info="state == 'draft'"/>
+            </h1>
+          </div>
+
+          <!-- Main fields -->
+          <group col="2">
+            <group>
+              <field name="date_from"/>
+              <field name="department_id"/>
+              <field name="company_id" groups="base.group_multi_company"/>
+              <field name="company_id" invisible="1" groups="!base.group_multi_company"/>
+            </group>
+            <group>
+              <field name="date_to"/>
+            </group>
+          </group>
+
+          <!-- Entretiens Clients KPIs -->
+          <group string="Entretiens Clients">
+            <field name="presented_sum" readonly="1"/>
+            <field name="client_interview_passed_sum" readonly="1"/>
+            <field name="client_interview_pass_rate" readonly="1" widget="percentage" string="Taux EC (%)"/>
+          </group>
+
+          <notebook>
+            <page string="Besoins en personnel">
+              <field name="staffing_need_ids" nolabel="1"
+                     context="{'default_company_id': company_id, 'default_staffing_plan_id': id}">
+                <list editable="bottom">
+                  <field name="name" string="Désignation"/>
+                  <field name="job_id"/>
+                  <field name="number_of_positions"/>
+                  <field name="positions_filled" readonly="1"/>
+                  <field name="assigned_to"
+                         domain="[('company_id', '=', parent.company_id), ('share', '=', False)]"/>
+                  <field name="assigned_date"/>
+                  <field name="state" widget="badge"
+                         decoration-success="state == 'closed'"
+                         decoration-warning="state == 'assigned'"
+                         decoration-info="state == 'draft'"/>
+                  <button name="action_assign" type="object"
+                          icon="fa-user-plus" title="Affecter"
+                          invisible="state != 'draft'"
+                          groups="achmitech_okr.group_okr_manager"/>
+                  <button name="action_close" type="object"
+                          icon="fa-check-circle" title="Clôturer"
+                          invisible="state != 'assigned'"
+                          groups="achmitech_okr.group_okr_manager"/>
+                  <button name="action_reset_draft" type="object"
+                          icon="fa-undo" title="Remettre en brouillon"
+                          invisible="state == 'draft'"
+                          groups="achmitech_okr.group_okr_manager"/>
+                </list>
+              </field>
+            </page>
+          </notebook>
+
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <!-- =========================
+       Staffing Plan - List View
+       ========================= -->
+  <record id="view_staffing_plan_list" model="ir.ui.view">
+    <field name="name">staffing.plan.list</field>
+    <field name="model">staffing.plan</field>
+    <field name="arch" type="xml">
+      <list string="Staffing Plans">
+        <field name="name"/>
+        <field name="department_id"/>
+        <field name="date_from"/>
+        <field name="date_to"/>
+        <field name="state" widget="badge"
+               decoration-success="state == 'active'"
+               decoration-warning="state == 'expired'"
+               decoration-info="state == 'draft'"/>
+        <field name="presented_sum" string="Présentés" optional="show"/>
+        <field name="client_interview_pass_rate" widget="percentage" string="Taux EC (%)" optional="show"/>
+        <field name="company_id" groups="base.group_multi_company"/>
+      </list>
+    </field>
+  </record>
+
+  <record id="action_staffing_plan" model="ir.actions.act_window">
+    <field name="name">Staffing Plans</field>
+    <field name="res_model">staffing.plan</field>
+    <field name="view_mode">list,form</field>
+    <field name="context">{}</field>
+  </record>
+
+</odoo>

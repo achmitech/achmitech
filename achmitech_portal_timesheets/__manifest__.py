@@ -24,7 +24,7 @@
     'version': "19.0.1",
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'project', 'hr_timesheet'],
+    'depends': ['base', 'project', 'hr_timesheet', 'hr_holidays'],
 
     # always loaded
     'data': [

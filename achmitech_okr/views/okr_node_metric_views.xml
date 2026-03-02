@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <record id="view_okr_node_metric_tree" model="ir.ui.view">
+    <field name="name">okr.node.metric.tree</field>
+    <field name="model">okr.node.metric</field>
+    <field name="arch" type="xml">
+      <list editable="bottom">
+        <field name="sequence" widget="handle"/>
+        <field name="definition_id" context="{'form_view_ref': 'achmitech_okr.view_okr_metric_definition_form'}"/>
+        <field name="target"/>
+        <field name="current" readonly="1"/>
+        <field name="progress" readonly="1"/>
+      </list>
+    </field>
+  </record>
+
+
+  <record id="view_okr_node_metric_form" model="ir.ui.view">
+  <field name="name">okr.node.metric.form</field>
+  <field name="model">okr.node.metric</field>
+  <field name="priority" eval="1000"/>
+  <field name="arch" type="xml">
+    <form string="Metric Line">
+      <sheet>
+        <group>
+          <field name="definition_id" options="{'no_create': True}"/>
+          <field name="target"/>
+        </group>
+        <group>
+          <field name="current" readonly="1"/>
+          <field name="progress" readonly="1"/>
+        </group>
+      </sheet>
+    </form>
+  </field>
+</record>
+
+</odoo>

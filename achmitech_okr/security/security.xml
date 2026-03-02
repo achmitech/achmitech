@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- Category (optional but recommended) -->
+    <record id="module_category_okr" model="ir.module.category">
+        <field name="name">OKR</field>
+        <field name="sequence">70</field>
+    </record>
+
+    <!-- Privilege group container (Odoo 19 pattern) -->
+    <record model="res.groups.privilege" id="res_groups_privilege_okr">
+        <field name="name">OKR</field>
+        <field name="sequence">9</field>
+        <field name="category_id" ref="achmitech_okr.module_category_okr"/>
+    </record>
+
+    <!-- OKR / User: assigned recruiter — read-only access to their own nodes -->
+    <record id="group_okr_user" model="res.groups">
+        <field name="name">User</field>
+        <field name="sequence">10</field>
+        <field name="privilege_id" ref="achmitech_okr.res_groups_privilege_okr"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('base.group_user')])]"/>
+        <field name="comment">Can view OKR nodes assigned to them (read-only).</field>
+    </record>
+
+    <!-- OKR / Manager: creates and manages all OKR records -->
+    <record id="group_okr_manager" model="res.groups">
+        <field name="name">Manager</field>
+        <field name="sequence">20</field>
+        <field name="privilege_id" ref="achmitech_okr.res_groups_privilege_okr"/>
+        <field name="implied_ids" eval="[(4, ref('achmitech_okr.group_okr_user'))]"/>
+        <field name="comment">Can manage OKR configuration and all OKR records.</field>
+    </record>
+
+    <!-- Delete stale rules on every upgrade so <record> below always wins.
+         Required because ir.model.data.noupdate=True on old records blocks
+         <record> updates even when noupdate="0" is set in XML. -->
+    <data>
+        <delete model="ir.rule" search="[('model_id.model', '=', 'okr.node')]"/>
+        <delete model="ir.rule" search="[('model_id.model', '=', 'okr.node.metric')]"/>
+        <delete model="ir.rule" search="[('model_id.model', '=', 'staffing.plan')]"/>
+        <delete model="ir.rule" search="[('model_id.model', '=', 'staffing.need')]"/>
+    </data>
+
+    <data noupdate="0">
+
+        <!-- Recruiter sees nodes where they are the assigned user,
+             plus the parent Objective so they have context. -->
+        <record id="rule_okr_node_user" model="ir.rule">
+            <field name="name">OKR Nodes - User (read-own)</field>
+            <field name="model_id" ref="model_okr_node"/>
+            <field name="groups" eval="[(4, ref('achmitech_okr.group_okr_user'))]"/>
+            <field name="perm_read" eval="1"/>
+            <field name="perm_write" eval="0"/>
+            <field name="perm_create" eval="0"/>
+            <field name="perm_unlink" eval="0"/>
+            <field name="domain_force">
+                ['&amp;', ('company_id', 'in', company_ids + [False]),
+                 '|', ('user_id', '=', user.id), ('child_ids.user_id', '=', user.id)]
+            </field>
+        </record>
+
+        <!-- Manager sees all nodes in their company -->
+        <record id="rule_okr_node_manager" model="ir.rule">
+            <field name="name">OKR Nodes - Manager</field>
+            <field name="model_id" ref="model_okr_node"/>
+            <field name="groups" eval="[(4, ref('achmitech_okr.group_okr_manager'))]"/>
+            <field name="perm_read" eval="1"/>
+            <field name="perm_write" eval="1"/>
+            <field name="perm_create" eval="1"/>
+            <field name="perm_unlink" eval="1"/>
+            <field name="domain_force">[('company_id', 'in', company_ids + [False])]</field>
+        </record>
+
+        <!-- Recruiter can read metrics on their directly assigned nodes -->
+        <record id="rule_okr_node_metric_user" model="ir.rule">
+            <field name="name">OKR Node Metrics - User (read-own)</field>
+            <field name="model_id" ref="model_okr_node_metric"/>
+            <field name="groups" eval="[(4, ref('achmitech_okr.group_okr_user'))]"/>
+            <field name="perm_read" eval="1"/>
+            <field name="perm_write" eval="0"/>
+            <field name="perm_create" eval="0"/>
+            <field name="perm_unlink" eval="0"/>
+            <field name="domain_force">
+                [('node_id.user_id', '=', user.id)]
+            </field>
+        </record>
+
+        <!-- Manager sees all metrics in their company -->
+        <record id="rule_okr_node_metric_manager" model="ir.rule">
+            <field name="name">OKR Node Metrics - Manager</field>
+            <field name="model_id" ref="model_okr_node_metric"/>
+            <field name="groups" eval="[(4, ref('achmitech_okr.group_okr_manager'))]"/>
+            <field name="perm_read" eval="1"/>
+            <field name="perm_write" eval="1"/>
+            <field name="perm_create" eval="1"/>
+            <field name="perm_unlink" eval="1"/>
+            <field name="domain_force">[('node_id.company_id', 'in', company_ids + [False])]</field>
+        </record>
+
+        <!-- Recruiter sees only staffing needs assigned to them -->
+        <record id="rule_staffing_need_user" model="ir.rule">
+            <field name="name">Staffing Need - User (read-own)</field>
+            <field name="model_id" ref="model_staffing_need"/>
+            <field name="groups" eval="[(4, ref('achmitech_okr.group_okr_user'))]"/>
+            <field name="perm_read" eval="1"/>
+            <field name="perm_write" eval="0"/>
+            <field name="perm_create" eval="0"/>
+            <field name="perm_unlink" eval="0"/>
+            <field name="domain_force">
+                ['&amp;', ('company_id', 'in', company_ids + [False]),
+                 ('assigned_to', '=', user.id)]
+            </field>
+        </record>
+
+        <!-- Manager sees all needs in their company -->
+        <record id="rule_staffing_need_manager" model="ir.rule">
+            <field name="name">Staffing Need - Manager</field>
+            <field name="model_id" ref="model_staffing_need"/>
+            <field name="groups" eval="[(4, ref('achmitech_okr.group_okr_manager'))]"/>
+            <field name="perm_read" eval="1"/>
+            <field name="perm_write" eval="1"/>
+            <field name="perm_create" eval="1"/>
+            <field name="perm_unlink" eval="1"/>
+            <field name="domain_force">[('company_id', 'in', company_ids + [False])]</field>
+        </record>
+
+        <!-- Recruiter sees plans where at least one need is assigned to them -->
+        <record id="rule_staffing_plan_user" model="ir.rule">
+            <field name="name">Staffing Plan - User (read-own)</field>
+            <field name="model_id" ref="model_staffing_plan"/>
+            <field name="groups" eval="[(4, ref('achmitech_okr.group_okr_user'))]"/>
+            <field name="perm_read" eval="1"/>
+            <field name="perm_write" eval="0"/>
+            <field name="perm_create" eval="0"/>
+            <field name="perm_unlink" eval="0"/>
+            <field name="domain_force">
+                ['&amp;', ('company_id', 'in', company_ids + [False]),
+                 ('staffing_need_ids.assigned_to', '=', user.id)]
+            </field>
+        </record>
+
+        <!-- Manager sees all plans in their company -->
+        <record id="rule_staffing_plan_manager" model="ir.rule">
+            <field name="name">Staffing Plan - Manager</field>
+            <field name="model_id" ref="model_staffing_plan"/>
+            <field name="groups" eval="[(4, ref('achmitech_okr.group_okr_manager'))]"/>
+            <field name="perm_read" eval="1"/>
+            <field name="perm_write" eval="1"/>
+            <field name="perm_create" eval="1"/>
+            <field name="perm_unlink" eval="1"/>
+            <field name="domain_force">[('company_id', 'in', company_ids + [False])]</field>
+        </record>
+
+    </data>
+
+</odoo>

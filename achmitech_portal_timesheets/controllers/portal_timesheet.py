@@ -6,9 +6,13 @@ from odoo.addons.portal.controllers.portal import CustomerPortal
 class PortalTimesheet(CustomerPortal):
 
     def _get_employee_for_portal_user(self):
-        # Standard mapping: portal user -> employee via hr.employee.user_id
+        # Standard mapping: portal user -> employee via hr.employee.user_id,
+        # scoped to the current company to avoid cross-company matches in multi-company setups.
         return request.env["hr.employee"].sudo().search(
-            [("user_id", "=", request.env.user.id)],
+            [
+                ("user_id", "=", request.env.user.id),
+                ("company_id", "=", request.env.company.id),
+            ],
             limit=1
         )
 
@@ -49,25 +53,42 @@ class PortalTimesheet(CustomerPortal):
         # Convert day ratio to hours (8h/day)
         unit_amount = ratio * 8.0
 
+        # Validate date early — before any ORM call that uses it
         if not date_str:
             request.session["ts_flash"] = {"type": "danger", "message": "Veuillez saisir une date valide."}
+            return self._task_redirect(task)
+        try:
+            parsed_date = fields.Date.from_string(date_str)
+        except Exception:
+            request.session["ts_flash"] = {"type": "danger", "message": "Format de date invalide."}
             return self._task_redirect(task)
 
         project = task.project_id.sudo()
         if not project or not project.allow_timesheets:
             request.session["ts_flash"] = {"type": "danger", "message": "Cette tâche appartient à un projet qui n'autorise pas la saisie des feuilles de temps."}
             return self._task_redirect(task)
-        
-        # One entry per day per task (per employee)
+
+        # Authorization checks: apply to both new entries and updates
+        if request.env.user not in task.user_ids:
+            request.session["ts_flash"] = {"type": "danger", "message": "Vous n'êtes pas assigné(e) à cette tâche."}
+            return self._task_redirect(task)
+
+        if task.stage_id and task.stage_id.fold:
+            request.session["ts_flash"] = {
+                "type": "danger",
+                "message": "Cette tâche est clôturée. Vous ne pouvez plus modifier vos feuilles de temps."
+            }
+            return self._task_redirect(task)
+
+        # One entry per day per task (per employee) — update if exists, create otherwise
         existing = request.env["account.analytic.line"].sudo().search([
             ("employee_id", "=", employee.id),
-            ("date", "=", date_str),
+            ("date", "=", parsed_date),
             ("task_id", "=", task.id),
             ("company_id", "=", request.env.company.id),
         ], limit=1)
 
         if existing:
-           # Option 1: replace hours + description
             existing.write({
                 "name": description,
                 "unit_amount": unit_amount,
@@ -77,23 +98,10 @@ class PortalTimesheet(CustomerPortal):
             request.session["ts_flash"] = {"type": "success", "message": "Votre saisie pour cette date a été mise à jour."}
             return self._task_redirect(task)
 
-        if request.env.user not in task.user_ids:
-            request.session["ts_flash"] = {"type": "danger", "message": "Vous n'êtes pas assigné(e) à cette tâche."}
-            return self._task_redirect(task)
-
-        # Task lock check (DONE / CLOSED)
-        if task.stage_id and task.stage_id.fold:
-            request.session["ts_flash"] = {
-                "type": "danger",
-                "message": "Cette tâche est clôturée. Vous ne pouvez plus modifier vos feuilles de temps."
-            }
-            return self._task_redirect(task)
-        
-
-        # Create timesheet using sudo(to bypass ACL)
+        # Create timesheet using sudo to bypass ACL
         request.env["account.analytic.line"].sudo().create({
             "name": description,
-            "date": fields.Date.from_string(date_str),
+            "date": parsed_date,
             "unit_amount": unit_amount,
             "project_id": project.id,
             "task_id": task.id,

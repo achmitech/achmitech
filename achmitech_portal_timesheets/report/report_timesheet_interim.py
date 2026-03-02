@@ -1,9 +1,6 @@
 from odoo import api, models, fields
 from collections import defaultdict
 from datetime import date, timedelta
-import logging
-
-_logger = logging.getLogger(__name__)
 
 class ReportTimesheetInterim(models.AbstractModel):
     """
@@ -68,20 +65,21 @@ class ReportTimesheetInterim(models.AbstractModel):
 
         employee = self.env["hr.employee"].browse(employee_id).exists()
 
-        # Source of truth: domain based on wizard (NOT docids)
+        # Source of truth: domain based on wizard (NOT docids).
+        # company_id is scoped to the employee's company so cross-company lines never bleed in.
         domain = [
             ("employee_id", "=", employee_id),
             ("date", ">=", date_from),
             ("date", "<=", date_to),
+            ("company_id", "=", employee.company_id.id),
         ]
 
-        # Optional filters: only include lines for selected project(s)/task(s).
-        # These keys must match what the wizard sends in its `data` dict.
-        if data.get("project_ids"):
-            domain.append(("project_id", "in", data["project_id"]))
+        # Optional filters: only include lines for the selected project/task.
+        if data.get("project_id"):
+            domain.append(("project_id", "=", data["project_id"]))
 
-        if data.get("task_ids"):
-            domain.append(("task_id", "in", data["task_id"]))
+        if data.get("task_id"):
+            domain.append(("task_id", "=", data["task_id"]))
 
         lines = self.env["account.analytic.line"].search(domain, order="date asc")
 
@@ -95,7 +93,6 @@ class ReportTimesheetInterim(models.AbstractModel):
         # Client is the partner linked to the project
         client = project.partner_id if project else False
 
-        _logger.info("XXXXXXXXXXXXXXXXXXX %s" , client)
         return {
             "doc_ids": lines.ids,
             "doc_model": "account.analytic.line",
@@ -191,9 +188,10 @@ class ReportTimesheetInterim(models.AbstractModel):
         # Build overlay map: date -> info (CONGE/MALADIE/FERIE)
         overlay_by_date = {}
         if employee:
-            # Validated leaves that overlap the selected period.
+            # Validated leaves that overlap the selected period, scoped to the employee's company.
             leaves = self.env["hr.leave"].sudo().search([
                 ("employee_id", "=", employee.id),
+                ("company_id", "=", employee.company_id.id),
                 ("state", "=", "validate"),
                 ("request_date_from", "<=", period_end),
                 ("request_date_to", ">=", period_start),
@@ -214,9 +212,10 @@ class ReportTimesheetInterim(models.AbstractModel):
                     overlay_by_date[cur] = info
                     cur += timedelta(days=1)
 
-            # Optional: global calendar leaves (public holidays). This can include more than holidays
-            # depending on the DB configuration; refine domain if needed.
+            # Public holidays: include leaves from the employee's company OR with no company
+            # (global holidays). Leaves from other companies are excluded.
             cal_leaves = self.env["resource.calendar.leaves"].sudo().search([
+                ("company_id", "in", [employee.company_id.id, False]),
                 ("date_from", "<=", fields.Datetime.to_datetime(period_end)),
                 ("date_to", ">=", fields.Datetime.to_datetime(period_start)),
             ])
@@ -228,12 +227,10 @@ class ReportTimesheetInterim(models.AbstractModel):
                     cur += timedelta(days=1)
 
         # Render-friendly list for QWeb
-        day_names = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche']
         days = []
         total_cra = 0
 
         for d in all_dates:
-            weekday = day_names[d.weekday()]
             is_weekend = d.weekday() in (5, 6)
 
             h = hours_by_date[d]
@@ -261,7 +258,7 @@ class ReportTimesheetInterim(models.AbstractModel):
                 bg = "#ed3a3a"
 
             days.append({
-                "label": f"{weekday}-{d.day}",
+                "label": str(d.day),
                 "cra_value": cra,
                 "bg": bg,
                 "status_code": status_code,  # or (overlay["code"] if overlay and h <= 0 else "")
@@ -280,7 +277,28 @@ class ReportTimesheetInterim(models.AbstractModel):
             yy = p_year + ((p_month + i - 1) // 12)
             months.append({"name": month_names_fr[mn], "year": yy})
 
-        return {"days": days, "months": months, "total_cra": total_cra}
+        # Month groups for the CRA table header: one colspan block per calendar month
+        month_names_fr_full = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+                               'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
+        month_groups = []
+        for d in all_dates:
+            label = f"{month_names_fr_full[d.month]} {d.year}"
+            if not month_groups or month_groups[-1]['label'] != label:
+                month_groups.append({'label': label, 'count': 1})
+            else:
+                month_groups[-1]['count'] += 1
+
+        # Week groups: one colspan block per ISO week number within the period
+        week_groups = []
+        for d in all_dates:
+            label = f"S{d.isocalendar()[1]}"
+            if not week_groups or week_groups[-1]['label'] != label:
+                week_groups.append({'label': label, 'count': 1})
+            else:
+                week_groups[-1]['count'] += 1
+
+        return {"days": days, "months": months, "total_cra": total_cra,
+                "month_groups": month_groups, "week_groups": week_groups}
     
 
     def _compute_conges_previsionnels(self, employee, period_start):
@@ -320,13 +338,12 @@ class ReportTimesheetInterim(models.AbstractModel):
 
         leaves = self.env["hr.leave"].sudo().search([
             ("employee_id", "=", employee.id),
-            ("state", "=", "validate"),  # "prévisionnel"
+            ("company_id", "=", employee.company_id.id),
+            ("state", "in", ("confirm", "validate1", "validate")),
             ("request_date_from", "<=", window_end),
             ("request_date_to", ">=", window_start),
         ])
 
-        _logger.info("XXXXXXXXXXXXXXXXX %s: ", leaves)
-        
         # Count per day per month (simple + robust)
         for lv in leaves:
             d0 = lv.request_date_from or fields.Date.to_date(lv.date_from)
