@@ -196,8 +196,19 @@ class OKRNode(models.Model):
         self.state = 'draft'
 
     def button_confirm(self):
-        self.state = 'confirmed'
-        self.child_ids.filtered(lambda c: c.state == 'draft').button_confirm()
+        queue = self.browse(self.ids)
+        visited = set()
+        while queue:
+            next_queue = self.env['okr.node']
+            for node in queue:
+                if node.id in visited:
+                    continue
+                visited.add(node.id)
+                node.state = 'confirmed'
+                next_queue |= node.child_ids.filtered(
+                    lambda c: c.state == 'draft' and c.id not in visited
+                )
+            queue = next_queue
 
     def button_cancel(self):
         self.state = 'cancelled'
