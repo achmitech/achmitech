@@ -21,9 +21,9 @@ class StaffingNeed(models.Model):
         ("3", "Basse"),
     ], string="Urgence", default="2")
 
+    date_opened = fields.Date(string="Date d'ouverture")
     assigned_to = fields.Many2one("res.users", string="Assigné à")
     assigned_date = fields.Datetime(string="Date d'affectation")
-    date_needed = fields.Date(string="Date souhaitée")
     number_of_positions = fields.Integer(string="Nombre de postes", required=True)
     margin_rate = fields.Float(string="Taux de marge (%)", digits=(5, 2))
 
