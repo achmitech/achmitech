@@ -47,6 +47,7 @@
               <field name="staffing_need_ids" nolabel="1"
                      context="{'default_company_id': company_id, 'default_staffing_plan_id': id}">
                 <list editable="bottom">
+                  <field name="date_opened" optional="show"/>
                   <field name="partner_id" string="Client" optional="show"/>
                   <field name="name" string="Poste"/>
                   <field name="technology" string="Technologie" optional="show"/>
@@ -56,7 +57,6 @@
                     decoration-warning="urgency == '2'"
                     decoration-secondary="urgency == '3'"
                     optional="show"/>
-                  <field name="date_needed" optional="show"/>
                   <field name="number_of_positions" string="Postes"/>
                   <field name="cv_sent_count" readonly="1" optional="show"/>
                   <field name="client_interview_count" readonly="1" optional="show"/>
