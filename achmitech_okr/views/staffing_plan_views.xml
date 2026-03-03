@@ -47,13 +47,24 @@
               <field name="staffing_need_ids" nolabel="1"
                      context="{'default_company_id': company_id, 'default_staffing_plan_id': id}">
                 <list editable="bottom">
-                  <field name="name" string="Désignation"/>
-                  <field name="job_id"/>
-                  <field name="number_of_positions"/>
+                  <field name="date_opened" optional="show"/>
+                  <field name="partner_id" string="Client" optional="show"/>
+                  <field name="name" string="Poste"/>
+                  <field name="technology" string="Technologie" optional="show"/>
+                  <field name="seniority_min" string="Séniorité min." optional="show"/>
+                  <field name="urgency" 
+                    decoration-danger="urgency == '1'"
+                    decoration-warning="urgency == '2'"
+                    decoration-secondary="urgency == '3'"
+                    optional="show"/>
+                  <field name="number_of_positions" string="Postes"/>
+                  <field name="cv_sent_count" readonly="1" optional="show"/>
+                  <field name="client_interview_count" readonly="1" optional="show"/>
                   <field name="positions_filled" readonly="1"/>
+                  <field name="margin_rate" string="Marge (%)" optional="show"/>
                   <field name="assigned_to"
                          domain="[('company_id', '=', parent.company_id), ('share', '=', False)]"/>
-                  <field name="assigned_date"/>
+                  <field name="assigned_date" optional="show"/>
                   <field name="state" widget="badge"
                          decoration-success="state == 'closed'"
                          decoration-warning="state == 'assigned'"

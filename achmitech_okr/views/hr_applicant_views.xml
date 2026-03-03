@@ -17,7 +17,7 @@
                     type="object"
                     string="Présenter au client"
                     class="btn-primary"
-                    invisible="application_status != 'ongoing' or presented_to_client_date or is_applicant_in_pool"/>
+                    invisible="application_status != 'ongoing' or presented_to_client_date or is_pool_applicant"/>
 
                 <button name="action_client_interview_done" type="object"
                     string="EC Passé"
@@ -35,6 +35,7 @@
                         ('state', '!=', 'closed'),
                         '|', ('company_id', '=', False), ('company_id', '=', company_id)
                         ]"
+                        invisible="is_pool_applicant"
                         readonly="presented_to_client_date"
                         options="{'no_create': True}"/>
                     <field name="rejection_source" invisible="application_status != 'refused'" readonly="1"/>
