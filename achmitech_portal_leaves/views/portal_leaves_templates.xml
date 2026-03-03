@@ -504,7 +504,7 @@
                  aria-labelledby="modal_new_leave_label" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
-                        <form action="/my/leaves/new" method="POST">
+                        <form action="/my/leaves/new" method="POST" enctype="multipart/form-data">
                             <input type="hidden" name="csrf_token"
                                    t-att-value="request.csrf_token()"/>
                             <div class="modal-header">
@@ -520,27 +520,93 @@
                                         Type de congé <span class="text-danger">*</span>
                                     </label>
                                     <select name="leave_type_id" id="leave_type_id"
-                                            class="form-select" required="required">
-                                        <option value="">— Choisir un type —</option>
+                                            class="form-select" required="required"
+                                            onchange="leaveFormToggleSections()">
+                                        <option value="" data-unit="">— Choisir un type —</option>
                                         <t t-foreach="leave_types" t-as="lt">
-                                            <option t-att-value="lt.id" t-out="lt.name"/>
+                                            <option t-att-value="lt.id"
+                                                    t-att-data-unit="lt.request_unit"
+                                                    t-att-data-support-doc="'1' if lt.support_document else '0'"
+                                                    t-out="lt.name"/>
                                         </t>
                                     </select>
                                 </div>
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label" for="date_from">
-                                            Date de début <span class="text-danger">*</span>
-                                        </label>
-                                        <input type="date" name="date_from" id="date_from"
-                                               class="form-control" required="required"/>
+                                <!-- Section: journée(s) complète(s) — visible par défaut -->
+                                <div id="leave_section_day">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label" for="date_from">
+                                                Date de début <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="date" name="date_from" id="date_from"
+                                                   class="form-control" required="required"/>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label" for="date_to">
+                                                Date de fin <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="date" name="date_to" id="date_to"
+                                                   class="form-control" required="required"/>
+                                        </div>
                                     </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label" for="date_to">
-                                            Date de fin <span class="text-danger">*</span>
-                                        </label>
-                                        <input type="date" name="date_to" id="date_to"
-                                               class="form-control" required="required"/>
+                                </div>
+
+                                <!-- Section: demi-journée -->
+                                <div id="leave_section_half_day" style="display:none">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label" for="date_from_half">
+                                                Date <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="date" name="date_from" id="date_from_half"
+                                                   class="form-control" disabled="disabled"/>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label" for="date_from_period">
+                                                Période <span class="text-danger">*</span>
+                                            </label>
+                                            <select name="date_from_period" id="date_from_period"
+                                                    class="form-select" disabled="disabled">
+                                                <option value="am">Matin</option>
+                                                <option value="pm">Après-midi</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Section: heures précises -->
+                                <div id="leave_section_hour" style="display:none">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label" for="date_from_hour">
+                                                Date de début <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="date" name="date_from" id="date_from_hour"
+                                                   class="form-control" disabled="disabled"/>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label" for="hour_from">
+                                                Heure de début <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="time" name="hour_from" id="hour_from"
+                                                   class="form-control" disabled="disabled"/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label" for="date_to_hour">
+                                                Date de fin <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="date" name="date_to" id="date_to_hour"
+                                                   class="form-control" disabled="disabled"/>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label" for="hour_to">
+                                                Heure de fin <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="time" name="hour_to" id="hour_to"
+                                                   class="form-control" disabled="disabled"/>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="mb-3">
@@ -550,6 +616,21 @@
                                     <textarea name="name" id="leave_name"
                                               class="form-control" rows="2"
                                               placeholder="Précisez si nécessaire…"/>
+                                </div>
+
+                                <!-- Justificatif (visible uniquement si le type l'exige) -->
+                                <div id="leave_section_support_doc" style="display:none" class="mb-3">
+                                    <label class="form-label" for="support_document">
+                                        Justificatif <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="file" name="support_document" id="support_document"
+                                           class="form-control" disabled="disabled"
+                                           accept="application/pdf,image/jpeg,image/png"
+                                           onchange="validateSupportDoc(this)"/>
+                                    <div class="form-text text-muted">
+                                        Formats acceptés : PDF, JPG, PNG. Taille maximale : 5 Mo.
+                                    </div>
+                                    <div id="support_doc_error" class="text-danger small mt-1" style="display:none"></div>
                                 </div>
                             </div>
                             <div class="modal-footer">
@@ -565,6 +646,49 @@
             </div>
 
         </t>
+
+        <script>
+            var MAX_DOC_SIZE = 5 * 1024 * 1024; // 5 Mo
+
+            function validateSupportDoc(input) {
+                var errorEl = document.getElementById('support_doc_error');
+                if (input.files &amp;&amp; input.files[0] &amp;&amp; input.files[0].size > MAX_DOC_SIZE) {
+                    errorEl.textContent = "Le fichier dépasse la taille maximale autorisée (5 Mo).";
+                    errorEl.style.display = '';
+                    input.value = '';
+                    return false;
+                }
+                errorEl.style.display = 'none';
+                return true;
+            }
+
+            function leaveFormToggleSections() {
+                var sel = document.getElementById('leave_type_id');
+                if (!sel) return;
+                var opt = sel.options[sel.selectedIndex];
+                var unit = (opt &amp;&amp; opt.dataset.unit) || 'day';
+                var needsDoc = opt &amp;&amp; opt.dataset.supportDoc === '1';
+
+                ['day', 'half_day', 'hour'].forEach(function(s) {
+                    var section = document.getElementById('leave_section_' + s);
+                    if (!section) return;
+                    var active = s === unit;
+                    section.style.display = active ? '' : 'none';
+                    section.querySelectorAll('input, select').forEach(function(el) {
+                        el.disabled = !active;
+                    });
+                });
+
+                var sdSection = document.getElementById('leave_section_support_doc');
+                if (sdSection) {
+                    sdSection.style.display = needsDoc ? '' : 'none';
+                    sdSection.querySelectorAll('input').forEach(function(el) {
+                        el.disabled = !needsDoc;
+                    });
+                }
+            }
+        </script>
+
     </template>
 
 </odoo>

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import base64
 import werkzeug.exceptions
 from operator import itemgetter
 from odoo import http, fields
@@ -328,6 +329,15 @@ class PortalLeaves(CustomerPortal):
         })
         return request.render('achmitech_portal_leaves.portal_my_leaves_list', values)
 
+    @staticmethod
+    def _time_str_to_float(time_str):
+        """Convert 'HH:MM' string to float hours (e.g. '09:30' → 9.5)."""
+        try:
+            h, m = time_str.strip().split(':')
+            return int(h) + int(m) / 60.0
+        except Exception:
+            return None
+
     @http.route('/my/leaves/new', type='http', auth='user', website=True, methods=['POST'])
     def my_leave_create(self, **post):
         employee = self._get_interim_employee()
@@ -335,21 +345,12 @@ class PortalLeaves(CustomerPortal):
             return request.redirect('/my')
 
         leave_type_id = int(post.get('leave_type_id') or 0)
-        date_from = post.get('date_from', '').strip()
-        date_to = post.get('date_to', '').strip()
         name = (post.get('name') or '').strip()
 
-        if not (leave_type_id and date_from and date_to):
+        if not leave_type_id:
             request.session['leave_flash'] = {
                 'type': 'danger',
                 'message': "Veuillez remplir tous les champs obligatoires.",
-            }
-            return request.redirect('/my/leaves')
-
-        if date_to < date_from:
-            request.session['leave_flash'] = {
-                'type': 'danger',
-                'message': "La date de fin ne peut pas être antérieure à la date de début.",
             }
             return request.redirect('/my/leaves')
 
@@ -358,16 +359,85 @@ class PortalLeaves(CustomerPortal):
             if not leave_type.exists():
                 raise ValueError("Type de congé invalide.")
 
+            request_unit = leave_type.request_unit
+            date_from = post.get('date_from', '').strip()
+
+            if not date_from:
+                raise ValueError("Veuillez remplir tous les champs obligatoires.")
+
+            if request_unit == 'half_day':
+                period = post.get('date_from_period', '').strip()
+                if period not in ('am', 'pm'):
+                    raise ValueError("Veuillez sélectionner une période (matin ou après-midi).")
+                vals = {
+                    'request_date_from': date_from,
+                    'request_date_to': date_from,
+                    'request_date_from_period': period,
+                    'request_date_to_period': period,
+                }
+
+            elif request_unit == 'hour':
+                date_to = post.get('date_to', '').strip()
+                hour_from_str = post.get('hour_from', '').strip()
+                hour_to_str = post.get('hour_to', '').strip()
+                if not date_to:
+                    raise ValueError("Veuillez remplir tous les champs obligatoires.")
+                hour_from = self._time_str_to_float(hour_from_str)
+                hour_to = self._time_str_to_float(hour_to_str)
+                if hour_from is None or hour_to is None:
+                    raise ValueError("Veuillez renseigner les heures de début et de fin.")
+                if date_to < date_from or (date_to == date_from and hour_to <= hour_from):
+                    raise ValueError("La date/heure de fin doit être postérieure à la date/heure de début.")
+                vals = {
+                    'request_date_from': date_from,
+                    'request_date_to': date_to,
+                    'request_hour_from': hour_from,
+                    'request_hour_to': hour_to,
+                }
+
+            else:  # 'day'
+                date_to = post.get('date_to', '').strip()
+                if not date_to:
+                    raise ValueError("Veuillez remplir tous les champs obligatoires.")
+                if date_to < date_from:
+                    raise ValueError("La date de fin ne peut pas être antérieure à la date de début.")
+                vals = {
+                    'request_date_from': date_from,
+                    'request_date_to': date_to,
+                }
+
+            MAX_DOC_SIZE = 5 * 1024 * 1024  # 5 Mo
+            uploaded_file = request.httprequest.files.get('support_document')
+            if leave_type.support_document:
+                if not uploaded_file or not uploaded_file.filename:
+                    raise ValueError(
+                        "Un justificatif est obligatoire pour ce type de congé (PDF, JPG ou PNG)."
+                    )
+            file_content = None
+            if uploaded_file and uploaded_file.filename:
+                file_content = uploaded_file.read()
+                if len(file_content) > MAX_DOC_SIZE:
+                    raise ValueError(
+                        "Le fichier dépasse la taille maximale autorisée (5 Mo)."
+                    )
+
             with request.env.cr.savepoint():
-                request.env['hr.leave'].sudo().with_context(
+                leave = request.env['hr.leave'].sudo().with_context(
                     mail_create_nolog=True,
                 ).create({
                     'employee_id': employee.id,
                     'holiday_status_id': leave_type_id,
-                    'request_date_from': date_from,
-                    'request_date_to': date_to,
                     'name': name or False,
+                    **vals,
                 })
+                if file_content:
+                    request.env['ir.attachment'].sudo().create({
+                        'name': uploaded_file.filename,
+                        'datas': base64.b64encode(file_content),
+                        'res_model': 'hr.leave',
+                        'res_id': leave.id,
+                        'mimetype': uploaded_file.content_type or 'application/octet-stream',
+                    })
             request.session['leave_flash'] = {
                 'type': 'success',
                 'message': "Demande de congé soumise avec succès.",
