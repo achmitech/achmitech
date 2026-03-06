@@ -214,8 +214,8 @@ def kpi_hires_count(env, node):
     domain = [
         ("user_id", "=", node.user_id.id),
         ("stage_id.hired_stage", "=", True),
-        ("date_closed", ">=", node.date_start),
-        ("date_closed", "<", node.date_end),
+        ("date_first_hired", ">=", node.date_start),
+        ("date_first_hired", "<", node.date_end),
         ("active", "=", True),
     ]
     if node.company_id:
