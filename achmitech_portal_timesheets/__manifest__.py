@@ -24,7 +24,7 @@
     'version': "19.0.1",
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'project', 'hr_timesheet', 'hr_holidays'],
+    'depends': ['base', 'project', 'hr_timesheet', 'hr_holidays', 'portal'],
 
     # always loaded
     'data': [
@@ -34,7 +34,6 @@
         'views/portal_task_template.xml',
         'views/hr_employee_form_view.xml',
         'report/report_timesheet_inherited.xml',
-        
     ],
     
     'license': 'LGPL-3',
