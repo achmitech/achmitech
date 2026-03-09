@@ -61,6 +61,12 @@ class HrApplicant(models.Model):
         compute="_compute_last_recontact_date",
     )
 
+    date_first_hired = fields.Date(
+        string="Date premier recrutement",
+        copy=False,
+        help="Date à laquelle le candidat a atteint le statut embauché pour la première fois.",
+    )
+
     @api.depends('partner_id')
     def _compute_recontact_log_ids(self):
         OkrLog = self.env['okr.recontact.log']
@@ -150,21 +156,37 @@ class HrApplicant(models.Model):
                 super(HrApplicant, already_pooled).write(vals)
             return True
 
+        # Stamp date_first_hired once on first transition to a hired stage
+        if "stage_id" in vals and "date_first_hired" not in vals:
+            new_stage = self.env["hr.recruitment.stage"].browse(vals["stage_id"])
+            if new_stage.hired_stage:
+                today = fields.Date.context_today(self)
+                without_date = self.filtered(lambda r: not r.date_first_hired)
+                if without_date:
+                    super(HrApplicant, without_date).write(dict(vals, date_first_hired=today))
+                    with_date = self - without_date
+                    if with_date:
+                        super(HrApplicant, with_date).write(vals)
+                    self._auto_close_staffing_needs()
+                    return True
+
         result = super().write(vals)
 
-        # Auto-close staffing needs when all positions are filled
         if "stage_id" in vals:
             new_stage = self.env["hr.recruitment.stage"].browse(vals["stage_id"])
             if new_stage.hired_stage:
-                needs = self.mapped("staffing_need_id").filtered(
-                    lambda n: n.state == "assigned"
-                )
-                for need in needs:
-                    hired = self.env["hr.applicant"].search_count([
-                        ("staffing_need_id", "=", need.id),
-                        ("stage_id.hired_stage", "=", True),
-                    ])
-                    if hired >= need.number_of_positions:
-                        need.sudo().action_close()
+                self._auto_close_staffing_needs()
 
         return result
+
+    def _auto_close_staffing_needs(self):
+        needs = self.mapped("staffing_need_id").filtered(
+            lambda n: n.state == "assigned"
+        )
+        for need in needs:
+            hired = self.env["hr.applicant"].search_count([
+                ("staffing_need_id", "=", need.id),
+                ("stage_id.hired_stage", "=", True),
+            ])
+            if hired >= need.number_of_positions:
+                need.sudo().action_close()
