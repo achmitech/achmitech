@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!-- Benefit type: monthly (reuse the generic one from hr_contract_salary) -->
+
+        <!-- Meal allowance benefit for MAR structure.
+             cost_res_field_id → _get_benefits_costs() includes l10n_ma_meal_allowance * 12
+             in final_yearly_costs. display_type=always: employer-defined, not employee-chosen. -->
+        <record id="hr_contract_salary_benefit_meal_mar" model="hr.contract.salary.benefit">
+            <field name="name">Panier repas</field>
+            <field name="sequence">10</field>
+            <field name="benefit_type_id" ref="hr_contract_salary.l10n_be_monthly_cash"/>
+            <field name="structure_type_id" ref="l10n_ma_hr_payroll.structure_type_employee_mar"/>
+            <field name="display_type">always</field>
+            <field name="res_field_id" ref="l10n_ma_hr_payroll.field_hr_version__l10n_ma_meal_allowance"/>
+            <field name="cost_res_field_id" ref="l10n_ma_hr_payroll.field_hr_version__l10n_ma_meal_allowance"/>
+        </record>
+
+        <!-- Transport exemption benefit for MAR structure. -->
+        <record id="hr_contract_salary_benefit_transport_mar" model="hr.contract.salary.benefit">
+            <field name="name">Transport</field>
+            <field name="sequence">11</field>
+            <field name="benefit_type_id" ref="hr_contract_salary.l10n_be_monthly_cash"/>
+            <field name="structure_type_id" ref="l10n_ma_hr_payroll.structure_type_employee_mar"/>
+            <field name="display_type">always</field>
+            <field name="res_field_id" ref="l10n_ma_hr_payroll.field_hr_version__l10n_ma_transport_exemption"/>
+            <field name="cost_res_field_id" ref="l10n_ma_hr_payroll.field_hr_version__l10n_ma_transport_exemption"/>
+        </record>
+
+        <!-- Phone/internet allowance benefit for MAR structure. -->
+        <record id="hr_contract_salary_benefit_phone_mar" model="hr.contract.salary.benefit">
+            <field name="name">Téléphone / Internet</field>
+            <field name="sequence">12</field>
+            <field name="benefit_type_id" ref="hr_contract_salary.l10n_be_monthly_cash"/>
+            <field name="structure_type_id" ref="l10n_ma_hr_payroll.structure_type_employee_mar"/>
+            <field name="display_type">always</field>
+            <field name="res_field_id" ref="achmitech_hr_payroll.field_hr_version__l10n_ma_phone_allowance"/>
+            <field name="cost_res_field_id" ref="achmitech_hr_payroll.field_hr_version__l10n_ma_phone_allowance"/>
+        </record>
+
+        <!-- Kilometric allowance: read-only on public view, included in yearly cost when set. -->
+        <record id="hr_contract_salary_benefit_kilometric_mar" model="hr.contract.salary.benefit">
+            <field name="name">Indemnité kilométrique</field>
+            <field name="sequence">20</field>
+            <field name="benefit_type_id" ref="hr_contract_salary.l10n_be_monthly_cash"/>
+            <field name="structure_type_id" ref="l10n_ma_hr_payroll.structure_type_employee_mar"/>
+            <field name="display_type">always</field>
+            <field name="res_field_id" ref="l10n_ma_hr_payroll.field_hr_version__l10n_ma_kilometric_exemption"/>
+            <field name="cost_res_field_id" ref="l10n_ma_hr_payroll.field_hr_version__l10n_ma_kilometric_exemption"/>
+        </record>
+
+
+    </data>
+</odoo>
