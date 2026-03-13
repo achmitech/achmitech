@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="hr_contract_salary_offer_view_form_inherit" model="ir.ui.view">
+        <field name="name">hr.contract.salary.offer.view.form.inherit.achmitech</field>
+        <field name="model">hr.contract.salary.offer</field>
+        <field name="inherit_id" ref="hr_contract_salary.hr_contract_salary_offer_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='group_offer']" position="inside">
+                <field name="client_id" options="{'no_create': True}"/>
+                <field name="mission_order_ref"/>
+            </xpath>
+            <xpath expr="//group[@name='salary_simulation_group']" position="before">
+                <group string="Indemnités" name="group_indemnities">
+                    <field name="l10n_ma_meal_allowance"/>
+                    <field name="l10n_ma_transport_exemption"/>
+                    <field name="l10n_ma_kilometric_exemption"/>
+                    <field name="l10n_ma_phone_allowance"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="hr_contract_salary_offer_view_form_retenues_inherit" model="ir.ui.view">
+        <field name="name">hr.contract.salary.offer.view.form.retenues.achmitech</field>
+        <field name="model">hr.contract.salary.offer</field>
+        <field name="inherit_id" ref="hr_contract_salary_payroll.hr_contract_salary_offer_view_form_inherit"/>
+        <field name="arch" type="xml">
+            <!-- Append deduction rows at the end of the simulation grid -->
+            <xpath expr="//div[contains(@style,'grid-template-columns')]" position="inside">
+                <div class="border-top" style="grid-column: span 4;"/>
+                <div class="fw-bold">CNSS Salariale</div>
+                <div>
+                    <field name="cnss_sal_wage" widget="monetary" readonly="1" options="{'currency_field': 'currency_id'}" class="justify-content-end"/>
+                </div>
+                <div>/</div>
+                <div>month</div>
+                <div class="fw-bold">AMO Salariale</div>
+                <div>
+                    <field name="amo_sal_wage" widget="monetary" readonly="1" options="{'currency_field': 'currency_id'}" class="justify-content-end"/>
+                </div>
+                <div>/</div>
+                <div>month</div>
+                <div class="fw-bold">IR</div>
+                <div>
+                    <field name="ir_wage" widget="monetary" readonly="1" options="{'currency_field': 'currency_id'}" class="justify-content-end"/>
+                </div>
+                <div>/</div>
+                <div>month</div>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
