@@ -10,7 +10,7 @@
                 <field name="client_id" options="{'no_create': True}"/>
                 <field name="mission_order_ref"/>
             </xpath>
-            <xpath expr="//group[@name='salary_simulation_group']" position="before">
+            <xpath expr="//group[@name='salary_simulation_group']" position="after">
                 <group string="Indemnités" name="group_indemnities">
                     <field name="l10n_ma_meal_allowance"/>
                     <field name="l10n_ma_transport_exemption"/>
