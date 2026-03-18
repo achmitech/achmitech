@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_achmitech_contract_sign_document_user,achmitech.contract.type.sign.document user,model_achmitech_contract_type_sign_document,base.group_user,1,0,0,0
+access_achmitech_contract_sign_document_manager,achmitech.contract.type.sign.document manager,model_achmitech_contract_type_sign_document,hr.group_hr_manager,1,1,1,1
