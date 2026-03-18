@@ -355,7 +355,7 @@
         <div class="page page-break">
             <p class="bold" style="margin-bottom:4pt;">
                 Fait A Rabat, Le
-                <t t-out="doc.contract_date_start.strftime('%d/%m/%Y') if doc.contract_date_start else '__/__/____'"/>
+                <t t-out="datetime.date.today().strftime('%d/%m/%Y')"/>
             </p>
             <p>En deux (2) exemplaires originaux, Un (1) pour l'Employeur et un (1) pour le Salarié.</p>
             <br/><br/>
@@ -464,7 +464,7 @@
 
             <br/>
             <p>Fait à Rabat, en double exemplaire, le
-                <t t-out="doc.contract_date_start.strftime('%d/%m/%Y') if doc.contract_date_start else '__/__/____'"/>
+                <t t-out="datetime.date.today().strftime('%d/%m/%Y')"/>
             </p>
             <br/><br/>
             <table class="sig-table">
