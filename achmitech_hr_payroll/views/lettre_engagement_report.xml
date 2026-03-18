@@ -222,7 +222,7 @@
         <!-- Signatures -->
         <p class="bold" style="margin-top:24pt;">
             Fait à <t t-out="doc.company_id.city or 'Rabat'"/>, le
-            <t t-out="doc.contract_date_start.strftime('%d/%m/%Y') if doc.contract_date_start else '__/__/____'"/>
+            <t t-out="datetime.date.today().strftime('%d/%m/%Y')"/>
         </p>
 
         <table class="sig-table">
