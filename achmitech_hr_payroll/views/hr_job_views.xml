@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hr_job_form_achmitech" model="ir.ui.view">
+        <field name="name">hr.job.form.achmitech</field>
+        <field name="model">hr.job</field>
+        <field name="inherit_id" ref="hr.view_hr_job_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Stage" name="internship">
+                    <group>
+                        <field name="internship_supervisor_id"/>
+                        <field name="internship_missions" placeholder="Décrivez les missions du stagiaire..."/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

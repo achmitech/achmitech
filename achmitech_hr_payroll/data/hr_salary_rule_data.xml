@@ -2,13 +2,6 @@
 <odoo>
     <data>
 
-        <!-- Keep TRANSPORT_EXEMPTION archived: TRANSPORT_INDMNT (id=205) is the active transport
-             allowance rule and already adds l10n_ma_transport_exemption to GROSS correctly.
-             Reactivating TRANSPORT_EXEMPTION would double the transport amount in GROSS. -->
-        <record id="l10n_ma_hr_payroll.l10n_ma_hr_rule_transportation_exemption" model="hr.salary.rule">
-            <field name="active">0</field>
-        </record>
-
         <!-- Disable MEDICAL_ALW: not on reference payslip; its rate (2.26%) is identical to E_AMO,
              causing double-counting in categories['UNTAXABLE_DED'] and inflating the IR base. -->
         <record id="l10n_ma_hr_payroll.l10n_ma_hr_payroll_rules_medical_alw" model="hr.salary.rule">
@@ -119,6 +112,15 @@ if version.employee_id.marital == 'married':
     result += 50
 if version.employee_id.children:
     result += min(300, 50 * version.employee_id.children)
+            </field>
+        </record>
+
+        <!-- Fix MEAL_A: when BASIC = 0 (e.g. stagiaires paid only via allowances),
+             the 20% cap would zero out the meal allowance. Use full amount when no base wage. -->
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_rule_meal" model="hr.salary.rule">
+            <field name="amount_python_compute">
+basic = result_rules['BASIC']['total']
+result = version.l10n_ma_meal_allowance if basic == 0 else min(version.l10n_ma_meal_allowance, 0.2 * basic)
             </field>
         </record>
 

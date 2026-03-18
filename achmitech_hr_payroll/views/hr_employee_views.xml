@@ -1,35 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- Employee form: hide unused MA allowances, add phone allowance -->
     <record id="hr_employee_form_phone_allowance" model="ir.ui.view">
         <field name="name">hr.employee.form.phone.allowance.achmitech</field>
         <field name="model">hr.employee</field>
         <field name="inherit_id" ref="l10n_ma_hr_payroll.hr_employee_form_l10n_ma_payroll"/>
         <field name="arch" type="xml">
+            <xpath expr="//label[@for='l10n_ma_hra']" position="replace"/>
+            <xpath expr="//field[@name='l10n_ma_hra']/.." position="replace"/>
+            <xpath expr="//label[@for='l10n_ma_da']" position="replace"/>
+            <xpath expr="//field[@name='l10n_ma_da']/.." position="replace"/>
+            <xpath expr="//label[@for='l10n_ma_medical_allowance']" position="replace"/>
+            <xpath expr="//field[@name='l10n_ma_medical_allowance']/.." position="replace"/>
+            <xpath expr="//label[@for='l10n_ma_kilometric_exemption']" position="replace">
+                <label for="l10n_ma_kilometric_exemption" string="Indemnité kilométrique"/>
+            </xpath>
+            <xpath expr="//label[@for='l10n_ma_meal_allowance']" position="replace">
+                <label for="l10n_ma_meal_allowance" string="Indemnité de Panier repas"/>
+            </xpath>
+            <xpath expr="//label[@for='l10n_ma_transport_exemption']" position="replace">
+                <label for="l10n_ma_transport_exemption" string="Indemnité de Transport"/>
+            </xpath>
             <xpath expr="//field[@name='l10n_ma_transport_exemption']/.." position="after">
                 <label for="l10n_ma_phone_allowance"/>
                 <div class="o_row">
-                    <field name="l10n_ma_phone_allowance" class="o_hr_narrow_field"/>
+                    <field name="l10n_ma_phone_allowance" string="Indemnité de Téléphone / Internet" class="o_hr_narrow_field"/>
                     <span>/ mois</span>
                 </div>
             </xpath>
         </field>
     </record>
 
-
+    <!-- Contract template form: same cleanup + phone allowance -->
     <record id="hr_contract_template_view_form_phone_allowance" model="ir.ui.view">
         <field name="name">hr.contract.template.view.form.phone.allowance.achmitech</field>
         <field name="model">hr.version</field>
         <field name="inherit_id" ref="l10n_ma_hr_payroll.hr_contract_template_view_form"/>
         <field name="arch" type="xml">
-            <!-- Hide unused allowances -->
             <xpath expr="//label[@for='l10n_ma_hra']" position="replace"/>
             <xpath expr="//field[@name='l10n_ma_hra']/.." position="replace"/>
             <xpath expr="//label[@for='l10n_ma_da']" position="replace"/>
             <xpath expr="//field[@name='l10n_ma_da']/.." position="replace"/>
-            <xpath expr="//label[@for='l10n_ma_kilometric_exemption']" position="replace"/>
-            <xpath expr="//field[@name='l10n_ma_kilometric_exemption']/.." position="replace"/>
-            <!-- Add phone allowance after transport exemption -->
+            <xpath expr="//label[@for='l10n_ma_medical_allowance']" position="replace"/>
+            <xpath expr="//field[@name='l10n_ma_medical_allowance']/.." position="replace"/>
+            <xpath expr="//label[@for='l10n_ma_kilometric_exemption']" position="replace">
+                <label for="l10n_ma_kilometric_exemption" string="Indemnité kilométrique"/>
+            </xpath>
+            <xpath expr="//label[@for='l10n_ma_meal_allowance']" position="replace">
+                <label for="l10n_ma_meal_allowance" string="Panier repas"/>
+            </xpath>
+            <xpath expr="//label[@for='l10n_ma_transport_exemption']" position="replace">
+                <label for="l10n_ma_transport_exemption" string="Transport"/>
+            </xpath>
             <xpath expr="//field[@name='l10n_ma_transport_exemption']/.." position="after">
                 <label for="l10n_ma_phone_allowance"/>
                 <div class="o_row">
