@@ -83,8 +83,8 @@ class OkrNodeMetric(models.Model):
 
                         # (optional) owner scope ONLY if model supports it
                         okr_uid = eval_ctx.get("okr_user_id")
-                        if okr_uid and "assigned_to" in Model._fields:
-                            domain = fields.Domain.AND([domain, [("assigned_to", "=", okr_uid)]])
+                        if okr_uid and "assigned_to_ids" in Model._fields:
+                            domain = fields.Domain.AND([domain, [("assigned_to_ids", "in", [okr_uid])]])
 
                         if d.aggregation == "count":
                             current = float(Model.search_count(domain))
