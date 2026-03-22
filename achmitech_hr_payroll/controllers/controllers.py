@@ -102,6 +102,8 @@ class HrContractSalaryAchmitech(PayrollHrContractSalary):
         """
         Extract employee and employer roles from the sign request items
         (populated by hr.contract.signatory configuration on the offer).
+        Falls back to the well-known hr_sign roles when the request has no items
+        (e.g. when contract_update_template_id is not set on the contract template).
         Returns (employee_role, employer_role) — either may be None.
         """
         employee_role = employer_role = None
@@ -123,6 +125,32 @@ class HrContractSalaryAchmitech(PayrollHrContractSalary):
             employee_role = items[0].role_id
         if not employer_role and len(items) >= 2:
             employer_role = items[1].role_id
+
+        # Last resort: no request items at all (contract_update_template not configured).
+        # Use the two well-known hr_sign roles directly so signature zones are still created.
+        if not employee_role:
+            try:
+                employee_role = request.env.ref(employee_xml_id)
+            except Exception:
+                pass
+        if not employer_role:
+            try:
+                # The employer / company role — xml_id varies by Odoo version
+                for xmlid in ('hr_sign.sign_item_role_company_signatory',
+                              'sign.sign_item_role_default'):
+                    try:
+                        employer_role = request.env.ref(xmlid)
+                        break
+                    except Exception:
+                        continue
+            except Exception:
+                pass
+
+        if not employer_role:
+            # Final fallback: any role that is not the employee role
+            roles = request.env['sign.item.role'].sudo().search(
+                [('id', '!=', employee_role.id if employee_role else 0)], limit=1)
+            employer_role = roles or None
 
         return employee_role, employer_role
 
@@ -238,6 +266,37 @@ class HrContractSalaryAchmitech(PayrollHrContractSalary):
     # ------------------------------------------------------------------
 
     def submit(self, offer_id=None, benefits=None, **kw):
+        # When the contract type has sign_document_ids configured but no static
+        # sign_template_id on the template version, the standard submit() check
+        # ("No signature template defined") fires before our dynamic template
+        # builder ever runs.  Inject any active sign template as a placeholder
+        # so the standard flow can create the sign.request; we replace the
+        # template afterwards with our dynamically-generated one.
+        try:
+            offer = request.env['hr.contract.salary.offer'].sudo().browse(int(offer_id))
+            if (not offer.sign_template_id
+                    and offer.contract_type_id.sign_document_ids):
+                # For active employees Odoo reads contract_update_template_id;
+                # for new hires it reads sign_template_id.  Either may be empty
+                # when we generate the contract PDF dynamically.
+                # Inject any active sign template so the standard check passes;
+                # our _build_contract_sign_template() replaces it afterwards.
+                is_update = bool(offer.employee_id and offer.employee_id.active)
+                # For updates, fall back to the initial sign template on the template
+                fallback = offer.contract_template_id.sign_template_id if is_update else None
+                if not fallback:
+                    fallback = request.env['sign.template'].sudo().search(
+                        [('active', '=', True)], limit=1)
+                if fallback:
+                    offer.sudo().write({'sign_template_id': fallback.id})
+                    _logger.info(
+                        "Injected placeholder sign template %s for offer %s "
+                        "(is_update=%s, will be replaced with dynamic template)",
+                        fallback.id, offer_id, is_update,
+                    )
+        except Exception:
+            _logger.exception("Could not inject placeholder sign template for offer %s", offer_id)
+
         result = super().submit(offer_id=offer_id, benefits=benefits, **kw)
 
         if not isinstance(result, dict) or result.get('error') or not result.get('request_id'):
@@ -266,6 +325,20 @@ class HrContractSalaryAchmitech(PayrollHrContractSalary):
                 "Sign request %s → merged template %s for offer %s",
                 sign_req.id, new_template.id, offer_id,
             )
+
+            # If the token is missing (happens when all signatories are mapped
+            # to 'hr' instead of 'employee' in contract_update_signatories_ids),
+            # fall back to any request item token so the redirect doesn't 404.
+            if not result.get('token'):
+                fallback_item = sign_req.request_item_ids[:1]
+                if fallback_item:
+                    result['token'] = fallback_item.access_token
+                    _logger.warning(
+                        "No employee token found for sign request %s — using fallback item %s. "
+                        "Fix: set signatory='employee' for the Candidat role in the CDI "
+                        "contract update signatories.",
+                        sign_req.id, fallback_item.id,
+                    )
         except Exception:
             _logger.exception(
                 "Failed to build contract sign template for offer %s — keeping original",

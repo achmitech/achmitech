@@ -28,6 +28,7 @@
         .sub-item-text { display: inline-block; width: 420pt; vertical-align: top; }
         .indent        { margin-left: 30pt; text-align: justify; }
         .bullet        { margin: 3pt 0 3pt 50pt; }
+        td, th         { border: 1px solid #fff; }
         .sig-table     { width: 100%; border-collapse: collapse; margin-top: 30pt; }
         .sig-left      { width: 50%; vertical-align: top; padding-right: 10pt; border: 1px solid #fff; }
         .sig-right     { width: 50%; vertical-align: top; padding-left: 10pt; border: 1px solid #fff; }
@@ -425,17 +426,33 @@
             </p>
             <p style="margin-bottom:12pt;">Dénommé ci-après <em>« le Salarié »</em></p>
 
-            <p style="margin-bottom:12pt; text-align:justify;">
-                Dans le cadre de ses fonctions, le Salarié sera amené à intervenir chez un client de la
-                société <span class="bold"><t t-out="doc.company_id.name"/>.</span>
-            </p>
-
-            <p><span class="bold">Client&#160;: </span><t t-out="doc.client_id.name or ''"/></p>
-            <p><span class="bold">Mission&#160;: </span><t t-out="doc.job_id.name or ''"/></p>
-            <p><span class="bold">Adresse site&#160;: </span><t t-out="doc.client_id.city or 'RABAT'"/></p>
-            <p style="margin-bottom:12pt;"><span class="bold">Démarrage&#160;: </span>
-                <t t-out="doc.contract_date_start.strftime('%d/%m/%Y') if doc.contract_date_start else '__/__/____'"/>
-            </p>
+            <t t-if="doc.client_id">
+                <p style="margin-bottom:12pt; text-align:justify;">
+                    Dans le cadre de ses fonctions, le Salarié sera amené à intervenir chez un client de la
+                    société <span class="bold"><t t-out="doc.company_id.name"/>.</span>
+                </p>
+                <p><span class="bold">Client&#160;: </span><t t-out="doc.client_id.name"/></p>
+                <p><span class="bold">Mission&#160;: </span><t t-out="doc.job_id.name or ''"/></p>
+                <p><span class="bold">Adresse site&#160;: </span><t t-out="doc.client_id.city or 'RABAT'"/></p>
+                <p style="margin-bottom:12pt;"><span class="bold">Démarrage&#160;: </span>
+                    <t t-out="doc.contract_date_start.strftime('%d/%m/%Y') if doc.contract_date_start else '__/__/____'"/>
+                </p>
+            </t>
+            <t t-else="">
+                <p style="margin-bottom:12pt; text-align:justify;">
+                    Dans le cadre de ses fonctions, le Salarié sera amené à intervenir dans les locaux du groupe
+                    <span class="bold"><t t-out="doc.company_id.name"/></span>, celui de ses filiales ou ses clients.
+                </p>
+                <p><span class="bold">Mission&#160;: </span><t t-out="doc.job_id.name or ''"/></p>
+                <p><span class="bold">Adresse site&#160;: </span>LOCAUX <t t-out="(doc.company_id.name or '').upper()"/>-<t t-out="(doc.company_id.city or 'RABAT').upper()"/></p>
+                <p><span class="bold">Démarrage&#160;: </span>
+                    <t t-out="doc.contract_date_start.strftime('%d/%m/%Y') if doc.contract_date_start else '__/__/____'"/>
+                </p>
+                <p style="margin-bottom:12pt;"><span class="bold">Fin d'activité&#160;: </span>
+                    <t t-out="doc.contract_date_end.strftime('%d/%m/%Y') if doc.contract_date_end else '__/__/____'"/>
+                    (date renouvelable par tacite reconduction)
+                </p>
+            </t>
 
             <!-- Indemnités block — conditionnel -->
             <t t-if="doc.l10n_ma_transport_exemption or doc.l10n_ma_phone_allowance or doc.l10n_ma_meal_allowance or doc.l10n_ma_kilometric_exemption">
