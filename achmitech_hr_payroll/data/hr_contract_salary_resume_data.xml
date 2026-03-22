@@ -2,13 +2,13 @@
 <odoo>
     <data noupdate="0">
 
-        <!-- Brut: reads the payslip GROSS rule (BASIC + all ALW), so it is always
+        <!-- Brut total: reads the payslip GROSS rule (BASIC + all ALW), so it is always
              consistent with the Net line which also comes from the payslip.
-             Using wage_with_holidays here would show only the base wage and could
-             be less than Net when allowances are included in GROSS.
+             Named "Salaire Brut Total" to avoid confusion with "Salaire Imposable" —
+             allowances (transport, meal, phone) are non-taxable and not included in the IR base.
              impacts_monthly_total=False so the raw gross doesn't pollute the total. -->
         <record id="hr_contract_salary_resume_gross_mar" model="hr.contract.salary.resume">
-            <field name="name">Brut</field>
+            <field name="name">Salaire Brut Total</field>
             <field name="sequence">5</field>
             <field name="value_type">payslip</field>
             <field name="code">GROSS</field>
@@ -67,6 +67,12 @@
             <field name="structure_type_id" ref="l10n_ma_hr_payroll.structure_type_employee_mar"/>
             <field name="impacts_monthly_total" eval="False"/>
             <field name="uom">currency</field>
+        </record>
+
+        <!-- Override standard "Taxable Salary" label — misleading because allowances
+             are non-taxable in Morocco; the shown GROSS includes them all. -->
+        <record id="hr_contract_salary_payroll.hr_contract_salary_payroll_resume_gross_worker" model="hr.contract.salary.resume">
+            <field name="name">Salaire Brut Total</field>
         </record>
 
         <!-- ── Retenues (deductions affecting the employee) ───────────────── -->
