@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Run once manually via Settings > Technical > Server Actions
+             to migrate assigned_to (M2O) → assigned_to_ids (M2M).
+             After migration is confirmed, assigned_to can be removed. -->
+        <record id="action_migrate_staffing_need_assigned_to" model="ir.actions.server">
+            <field name="name">Migrate staffing.need assigned_to → assigned_to_ids</field>
+            <field name="model_id" ref="model_staffing_plan"/>
+            <field name="state">code</field>
+            <field name="code">action = model.action_migrate_assigned_to_ids()</field>
+        </record>
+    </data>
+</odoo>

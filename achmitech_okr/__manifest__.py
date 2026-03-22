@@ -22,6 +22,7 @@ Manage staffing plans, staffing needs, and KPI metrics linked to recruitment act
         'security/ir.model.access.csv',
         'data/ir_cron_data.xml',
         'data/staffing_data.xml',
+        'data/migrate_assigned_to_ids.xml',
         'views/staffing_plan_views.xml',
         'views/hr_applicant_views.xml',
         'wizard/applicant_get_refuse_reason_views.xml',

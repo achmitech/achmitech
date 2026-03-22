@@ -83,7 +83,7 @@ erDiagram
     HR_APPLICANT        ||--o{    OKR_RECONTACT_LOG   : "recontact logs"
 ```
 
-> External references not shown: `res.users` (okr.node.user_id, staffing.need.assigned_to), `hr.department` (staffing.plan.department_id), `hr.job` (staffing.need.job_id), `res.company`.
+> External references not shown: `res.users` (okr.node.user_id, staffing.need.assigned_to_ids (M2M)), `hr.department` (staffing.plan.department_id), `hr.job` (staffing.need.job_id), `res.company`.
 
 ## Security Groups
 
@@ -100,15 +100,16 @@ Defined in `security/security.xml`. Both groups belong to the **OKR** privilege/
 
 All record rules use `noupdate="0"` and are preceded by `<delete>` tags that wipe existing rules on every upgrade. This prevents stale rules from blocking domain updates (a common `noupdate` lock issue in Odoo).
 
-| Model | Group | Filter |
-|---|---|---|
-| `okr.node` | User | `user_id = me` OR `child_ids.user_id = me` |
-| `okr.node` | Manager | company-scoped |
-| `okr.node.metric` | User | `node_id.user_id = me` |
-| `staffing.need` | User | `assigned_to = me`, company-scoped |
-| `staffing.need` | Manager | company-scoped |
-| `staffing.plan` | User | has at least one need where `assigned_to = me`, company-scoped |
-| `staffing.plan` | Manager | company-scoped |
+| Model | Group | Perm | Filter |
+|---|---|---|---|
+| `okr.node` | User | read | `user_id = me` OR `child_ids.user_id = me` |
+| `okr.node` | Manager | all | company-scoped |
+| `okr.node.metric` | User | read | `node_id.user_id = me` |
+| `staffing.need` | User | read | company-scoped (broad — avoids M2O access errors) |
+| `staffing.need` | User | write/create | `assigned_to_ids` includes me, company-scoped |
+| `staffing.need` | Manager | all | company-scoped |
+| `staffing.plan` | User | read/write | company-scoped (recruiters can browse and add needs to any plan) |
+| `staffing.plan` | Manager | all | company-scoped |
 
 ---
 
@@ -183,18 +184,23 @@ A single hiring need inside a staffing plan.
 
 Key fields:
 - `staffing_plan_id`, `company_id` (related), `job_id`
-- `assigned_to`: recruiter responsible
+- `assigned_to_ids`: M2M to `res.users` — recruiters responsible (shared needs give full credit to each assigned recruiter)
 - `assigned_date`: set automatically on `action_assign`
 - `number_of_positions`: target headcount
 - `positions_filled`: computed count of applicants currently in a hired stage
 - `state`: `draft` → `assigned` → `closed`
 
+> **Migration note**: `assigned_to` (M2O) is kept as a legacy field. Run `action_migrate_assigned_to_ids` from the staffing plan form (admin button) to populate `assigned_to_ids` from existing data. Remove `assigned_to` once migration is confirmed.
+
 **Auto-close**: when an applicant moves to a hired stage (`hr.recruitment.stage.hired_stage = True`), the system checks if `positions_filled >= number_of_positions`. If so, the need is automatically closed (only if currently `assigned`).
 
-State transitions (manager only in the UI):
+State transitions (manager buttons in UI):
 - `action_assign` — sets state to `assigned`, auto-fills `assigned_date`
 - `action_close` — sets state to `closed`
 - `action_reset_draft` — resets to `draft`
+- `action_reset_draft` — resets to `draft` (manager button in UI)
+
+Recruiters can create needs directly from the plan form and assign themselves. Write/create is restricted to needs where the recruiter is in `assigned_to_ids`.
 
 ---
 

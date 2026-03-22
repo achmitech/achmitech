@@ -25,7 +25,7 @@ def kpi_need_covered_under_5d_rate(env, node):
 
     need_domain = [
         ("company_id", "=", node.company_id.id),
-        ("assigned_to", "=", node.user_id.id),
+        ("assigned_to_ids", "in", [node.user_id.id]),
         ("assigned_date", ">=", node.date_start),
         ("assigned_date", "<", node.date_end),  # end exclusive
         ("state", "!=", "draft"),
@@ -80,7 +80,7 @@ def kpi_ec_pass_rate(env, node):
     base_domain = [
         ("company_id", "=", node.company_id.id),
         ("staffing_need_id", "!=", False),
-        ("staffing_need_id.assigned_to", "=", node.user_id.id),
+        ("staffing_need_id.assigned_to_ids", "in", [node.user_id.id]),
         ("presented_to_client_date", ">=", node.date_start),
         ("presented_to_client_date", "<", node.date_end),
     ]
