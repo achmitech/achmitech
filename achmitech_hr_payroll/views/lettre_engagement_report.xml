@@ -17,6 +17,7 @@
         .cover-page    { padding-top: 40mm; text-align: center; }
         .cover-block   { margin: 24pt 0; text-align: center; }
         .cover-block p { text-align: center; }
+        td, th         { border: 1px solid #fff; }
         .sig-table     { width: 100%; border-collapse: collapse; margin-top: 30pt; }
         .sig-left      { width: 50%; vertical-align: top; padding-right: 10pt; border: 1px solid #fff; }
         .sig-right     { width: 50%; vertical-align: top; padding-left: 10pt; border: 1px solid #fff; }
@@ -73,7 +74,7 @@
                 <p class="sc">
                     <span class="bold">En date du&#160;</span>
                     <span class="bold">
-                        <t t-out="doc.contract_date_start.strftime('%d/%m/%Y') if doc.contract_date_start else '__/__/____'"/>
+                        <t t-out="datetime.date.today().strftime('%d/%m/%Y')"/>
                     </span>
                 </p>
             </div>
@@ -162,28 +163,32 @@
     <!-- PAGE 3 : ARTICLES 5-7 + SIGNATURES -->
     <div class="page page-break">
 
-        <!-- Article 5 -->
+        <!-- Article 5 — read allowances from doc directly so both live versions
+             (originated_offer_id set) and preview patches (written on doc) work -->
+        <t t-set="meal"      t-value="doc.l10n_ma_meal_allowance      or (offer.l10n_ma_meal_allowance      if offer else 0)"/>
+        <t t-set="transport" t-value="doc.l10n_ma_transport_exemption  or (offer.l10n_ma_transport_exemption  if offer else 0)"/>
+        <t t-set="phone"     t-value="doc.l10n_ma_phone_allowance      or (offer.l10n_ma_phone_allowance      if offer else 0)"/>
         <p class="article-title">Article 5 - Gratification</p>
         <p>
             À titre de participation et pour couvrir certains frais,
             <span class="bold"><t t-out="doc.company_id.name or ''"/></span>
             versera au Stagiaire une allocation de participation mensuelle d'un montant global de
             <span class="bold">
-                <t t-out="'{:,.0f}'.format((offer.l10n_ma_meal_allowance or 0) + (offer.l10n_ma_transport_exemption or 0) + (offer.l10n_ma_phone_allowance or 0)).replace(',', ' ')"/> DHS
+                <t t-out="'{:,.0f}'.format(meal + transport + phone).replace(',', ' ')"/> DHS
             </span>,
             répartie comme suit :
         </p>
         <ul style="margin: 6pt 0 6pt 20pt;">
-            <li t-if="offer.l10n_ma_meal_allowance">
-                <span class="bold"><t t-out="'{:,.0f}'.format(offer.l10n_ma_meal_allowance).replace(',', ' ')"/> MAD</span>
+            <li t-if="meal">
+                <span class="bold"><t t-out="'{:,.0f}'.format(meal).replace(',', ' ')"/> MAD</span>
                 au titre de <span class="bold">panier repas</span>,
             </li>
-            <li t-if="offer.l10n_ma_transport_exemption">
-                <span class="bold"><t t-out="'{:,.0f}'.format(offer.l10n_ma_transport_exemption).replace(',', ' ')"/> MAD</span>
+            <li t-if="transport">
+                <span class="bold"><t t-out="'{:,.0f}'.format(transport).replace(',', ' ')"/> MAD</span>
                 au titre de <span class="bold">transport</span>,
             </li>
-            <li t-if="offer.l10n_ma_phone_allowance">
-                <span class="bold"><t t-out="'{:,.0f}'.format(offer.l10n_ma_phone_allowance).replace(',', ' ')"/> MAD</span>
+            <li t-if="phone">
+                <span class="bold"><t t-out="'{:,.0f}'.format(phone).replace(',', ' ')"/> MAD</span>
                 au titre de <span class="bold">téléphone / internet</span>.
             </li>
         </ul>

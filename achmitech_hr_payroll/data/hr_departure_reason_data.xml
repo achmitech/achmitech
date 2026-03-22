@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="departure_fin_stage" model="hr.departure.reason">
+        <field name="name">Fin de stage</field>
+        <field name="sequence">10</field>
+    </record>
+
+    <record id="departure_rupture_pe" model="hr.departure.reason">
+        <field name="name">Rupture de période d'essai</field>
+        <field name="sequence">20</field>
+    </record>
+
+    <record id="departure_fin_cdd" model="hr.departure.reason">
+        <field name="name">Fin de CDD</field>
+        <field name="sequence">30</field>
+    </record>
+
+    <record id="departure_demission" model="hr.departure.reason">
+        <field name="name">Démission</field>
+        <field name="sequence">40</field>
+    </record>
+
+    <record id="departure_licenciement" model="hr.departure.reason">
+        <field name="name">Licenciement</field>
+        <field name="sequence">50</field>
+    </record>
+
+    <record id="departure_fin_mission" model="hr.departure.reason">
+        <field name="name">Fin de mission</field>
+        <field name="sequence">60</field>
+    </record>
+
+    <record id="departure_retraite" model="hr.departure.reason">
+        <field name="name">Retraite</field>
+        <field name="sequence">70</field>
+    </record>
+
+</odoo>

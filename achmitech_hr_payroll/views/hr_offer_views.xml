@@ -6,6 +6,14 @@
         <field name="model">hr.contract.salary.offer</field>
         <field name="inherit_id" ref="hr_contract_salary.hr_contract_salary_offer_view_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_jump_to_offer']" position="after">
+                <button
+                    name="action_preview_offer_documents"
+                    type="object"
+                    string="Aperçu documents"
+                    class="btn btn-secondary"
+                    invisible="not id or not contract_template_id"/>
+            </xpath>
             <xpath expr="//group[@name='group_offer']" position="inside">
                 <field name="client_id" options="{'no_create': True}"/>
                 <field name="mission_order_ref"/>
