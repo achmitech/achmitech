@@ -118,10 +118,22 @@ if version.employee_id.children:
         <!-- Fix MEAL_A: when BASIC = 0 (e.g. stagiaires paid only via allowances),
              the 20% cap would zero out the meal allowance. Use full amount when no base wage. -->
         <record id="l10n_ma_hr_payroll.l10n_ma_hr_rule_meal" model="hr.salary.rule">
+            <field name="name">Indemnité de panier repas</field>
             <field name="amount_python_compute">
 basic = result_rules['BASIC']['total']
 result = version.l10n_ma_meal_allowance if basic == 0 else min(version.l10n_ma_meal_allowance, 0.2 * basic)
             </field>
+        </record>
+
+        <!-- French labels for simulator dialog (Calcul de la valeur nette) -->
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_payroll_rules_employee_cnss" model="hr.salary.rule">
+            <field name="name">CNSS Salariale</field>
+        </record>
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_payroll_rules_employee_amo" model="hr.salary.rule">
+            <field name="name">AMO Salariale</field>
+        </record>
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_payroll_rules_total_untaxable_ded" model="hr.salary.rule">
+            <field name="name">Total Déductions Non Imposables</field>
         </record>
 
         <!-- Disable HRA and DA: Indian/Gulf concepts, not used in Moroccan payroll. -->
