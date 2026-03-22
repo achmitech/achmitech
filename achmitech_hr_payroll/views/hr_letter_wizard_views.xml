@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================================================================
+         WIZARD FORM — Certificat de Travail
+         ================================================================ -->
+    <record id="hr_letter_wizard_certificat_travail_view" model="ir.ui.view">
+        <field name="name">hr.letter.wizard.certificat_travail.form</field>
+        <field name="model">hr.letter.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Certificat / Attestation de Travail">
+                <group>
+                    <field name="letter_type" invisible="1"/>
+                    <field name="employee_id" required="1"/>
+                </group>
+                <footer>
+                    <button string="Imprimer" type="object" name="action_print" class="btn-primary"/>
+                    <button string="Annuler" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ================================================================
+         WIZARD FORM — Attestation de Stage
+         ================================================================ -->
+    <record id="hr_letter_wizard_attestation_stage_view" model="ir.ui.view">
+        <field name="name">hr.letter.wizard.attestation_stage.form</field>
+        <field name="model">hr.letter.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Attestation de Stage">
+                <group>
+                    <field name="letter_type" invisible="1"/>
+                    <field name="employee_id" required="1"/>
+                    <field name="version_id" required="1"
+                           domain="[('employee_id', '=', employee_id)]"
+                           options="{'no_create': True}"/>
+                </group>
+                <footer>
+                    <button string="Imprimer" type="object" name="action_print" class="btn-primary"/>
+                    <button string="Annuler" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ================================================================
+         WIZARD FORM — Renouvellement PE
+         ================================================================ -->
+    <record id="hr_letter_wizard_renouvellement_pe_view" model="ir.ui.view">
+        <field name="name">hr.letter.wizard.renouvellement_pe.form</field>
+        <field name="model">hr.letter.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Renouvellement de la période d'essai">
+                <group>
+                    <field name="letter_type" invisible="1"/>
+                    <field name="employee_id" required="1"/>
+                    <field name="version_id" required="1"
+                           domain="[('employee_id', '=', employee_id)]"
+                           options="{'no_create': True}"/>
+                    <field name="pe_initial_end_date" required="1"/>
+                    <field name="pe_new_end_date" required="1"/>
+                </group>
+                <footer>
+                    <button string="Imprimer" type="object" name="action_print" class="btn-primary"/>
+                    <button string="Annuler" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ================================================================
+         WIZARD FORM — Rupture PE
+         ================================================================ -->
+    <record id="hr_letter_wizard_rupture_pe_view" model="ir.ui.view">
+        <field name="name">hr.letter.wizard.rupture_pe.form</field>
+        <field name="model">hr.letter.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Rupture de la période d'essai">
+                <group>
+                    <field name="letter_type" invisible="1"/>
+                    <field name="employee_id" required="1"/>
+                    <field name="version_id" required="1"
+                           domain="[('employee_id', '=', employee_id)]"
+                           options="{'no_create': True}"/>
+                    <field name="termination_date" required="1"/>
+                    <field name="notice_days" required="1"/>
+                    <field name="paid_until_date" required="1"/>
+                </group>
+                <footer>
+                    <button string="Imprimer" type="object" name="action_print" class="btn-primary"/>
+                    <button string="Annuler" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ================================================================
+         WIZARD FORM — Aménagement Stage
+         ================================================================ -->
+    <record id="hr_letter_wizard_amenagement_stage_view" model="ir.ui.view">
+        <field name="name">hr.letter.wizard.amenagement_stage.form</field>
+        <field name="model">hr.letter.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Aménagement durée du stage">
+                <group>
+                    <field name="letter_type" invisible="1"/>
+                    <field name="employee_id" required="1"/>
+                    <field name="version_id" required="1"
+                           domain="[('employee_id', '=', employee_id)]"
+                           options="{'no_create': True}"/>
+                    <field name="engagement_letter_date" required="1"/>
+                    <field name="new_end_date" required="1"/>
+                </group>
+                <footer>
+                    <button string="Imprimer" type="object" name="action_print" class="btn-primary"/>
+                    <button string="Annuler" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ================================================================
+         ACTIONS bound to hr.version (Print/Action menu on version form)
+         ================================================================ -->
+    <record id="action_open_wizard_renouvellement_pe" model="ir.actions.act_window">
+        <field name="name">Renouvellement PE</field>
+        <field name="res_model">hr.letter.wizard</field>
+        <field name="view_id" ref="hr_letter_wizard_renouvellement_pe_view"/>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="hr.model_hr_version"/>
+        <field name="context">{'default_letter_type': 'renouvellement_pe', 'default_version_id': active_id}</field>
+    </record>
+
+    <record id="action_open_wizard_rupture_pe" model="ir.actions.act_window">
+        <field name="name">Rupture PE</field>
+        <field name="res_model">hr.letter.wizard</field>
+        <field name="view_id" ref="hr_letter_wizard_rupture_pe_view"/>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="hr.model_hr_version"/>
+        <field name="context">{'default_letter_type': 'rupture_pe', 'default_version_id': active_id}</field>
+    </record>
+
+    <record id="action_open_wizard_amenagement_stage" model="ir.actions.act_window">
+        <field name="name">Aménagement Stage</field>
+        <field name="res_model">hr.letter.wizard</field>
+        <field name="view_id" ref="hr_letter_wizard_amenagement_stage_view"/>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="hr.model_hr_version"/>
+        <field name="context">{'default_letter_type': 'amenagement_stage', 'default_version_id': active_id}</field>
+    </record>
+
+    <!-- ================================================================
+         ACTIONS bound to hr.employee (Action menu on employee form)
+         ================================================================ -->
+    <record id="action_open_wizard_certificat_travail_from_employee" model="ir.actions.act_window">
+        <field name="name">Certificat de Travail</field>
+        <field name="res_model">hr.letter.wizard</field>
+        <field name="view_id" ref="hr_letter_wizard_certificat_travail_view"/>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="hr.model_hr_employee"/>
+        <field name="context">{'default_letter_type': 'certificat_travail', 'default_employee_id': active_id}</field>
+    </record>
+
+    <record id="action_open_wizard_attestation_stage_from_employee" model="ir.actions.act_window">
+        <field name="name">Attestation de Stage</field>
+        <field name="res_model">hr.letter.wizard</field>
+        <field name="view_id" ref="hr_letter_wizard_attestation_stage_view"/>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="hr.model_hr_employee"/>
+        <field name="context">{'default_letter_type': 'attestation_stage', 'default_employee_id': active_id}</field>
+    </record>
+
+    <record id="action_open_wizard_renouvellement_pe_from_employee" model="ir.actions.act_window">
+        <field name="name">Renouvellement PE</field>
+        <field name="res_model">hr.letter.wizard</field>
+        <field name="view_id" ref="hr_letter_wizard_renouvellement_pe_view"/>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="hr.model_hr_employee"/>
+        <field name="context">{'default_letter_type': 'renouvellement_pe', 'default_employee_id': active_id}</field>
+    </record>
+
+    <record id="action_open_wizard_rupture_pe_from_employee" model="ir.actions.act_window">
+        <field name="name">Rupture PE</field>
+        <field name="res_model">hr.letter.wizard</field>
+        <field name="view_id" ref="hr_letter_wizard_rupture_pe_view"/>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="hr.model_hr_employee"/>
+        <field name="context">{'default_letter_type': 'rupture_pe', 'default_employee_id': active_id}</field>
+    </record>
+
+    <record id="action_open_wizard_amenagement_stage_from_employee" model="ir.actions.act_window">
+        <field name="name">Aménagement Stage</field>
+        <field name="res_model">hr.letter.wizard</field>
+        <field name="view_id" ref="hr_letter_wizard_amenagement_stage_view"/>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="hr.model_hr_employee"/>
+        <field name="context">{'default_letter_type': 'amenagement_stage', 'default_employee_id': active_id}</field>
+    </record>
+
+</odoo>
