@@ -10,10 +10,12 @@ class HrVersion(models.Model):
     sign_wage_annual_gross = fields.Char(compute='_compute_sign_wage_annual_gross')
     sign_wage_annual_gross_words = fields.Char(compute='_compute_sign_wage_annual_gross')
 
-    @api.depends('originated_offer_id.final_yearly_costs')
+    @api.depends('originated_offer_id.final_yearly_costs', 'wage')
     def _compute_sign_wage_annual_gross(self):
         for version in self:
-            annual = version.originated_offer_id.final_yearly_costs or 0
+            # Prefer the offer's final yearly cost (employer cost); fall back
+            # to wage * 12 so preview patches (no originated_offer_id) work.
+            annual = version.originated_offer_id.final_yearly_costs or (version.wage * 12)
             version.sign_wage_annual_gross = f"{annual:,.2f} MAD".replace(',', '\u202f')
             version.sign_wage_annual_gross_words = num2words(int(annual), lang='fr') + ' dirhams'
     client_id = fields.Many2one(
@@ -83,6 +85,23 @@ class HrContractSalaryOffer(models.Model):
             if diff:
                 version.write(diff)
         return version
+
+    @api.depends('contract_template_id.sign_template_id',
+                 'contract_template_id.contract_update_template_id',
+                 'contract_type_id.sign_document_ids')
+    def _compute_sign_template_id(self):
+        """
+        Override: when the contract type uses our dynamic sign_document_ids flow
+        but the template version has no contract_update_template_id configured,
+        fall back to sign_template_id so the UI "Générer l'offre" button remains
+        visible and the submit() controller can proceed.
+        """
+        super()._compute_sign_template_id()
+        for offer in self:
+            if not offer.sign_template_id and offer.contract_type_id.sign_document_ids:
+                # Active employee path uses contract_update_template_id; fall back
+                # to the initial sign template when the update template is not set.
+                offer.sign_template_id = offer.contract_template_id.sign_template_id
 
     @api.depends('l10n_ma_meal_allowance', 'l10n_ma_transport_exemption',
                  'l10n_ma_kilometric_exemption', 'l10n_ma_phone_allowance',
