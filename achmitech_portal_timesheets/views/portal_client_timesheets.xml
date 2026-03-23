@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- Portal home: counter card for client timesheet validation -->
+  <template id="portal_my_home_client_timesheets" inherit_id="portal.portal_my_home"
+            name="Portal: Validation feuilles de temps (client)">
+    <!-- Enable the portal_client_category section and compute the is_ts_client flag -->
+    <xpath expr="//div[hasclass('o_portal_docs')]" position="before">
+      <t t-set="portal_client_category_enable" t-value="True"/>
+      <t t-set="_ts_projects" t-value="request.env['project.project'].sudo().search([('partner_id', '=', request.env.user.partner_id.id), ('allow_timesheets', '=', True)])"/>
+      <t t-set="is_ts_client" t-value="bool(_ts_projects)"/>
+      <t t-if="is_ts_client">
+        <t t-set="client_ts_count" t-value="request.env['account.analytic.line'].sudo().search_count([('project_id', 'in', _ts_projects.ids), ('task_id', '!=', False), ('validated', '=', False)])"/>
+      </t>
+    </xpath>
+    <div id="portal_client_category" position="inside">
+      <t t-if="is_ts_client">
+        <t t-call="portal.portal_docs_entry">
+          <t t-set="icon" t-value="'/hr_timesheet/static/img/timesheet.svg'"/>
+          <t t-set="title">Feuilles de temps à valider</t>
+          <t t-set="url" t-value="'/my/client-timesheets'"/>
+          <t t-set="text">Validez ou refusez les feuilles de temps de vos collaborateurs.</t>
+          <t t-set="count" t-value="client_ts_count or False"/>
+          <t t-set="bg_color" t-value="'alert alert-primary align-items-center' if client_ts_count else False"/>
+          <t t-set="config_card" t-value="True"/>
+        </t>
+      </t>
+    </div>
+  </template>
+
+  <!-- Client timesheet validation page -->
+  <template id="portal_client_timesheets" name="Client: Validation des feuilles de temps">
+    <t t-call="portal.portal_layout">
+
+      <t t-call="portal.portal_searchbar">
+        <t t-set="title">Feuilles de temps à valider</t>
+      </t>
+
+      <div class="container mt-3">
+
+        <t t-set="flash" t-value="request.session.pop('client_ts_flash', None)"/>
+        <t t-if="flash">
+          <div t-attf-class="alert alert-#{flash.get('type','info')} alert-dismissible fade show" role="alert">
+            <t t-out="flash.get('message')"/>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"/>
+          </div>
+        </t>
+
+        <t t-if="no_access">
+          <div class="alert alert-info">
+            Aucun projet ne vous est associé en tant que client.
+          </div>
+        </t>
+
+        <t t-else="">
+
+          <!-- Month navigation -->
+          <div class="d-flex align-items-center justify-content-between mb-4">
+            <a t-attf-href="/my/client-timesheets?month=#{prev_month}&amp;year=#{prev_year}"
+               class="btn btn-outline-secondary btn-sm">
+              <i class="fa fa-chevron-left"/> Précédent
+            </a>
+            <h5 class="mb-0">
+              <t t-out="month_name"/> <t t-out="sel_year"/>
+            </h5>
+            <a t-attf-href="/my/client-timesheets?month=#{next_month}&amp;year=#{next_year}"
+               class="btn btn-outline-secondary btn-sm">
+              Suivant <i class="fa fa-chevron-right"/>
+            </a>
+          </div>
+
+          <!-- Summary bar -->
+          <t t-if="groups">
+            <div class="d-flex gap-3 mb-3 text-muted small">
+              <span><i class="fa fa-users me-1"/><t t-out="len(groups)"/> collaborateur(s)</span>
+              <span><i class="fa fa-clock-o me-1"/><t t-out="client_ts_count"/> saisie(s) en attente</span>
+            </div>
+          </t>
+
+          <!-- Empty state -->
+          <t t-if="not groups">
+            <div class="alert alert-info">
+              Aucune feuille de temps en attente de validation pour
+              <strong><t t-out="month_name"/> <t t-out="sel_year"/></strong>.
+            </div>
+          </t>
+
+          <!-- Accordion: one collapsible section per employee -->
+          <div class="accordion" id="ts_accordion">
+            <t t-foreach="groups" t-as="grp">
+              <t t-set="acc_id" t-value="'acc_emp_%d' % grp['employee'].id"/>
+
+              <div class="accordion-item border rounded mb-2 shadow-sm overflow-hidden">
+
+                <!-- Header: toggle + badges + validate button -->
+                <h2 class="accordion-header m-0">
+                  <div class="d-flex align-items-center w-100 gap-2 px-3 py-2 bg-light">
+
+                    <button class="accordion-button collapsed flex-grow-1 p-0 bg-transparent border-0 shadow-none text-start"
+                            type="button" data-bs-toggle="collapse"
+                            t-attf-data-bs-target="##{acc_id}"
+                            aria-expanded="false"
+                            t-attf-aria-controls="#{acc_id}">
+                      <i class="fa fa-user-circle me-2 text-primary"/>
+                      <span class="fw-semibold me-3"><t t-out="grp['employee'].name"/></span>
+                      <span class="badge bg-secondary me-1">
+                        <t t-out="len(grp['lines'])"/> saisie(s)
+                      </span>
+                      <span class="badge bg-info text-dark">
+                        <t t-out="'%gj' % grp['total_days']"/>
+                      </span>
+                    </button>
+
+                    <form action="/my/client-timesheets/validate" method="POST" class="mb-0 flex-shrink-0">
+                      <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                      <input type="hidden" name="employee_id" t-att-value="grp['employee'].id"/>
+                      <input type="hidden" name="month" t-att-value="sel_month"/>
+                      <input type="hidden" name="year" t-att-value="sel_year"/>
+                      <button type="submit" class="btn btn-success btn-sm"
+                              onclick="return confirm('Valider toutes les saisies de ce collaborateur pour ce mois ?\nCette action est irréversible.')">
+                        <i class="fa fa-check me-1"/>Tout valider
+                      </button>
+                    </form>
+
+                  </div>
+                </h2>
+
+                <!-- Collapsible body: lines table -->
+                <div t-att-id="acc_id" class="accordion-collapse collapse">
+                  <div class="accordion-body p-0">
+                    <table class="table table-sm table-hover mb-0">
+                      <thead class="table-light">
+                        <tr>
+                          <th class="ps-3">Date</th>
+                          <th>Tâche</th>
+                          <th>Description</th>
+                          <th class="text-center">Temps</th>
+                          <th class="text-center pe-3">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <t t-foreach="grp['lines']" t-as="line">
+                          <tr t-att-class="'table-warning' if line.correction_requested else ''">
+                            <td class="ps-3 text-nowrap">
+                              <t t-out="line.date.strftime('%d/%m/%Y')"/>
+                              <t t-if="line.correction_requested">
+                                <span class="badge bg-warning text-dark ms-1" title="Correction demandée">
+                                  <i class="fa fa-pencil"/>
+                                </span>
+                              </t>
+                            </td>
+                            <td><t t-out="line.task_id.name or '—'"/></td>
+                            <td class="text-muted"><t t-out="line.name or '—'"/></td>
+                            <td class="text-center fw-semibold">
+                              <t t-out="'%gj' % (line.unit_amount / 8.0)"/>
+                            </td>
+                            <td class="text-center pe-3">
+                              <div class="d-flex gap-1 justify-content-center">
+                                <form t-attf-action="/my/client-timesheets/validate-line/#{line.id}" method="POST" class="mb-0">
+                                  <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                  <input type="hidden" name="month" t-att-value="sel_month"/>
+                                  <input type="hidden" name="year" t-att-value="sel_year"/>
+                                  <button type="submit" class="btn btn-outline-success btn-sm"
+                                          onclick="return confirm('Valider cette saisie ?')">
+                                    <i class="fa fa-check me-1"/>Valider
+                                  </button>
+                                </form>
+                                <button type="button" class="btn btn-outline-warning btn-sm"
+                                        data-bs-toggle="modal"
+                                        t-attf-data-bs-target="#refuse_modal_#{line.id}">
+                                  <i class="fa fa-pencil me-1"/>Correction
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        </t>
+                      </tbody>
+                      <tfoot class="table-light">
+                        <tr>
+                          <td colspan="3" class="ps-3 text-end text-muted small">Total</td>
+                          <td class="text-center fw-bold"><t t-out="'%gj' % grp['total_days']"/></td>
+                          <td/>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Refuse modals for this employee (outside accordion to avoid nesting issues) -->
+              <t t-foreach="grp['lines']" t-as="line">
+                <div class="modal fade" t-attf-id="refuse_modal_#{line.id}" tabindex="-1"
+                     aria-hidden="true" data-focus="false">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <form t-attf-action="/my/client-timesheets/refuse/#{line.id}" method="POST">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <div class="modal-header">
+                          <h5 class="modal-title">Demander une correction</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal"/>
+                        </div>
+                        <div class="modal-body">
+                          <p class="mb-1">
+                            <strong><t t-out="line.date.strftime('%d/%m/%Y')"/></strong> —
+                            <t t-out="line.employee_id.name"/> —
+                            <t t-out="'%gj' % (line.unit_amount / 8.0)"/>
+                          </p>
+                          <t t-if="line.name">
+                            <p class="text-muted small mb-3"><t t-out="line.name"/></p>
+                          </t>
+                          <div class="mb-0">
+                            <label class="form-label">Remarques (optionnel)</label>
+                            <textarea name="reason" class="form-control" rows="3"
+                                      placeholder="Indiquez vos remarques…"/>
+                          </div>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="submit" class="btn btn-danger">
+                            <i class="fa fa-send me-1"/>Envoyer la demande
+                          </button>
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            Annuler
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </t>
+
+            </t>
+          </div>
+        </t>
+      </div>
+
+    </t>
+  </template>
+
+</odoo>

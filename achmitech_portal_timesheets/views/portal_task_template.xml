@@ -40,17 +40,26 @@
                 <th>Date</th>
                 <th>Description</th>
                 <th class="text-end">Heures</th>
-                <th class="text-center">Validé</th>
+                <th class="text-center">Statut</th>
               </tr>
             </thead>
             <tbody>
               <t t-foreach="timesheets" t-as="ts">
-                <tr t-att-class="'table-success' if ts.validated else ''">
+                <tr t-att-class="'table-warning' if ts.correction_requested else ('table-success' if ts.validated else '')">
                   <td><t t-esc="ts.date"/></td>
                   <td><t t-esc="ts.name or '—'"/></td>
                   <td class="text-end"><t t-esc="'%.1f h' % ts.unit_amount"/></td>
                   <td class="text-center">
-                    <t t-if="ts.validated"><i class="fa fa-check text-success"/></t>
+                    <t t-if="ts.correction_requested">
+                      <span class="badge bg-warning text-dark">
+                        <i class="fa fa-pencil me-1"/>Correction demandée
+                      </span>
+                    </t>
+                    <t t-elif="ts.validated">
+                      <span class="badge bg-success">
+                        <i class="fa fa-check me-1"/>Validé
+                      </span>
+                    </t>
                   </td>
                 </tr>
               </t>
