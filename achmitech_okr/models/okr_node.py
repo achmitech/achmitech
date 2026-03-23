@@ -11,6 +11,7 @@ class OKRNode(models.Model):
     _parent_store = True
     _order = "id desc"
 
+    active = fields.Boolean(default=True)
     name = fields.Char(string="Titre", required=True, tracking=True)
     description = fields.Text(string="Description")
 

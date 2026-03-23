@@ -49,6 +49,7 @@
                 </header>
 
                 <sheet>
+                    <widget name="web_ribbon" title="Archivé" bg_color="text-bg-danger" invisible="active"/>
                     <div class="oe_button_box" name="button_box">
                         <button class="oe_stat_button"
                                 name="%(action_okr_node_hierarchy)d"
@@ -311,6 +312,8 @@
 				<field name="year"/>
 				<separator/>
 				<filter name="ftr_this_year" string="Cette année" domain="[('year','=', context_today().year)]"/>
+				<separator/>
+				<filter name="ftr_archived" string="Archivé" domain="[('active','=', False)]"/>
 				<separator/>
 				<filter name="ftr_draft" string="Brouillon" domain="[('state','=', 'draft')]"/>
 				<filter name="ftr_confirmed" string="Confirmé" domain="[('state','=', 'confirmed')]"/>
