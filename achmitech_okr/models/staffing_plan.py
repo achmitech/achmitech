@@ -82,6 +82,24 @@ class StaffingPlan(models.Model):
             plan.client_interview_passed_sum = passed
             plan.client_interview_pass_rate = (passed / presented) if presented else 0.0
 
+    def action_migrate_assigned_to_ids(self):
+        needs = self.env["staffing.need"].sudo().search([("assigned_to", "!=", False)])
+        migrated = 0
+        for need in needs:
+            if need.assigned_to not in need.assigned_to_ids:
+                need.write({"assigned_to_ids": [(4, need.assigned_to.id)]})
+                migrated += 1
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Migration terminée"),
+                "message": _("%d besoins mis à jour.") % migrated,
+                "type": "success",
+                "sticky": True,
+            },
+        }
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:

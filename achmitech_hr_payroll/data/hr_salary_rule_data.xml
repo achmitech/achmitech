@@ -157,5 +157,19 @@ result = version.l10n_ma_meal_allowance if basic == 0 else min(version.l10n_ma_m
             <field name="condition_python">result = bool(employee.l10n_ma_cimr_number)</field>
         </record>
 
+        <!-- SMIG horaire — 2026 Finance Law: 17.92 MAD/h (effective 1 Jan 2026).
+             Used by the 2HAJOB structure BASIC rule: hours × smig_horaire. -->
+        <record id="l10n_ma_rule_parameter_smig_horaire" model="hr.rule.parameter">
+            <field name="name">SMIG Horaire (Maroc)</field>
+            <field name="code">l10n_ma_smig_horaire</field>
+            <field name="country_id" ref="base.ma"/>
+        </record>
+
+        <record id="l10n_ma_rule_parameter_smig_horaire_2026" model="hr.rule.parameter.value">
+            <field name="rule_parameter_id" ref="l10n_ma_rule_parameter_smig_horaire"/>
+            <field name="date_from">2026-01-01</field>
+            <field name="parameter_value">17.92</field>
+        </record>
+
     </data>
 </odoo>

@@ -185,7 +185,8 @@
             <br/>
 
             <p class="article-title">Article 4 - Lieu de Travail</p>
-            <p>Le lieu de travail est situé à <span class="bold">RABAT</span>.</p>
+            <t t-set="work_city" t-value="(doc.client_id.city or doc.company_id.city or '_______').upper()"/>
+            <p>Le lieu de travail est situé à <span class="bold" t-esc="work_city"/>.</p>
             <p>Toutefois, l'Employeur se réserve le droit, pour des raisons liées à l'organisation et/ou au bon fonctionnement de la Société de modifier le lieu de travail actuel du Salarié. Celui-ci pourra être amené à exercer son activité à titre temporaire ou permanent, en tout lieu du territoire national.</p>
             <br/>
 

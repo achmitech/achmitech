@@ -22,7 +22,16 @@ class StaffingNeed(models.Model):
     ], string="Urgence", default="2")
 
     date_opened = fields.Date(string="Date d'ouverture")
-    assigned_to = fields.Many2one("res.users", string="Assigné à")
+    # Legacy field — kept for data migration to assigned_to_ids. Remove after migration.
+    assigned_to = fields.Many2one("res.users", string="Assigné à (ancien)")
+    assigned_to_ids = fields.Many2many(
+        "res.users",
+        "staffing_need_user_rel",
+        "need_id",
+        "user_id",
+        string="Assigné à",
+        default=lambda self: [(4, self.env.uid)],
+    )
     assigned_date = fields.Datetime(string="Date d'affectation")
     number_of_positions = fields.Integer(string="Nombre de postes", required=True)
     margin_rate = fields.Float(string="Taux de marge (%)", digits=(5, 2))
