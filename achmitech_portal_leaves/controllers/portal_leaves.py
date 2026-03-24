@@ -373,14 +373,22 @@ class PortalLeaves(CustomerPortal):
                 raise ValueError("Veuillez remplir tous les champs obligatoires.")
 
             if request_unit == 'half_day':
-                period = post.get('date_from_period', '').strip()
-                if period not in ('am', 'pm'):
+                period_from = post.get('date_from_period', '').strip()
+                date_to = post.get('date_to', '').strip()
+                period_to = post.get('date_to_period', '').strip()
+                if period_from not in ('am', 'pm') or period_to not in ('am', 'pm'):
                     raise ValueError("Veuillez sélectionner une période (matin ou après-midi).")
+                if not date_to:
+                    raise ValueError("Veuillez remplir tous les champs obligatoires.")
+                if date_to < date_from:
+                    raise ValueError("La date de fin ne peut pas être antérieure à la date de début.")
+                if date_to == date_from and period_to == 'am' and period_from == 'pm':
+                    raise ValueError("La période de fin ne peut pas être antérieure à la période de début.")
                 vals = {
                     'request_date_from': date_from,
-                    'request_date_to': date_from,
-                    'request_date_from_period': period,
-                    'request_date_to_period': period,
+                    'request_date_to': date_to,
+                    'request_date_from_period': period_from,
+                    'request_date_to_period': period_to,
                 }
 
             elif request_unit == 'hour':
