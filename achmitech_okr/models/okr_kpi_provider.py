@@ -145,15 +145,14 @@ def kpi_pool_active_count(env, node):
     Do NOT add a date filter — the goal is to maintain a standing pool,
     not to accumulate N additions per period.
     """
-    if not node.user_id:
+    if not node.user_id or not node.company_id:
         return 0.0
 
     pool_domain = [
         ('talent_pool_ids', '!=', False),
         ("user_id", "=", node.user_id.id),
+        ("company_id", "=", node.company_id.id),
     ]
-    if node.company_id:
-        pool_domain.append(("company_id", "=", node.company_id.id))
 
     return float(env["hr.applicant"].sudo().search_count(pool_domain))
 
@@ -170,12 +169,14 @@ def kpi_pool_recontacted_rate(env, node):
     if not node.date_start or not node.date_end or not node.user_id:
         return 0.0
 
+    if not node.company_id:
+        return 0.0
+
     pool_domain = [
         ("talent_pool_ids", "!=", False),
         ("user_id", "=", node.user_id.id),
+        ("company_id", "=", node.company_id.id),
     ]
-    if node.company_id:
-        pool_domain.append(("company_id", "=", node.company_id.id))
 
     pool_size = env["hr.applicant"].sudo().search_count(pool_domain)
     if not pool_size:
@@ -186,6 +187,7 @@ def kpi_pool_recontacted_rate(env, node):
         ("date", "<", node.date_end),
         ("applicant_id.talent_pool_ids", "!=", False),
         ("applicant_id.user_id", "=", node.user_id.id),
+        ("applicant_id.company_id", "=", node.company_id.id),
         ("user_id", "=", node.user_id.id),
     ]
 
@@ -211,14 +213,16 @@ def kpi_hires_count(env, node):
     if not node.user_id or not node.date_start or not node.date_end:
         return 0.0
 
+    if not node.company_id:
+        return 0.0
+
     domain = [
         ("user_id", "=", node.user_id.id),
         ("stage_id.hired_stage", "=", True),
         ("date_first_hired", ">=", node.date_start),
         ("date_first_hired", "<", node.date_end),
         ("active", "=", True),
+        ("company_id", "=", node.company_id.id),
     ]
-    if node.company_id:
-        domain.append(("company_id", "=", node.company_id.id))
 
     return float(env["hr.applicant"].sudo().search_count(domain))

@@ -22,12 +22,14 @@ class PortalLeaves(CustomerPortal):
             values['pending_leaves_count'] = request.env['hr.leave'].sudo().search_count([
                 ('client_partner_id', '=', partner.id),
                 ('state', '=', 'client_validate'),
+                ('company_id', '=', request.env.company.id),
             ])
         if 'my_leaves_count' in counters:
             employee = self._get_interim_employee()
             if employee:
                 values['my_leaves_count'] = request.env['hr.leave'].sudo().search_count([
                     ('employee_id', '=', employee.id),
+                    ('company_id', '=', employee.company_id.id),
                     ('state', 'not in', ['draft', 'cancel']),
                 ])
         return values
@@ -42,6 +44,7 @@ class PortalLeaves(CustomerPortal):
         employee = self._get_interim_employee()
         is_client = request.env['hr.employee'].sudo().search_count([
             ('client_project_id.partner_id', '=', partner.id),
+            ('company_id', '=', request.env.company.id),
         ]) > 0
         return bool(employee), is_client
 
@@ -56,6 +59,7 @@ class PortalLeaves(CustomerPortal):
             qcontext['pending_leaves_count'] = request.env['hr.leave'].sudo().search_count([
                 ('client_partner_id', '=', partner.id),
                 ('state', '=', 'client_validate'),
+                ('company_id', '=', request.env.company.id),
             ])
         response.qcontext.update(qcontext)
         return response
@@ -65,7 +69,8 @@ class PortalLeaves(CustomerPortal):
 
     def _get_interim_employee(self):
         return request.env['hr.employee'].sudo().search(
-            [('user_id', '=', request.env.user.id)], limit=1
+            [('user_id', '=', request.env.user.id),
+             ('company_id', '=', request.env.company.id)], limit=1
         )
 
     def _check_leave_access(self, leave_id):
@@ -120,6 +125,7 @@ class PortalLeaves(CustomerPortal):
         pending_count = Leave.search_count([
             ('client_partner_id', '=', partner.id),
             ('state', '=', 'client_validate'),
+            ('company_id', '=', request.env.company.id),
         ])
 
         # ── Default sort per tab ───────────────────────────────────────────
@@ -130,7 +136,7 @@ class PortalLeaves(CustomerPortal):
             order = f'{groupby}, {order}'
 
         # ── Base domain for the active tab ─────────────────────────────────
-        base_domain = [('client_partner_id', '=', partner.id)]
+        base_domain = [('client_partner_id', '=', partner.id), ('company_id', '=', request.env.company.id)]
         if tab == 'pending':
             base_domain += [('state', '=', 'client_validate')]
         else:
@@ -277,6 +283,7 @@ class PortalLeaves(CustomerPortal):
 
         base_domain = [
             ('employee_id', '=', employee.id),
+            ('company_id', '=', employee.company_id.id),
             ('state', 'not in', ['draft', 'cancel']),
         ] + filter_domain
 
@@ -427,6 +434,7 @@ class PortalLeaves(CustomerPortal):
                 ).create({
                     'employee_id': employee.id,
                     'holiday_status_id': leave_type_id,
+                    'company_id': employee.company_id.id,
                     'name': name or False,
                     **vals,
                 })
@@ -437,6 +445,7 @@ class PortalLeaves(CustomerPortal):
                         'res_model': 'hr.leave',
                         'res_id': leave.id,
                         'mimetype': uploaded_file.content_type or 'application/octet-stream',
+                        'company_id': employee.company_id.id,
                     })
             request.session['leave_flash'] = {
                 'type': 'success',

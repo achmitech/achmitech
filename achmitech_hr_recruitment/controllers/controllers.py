@@ -43,7 +43,8 @@ class AchmitechHrRecruitment(http.Controller):
     )
     def dossier_form(self, token, **kw):
         candidate = request.env["hr.applicant"].sudo().search(
-            [("dca_access_token", "=", token)],
+            [("dca_access_token", "=", token),
+             ("company_id", "=", request.env.company.id)],
             limit=1
         )
         if not candidate:
@@ -174,7 +175,8 @@ class AchmitechHrRecruitment(http.Controller):
     )
     def dossier_submit(self, token=None, **post):
         candidate = request.env["hr.applicant"].sudo().search(
-            [("dca_access_token", "=", token)],
+            [("dca_access_token", "=", token),
+             ("company_id", "=", request.env.company.id)],
             limit=1
         )
         if not candidate:
@@ -369,7 +371,9 @@ class AchmitechHrRecruitment(http.Controller):
                 
     @http.route("/dossier/thank-you/<string:token>", type="http", auth="public", website=True)
     def dossier_thankyou(self, token, **kw):
-        applicant = request.env["hr.applicant"].sudo().search([("dca_access_token", "=", token)], limit=1)
+        applicant = request.env["hr.applicant"].sudo().search(
+            [("dca_access_token", "=", token),
+             ("company_id", "=", request.env.company.id)], limit=1)
         if not applicant:
             return request.not_found()
 
@@ -415,7 +419,8 @@ class AchmitechHrRecruitment(http.Controller):
     @http.route("/dossier/get-levels", type="json2", auth="public", methods=['POST'], website=True, csrf=False)
     def dossier_get_levels(self, token=None, skill_id=None, **kw):
         candidate = request.env["hr.applicant"].sudo().search(
-            [("dca_access_token", "=", token)],
+            [("dca_access_token", "=", token),
+             ("company_id", "=", request.env.company.id)],
             limit=1
         )
         if not candidate:

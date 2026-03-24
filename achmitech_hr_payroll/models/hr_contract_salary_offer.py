@@ -79,6 +79,7 @@ class HrContractSalaryOffer(models.Model):
             'res_model': self._name,
             'res_id': self.id,
             'mimetype': 'application/pdf',
+            'company_id': self.company_id.id if self.company_id else self.env.company.id,
         })
         return {
             'type': 'ir.actions.act_url',

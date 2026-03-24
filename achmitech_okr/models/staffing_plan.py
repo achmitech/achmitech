@@ -83,7 +83,10 @@ class StaffingPlan(models.Model):
             plan.client_interview_pass_rate = (passed / presented) if presented else 0.0
 
     def action_migrate_assigned_to_ids(self):
-        needs = self.env["staffing.need"].sudo().search([("assigned_to", "!=", False)])
+        needs = self.env["staffing.need"].sudo().search([
+            ("assigned_to", "!=", False),
+            ("company_id", "=", self.env.company.id),
+        ])
         migrated = 0
         for need in needs:
             if need.assigned_to not in need.assigned_to_ids:
