@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!-- Brut total: reads the payslip GROSS rule (BASIC + all ALW), so it is always
+             consistent with the Net line which also comes from the payslip.
+             Named "Salaire Brut Total" to avoid confusion with "Salaire Imposable" —
+             allowances (transport, meal, phone) are non-taxable and not included in the IR base.
+             impacts_monthly_total=False so the raw gross doesn't pollute the total. -->
+        <record id="hr_contract_salary_resume_gross_mar" model="hr.contract.salary.resume">
+            <field name="name">Salaire Brut Total</field>
+            <field name="sequence">5</field>
+            <field name="value_type">payslip</field>
+            <field name="code">GROSS</field>
+            <field name="category_id" ref="hr_contract_salary.hr_contract_salary_resume_category_monthly_salary"/>
+            <field name="structure_type_id" ref="l10n_ma_hr_payroll.structure_type_employee_mar"/>
+            <field name="impacts_monthly_total" eval="False"/>
+            <field name="uom">currency</field>
+        </record>
+
+        <!-- Net: computed by the payslip simulation (NET salary rule).
+             impacts_monthly_total=True → Monthly Equivalent = Net + allowances. -->
+        <record id="hr_contract_salary_resume_net_mar" model="hr.contract.salary.resume">
+            <field name="name">Net</field>
+            <field name="sequence">10</field>
+            <field name="value_type">payslip</field>
+            <field name="code">NET</field>
+            <field name="category_id" ref="hr_contract_salary.hr_contract_salary_resume_category_monthly_salary"/>
+            <field name="structure_type_id" ref="l10n_ma_hr_payroll.structure_type_employee_mar"/>
+            <field name="impacts_monthly_total" eval="True"/>
+            <field name="uom">currency</field>
+        </record>
+
+        <!-- Monthly Benefits resume lines: informational display only.
+             impacts_monthly_total=False because these allowances go through the payslip
+             (ALW → GROSS → NET). They are already counted inside the Net value.
+             Adding them again to the Monthly Equivalent would double-count them. -->
+
+        <record id="hr_contract_salary_resume_meal_allowance_mar" model="hr.contract.salary.resume">
+            <field name="name">Panier repas</field>
+            <field name="sequence">11</field>
+            <field name="value_type">version</field>
+            <field name="code">l10n_ma_meal_allowance</field>
+            <field name="category_id" ref="hr_contract_salary.hr_contract_salary_resume_category_monthly_benefits"/>
+            <field name="structure_type_id" ref="l10n_ma_hr_payroll.structure_type_employee_mar"/>
+            <field name="impacts_monthly_total" eval="False"/>
+            <field name="uom">currency</field>
+        </record>
+
+        <record id="hr_contract_salary_resume_transport_mar" model="hr.contract.salary.resume">
+            <field name="name">Transport</field>
+            <field name="sequence">12</field>
+            <field name="value_type">version</field>
+            <field name="code">l10n_ma_transport_exemption</field>
+            <field name="category_id" ref="hr_contract_salary.hr_contract_salary_resume_category_monthly_benefits"/>
+            <field name="structure_type_id" ref="l10n_ma_hr_payroll.structure_type_employee_mar"/>
+            <field name="impacts_monthly_total" eval="False"/>
+            <field name="uom">currency</field>
+        </record>
+
+        <record id="hr_contract_salary_resume_phone_allowance_mar" model="hr.contract.salary.resume">
+            <field name="name">Téléphone / Internet</field>
+            <field name="sequence">13</field>
+            <field name="value_type">version</field>
+            <field name="code">l10n_ma_phone_allowance</field>
+            <field name="category_id" ref="hr_contract_salary.hr_contract_salary_resume_category_monthly_benefits"/>
+            <field name="structure_type_id" ref="l10n_ma_hr_payroll.structure_type_employee_mar"/>
+            <field name="impacts_monthly_total" eval="False"/>
+            <field name="uom">currency</field>
+        </record>
+
+        <!-- Override standard "Taxable Salary" label — misleading because allowances
+             are non-taxable in Morocco; the shown GROSS includes them all. -->
+        <record id="hr_contract_salary_payroll.hr_contract_salary_payroll_resume_gross_worker" model="hr.contract.salary.resume">
+            <field name="name">Salaire Brut Total</field>
+        </record>
+
+        <!-- ── Retenues (deductions affecting the employee) ───────────────── -->
+
+        <record id="hr_contract_salary_resume_category_retenues_mar" model="hr.contract.salary.resume.category">
+            <field name="name">Retenues</field>
+            <field name="sequence">30</field>
+            <field name="periodicity">monthly</field>
+        </record>
+
+        <!-- CNSS salariale — always present -->
+        <record id="hr_contract_salary_resume_cnss_sal_mar" model="hr.contract.salary.resume">
+            <field name="name">CNSS Salariale</field>
+            <field name="sequence">20</field>
+            <field name="value_type">payslip</field>
+            <field name="code">E_CNSS</field>
+            <field name="category_id" ref="hr_contract_salary_resume_category_retenues_mar"/>
+            <field name="structure_type_id" ref="l10n_ma_hr_payroll.structure_type_employee_mar"/>
+            <field name="impacts_monthly_total" eval="False"/>
+            <field name="uom">currency</field>
+        </record>
+
+        <!-- AMO salariale — always present -->
+        <record id="hr_contract_salary_resume_amo_sal_mar" model="hr.contract.salary.resume">
+            <field name="name">AMO Salariale</field>
+            <field name="sequence">21</field>
+            <field name="value_type">payslip</field>
+            <field name="code">E_AMO</field>
+            <field name="category_id" ref="hr_contract_salary_resume_category_retenues_mar"/>
+            <field name="structure_type_id" ref="l10n_ma_hr_payroll.structure_type_employee_mar"/>
+            <field name="impacts_monthly_total" eval="False"/>
+            <field name="uom">currency</field>
+        </record>
+
+        <!-- IR (Impôt sur le Revenu) — always present -->
+        <record id="hr_contract_salary_resume_ir_mar" model="hr.contract.salary.resume">
+            <field name="name">IR (Impôt sur le Revenu)</field>
+            <field name="sequence">22</field>
+            <field name="value_type">payslip</field>
+            <field name="code">NET_INCOME_TAX</field>
+            <field name="category_id" ref="hr_contract_salary_resume_category_retenues_mar"/>
+            <field name="structure_type_id" ref="l10n_ma_hr_payroll.structure_type_employee_mar"/>
+            <field name="impacts_monthly_total" eval="False"/>
+            <field name="uom">currency</field>
+        </record>
+
+        <!-- CIMR — hidden when 0 (only employees with a CIMR number) -->
+        <record id="hr_contract_salary_resume_cimr_mar" model="hr.contract.salary.resume">
+            <field name="name">CIMR</field>
+            <field name="sequence">23</field>
+            <field name="value_type">payslip</field>
+            <field name="code">CIMR</field>
+            <field name="category_id" ref="hr_contract_salary_resume_category_retenues_mar"/>
+            <field name="structure_type_id" ref="l10n_ma_hr_payroll.structure_type_employee_mar"/>
+            <field name="impacts_monthly_total" eval="False"/>
+            <field name="hide_if_zero" eval="True"/>
+            <field name="uom">currency</field>
+        </record>
+
+        <!-- Contribution professionnelle — hidden when 0 (tied to CIMR) -->
+        <record id="hr_contract_salary_resume_pro_contribution_mar" model="hr.contract.salary.resume">
+            <field name="name">Contribution Professionnelle</field>
+            <field name="sequence">24</field>
+            <field name="value_type">payslip</field>
+            <field name="code">PRO_CONTRIBUTION</field>
+            <field name="category_id" ref="hr_contract_salary_resume_category_retenues_mar"/>
+            <field name="structure_type_id" ref="l10n_ma_hr_payroll.structure_type_employee_mar"/>
+            <field name="impacts_monthly_total" eval="False"/>
+            <field name="hide_if_zero" eval="True"/>
+            <field name="uom">currency</field>
+        </record>
+
+    </data>
+</odoo>

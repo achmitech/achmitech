@@ -9,6 +9,12 @@
     <field name="model">staffing.plan</field>
     <field name="arch" type="xml">
       <form string="Staffing Plan">
+        <header>
+          <button name="action_migrate_assigned_to_ids"
+                  string="Migrer assigned_to → assigned_to_ids"
+                  type="object"
+                  groups="base.group_system"/>
+        </header>
         <sheet>
 
           <!-- Title -->
@@ -52,7 +58,7 @@
                   <field name="name" string="Poste"/>
                   <field name="technology" string="Technologie" optional="show"/>
                   <field name="seniority_min" string="Séniorité min." optional="show"/>
-                  <field name="urgency" 
+                  <field name="urgency"
                     decoration-danger="urgency == '1'"
                     decoration-warning="urgency == '2'"
                     decoration-secondary="urgency == '3'"
@@ -62,7 +68,7 @@
                   <field name="client_interview_count" readonly="1" optional="show"/>
                   <field name="positions_filled" readonly="1"/>
                   <field name="margin_rate" string="Marge (%)" optional="show"/>
-                  <field name="assigned_to"
+                  <field name="assigned_to_ids" widget="many2many_tags"
                          domain="[('company_id', '=', parent.company_id), ('share', '=', False)]"/>
                   <field name="assigned_date" optional="show"/>
                   <field name="state" widget="badge"

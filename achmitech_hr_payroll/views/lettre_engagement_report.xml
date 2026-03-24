@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+<!-- ================================================================
+     STYLES COMMUNS
+     ================================================================ -->
+<template id="report_lettre_engagement_assets">
+    <style>
+        body           { font-family: Arial, sans-serif; font-size: 10pt; color: #000; }
+        h1, h2         { font-family: Arial, sans-serif; }
+        p              { margin: 0 0 6pt 0; text-align: justify; }
+        .sc            { font-variant: small-caps; }
+        .bold          { font-weight: bold; }
+        .center        { text-align: center !important; }
+        .right         { text-align: right !important; }
+        .page-break    { page-break-before: always; padding-top: 12pt; }
+        .cover-page    { padding-top: 40mm; text-align: center; }
+        .cover-block   { margin: 24pt 0; text-align: center; }
+        .cover-block p { text-align: center; }
+        td, th         { border: 1px solid #fff; }
+        .sig-table     { width: 100%; border-collapse: collapse; margin-top: 30pt; }
+        .sig-left      { width: 50%; vertical-align: top; padding-right: 10pt; border: 1px solid #fff; }
+        .sig-right     { width: 50%; vertical-align: top; padding-left: 10pt; border: 1px solid #fff; }
+        .article-title { font-variant: small-caps; font-weight: bold; margin: 14pt 0 6pt 0; }
+        .initials-bar  { position: fixed; bottom: 4mm; width: 100%; font-size: 8pt; color: #555; }
+        .initials-left { float: left; }
+        .initials-right{ float: right; }
+        @page { size: A4; margin: 2.5cm 2.5cm 2.5cm 2.5cm; }
+    </style>
+</template>
+
+<!-- ================================================================
+     DOCUMENT BODY
+     ================================================================ -->
+<template id="report_lettre_engagement_document">
+    <t t-set="civility"  t-value="'Madame'  if doc.sex == 'female' else 'Monsieur'"/>
+    <t t-set="offer" t-value="doc.originated_offer_id"/>
+
+    <!-- Initials bar — appears on every page via position:fixed -->
+    <div class="initials-bar">
+        <span class="initials-left">Initiales La Société : ______</span>
+        <span class="initials-right">Initiales Le/La Stagiaire : ______</span>
+    </div>
+
+    <!-- PAGE 1 : COUVERTURE -->
+    <div class="page">
+        <div class="cover-page">
+            <hr/>
+            <div class="cover-block">
+                <p style="font-size:14pt; font-weight:bold; font-variant:small-caps;">
+                    Lettre d'Engagement de Stage
+                </p>
+            </div>
+            <hr/>
+            <div class="cover-block">
+                <p class="sc">Entre</p>
+            </div>
+            <div class="cover-block">
+                <p class="sc" style="font-size:10pt;">La Société</p>
+                <p style="font-size:12pt; font-weight:bold;">
+                    <t t-out="doc.company_id.name or ''"/>
+                </p>
+            </div>
+            <div class="cover-block">
+                <p class="sc">Et</p>
+            </div>
+            <div class="cover-block">
+                <p class="sc" style="font-size:12pt; font-weight:bold;">
+                    <t t-out="civility"/> <t t-out="doc.employee_id.name or ''"/>
+                </p>
+            </div>
+            <hr/>
+            <div class="cover-block">
+                <p class="sc">
+                    <span class="bold">En date du&#160;</span>
+                    <span class="bold">
+                        <t t-out="datetime.date.today().strftime('%d/%m/%Y')"/>
+                    </span>
+                </p>
+            </div>
+            <hr/>
+        </div>
+    </div>
+
+    <!-- PAGE 2 : PARTIES + ARTICLES 1-4 -->
+    <div class="page page-break">
+
+        <!-- Parties -->
+        <p class="bold sc" style="margin-bottom:10pt;">Entre-Les Soussignés :</p>
+
+        <p style="margin-bottom:4pt;">
+            La société <span class="bold"><t t-out="doc.company_id.name or ''"/></span>,
+            société à responsabilité limitée, au capital de
+            <span class="bold">1.000.000,00 MAD</span>
+            dont le siège social est fixé à
+            <span class="bold">Avenue Al Majd Riad Al Fath Imm 6 B9 RABAT</span>
+            et inscrite au Registre de Commerce de Rabat sous le numéro
+            <span class="bold">153365</span>
+            représentée par Monsieur <span class="bold">Aziz ACHMIT</span>
+            agissant en qualité de Gérant,
+        </p>
+        <p class="right"><span class="bold sc">Ci-après dénommée la « Société »,</span></p>
+        <p class="right"><span class="bold sc">D'une Part,</span></p>
+
+        <p style="margin: 10pt 0 4pt 0;"><span class="bold sc">Et</span></p>
+
+        <p style="margin-bottom:4pt;">
+            <span class="sc bold"><t t-out="civility"/> <t t-out="doc.employee_id.name or ''"/></span>,
+            <t t-if="doc.country_id">ressortissant(e) de <span class="bold"><t t-out="doc.country_id.name"/></span>,</t>
+            né(e) le
+            <span class="bold"><t t-out="doc.employee_id.birthday.strftime('%d/%m/%Y') if doc.employee_id.birthday else '__/__/____'"/></span>
+            à <span class="bold"><t t-out="doc.employee_id.place_of_birth or '______'"/></span>,
+            titulaire de la Carte d'Identité Nationale N° :
+            <span class="bold"><t t-out="doc.employee_id.l10n_ma_cin_number or '__________'"/></span>
+            et demeurant à l'adresse :
+            <span class="bold"><t t-out="', '.join(filter(None, [doc.private_street, doc.private_city])) or '______'"/></span>
+        </p>
+        <p class="right"><span class="bold sc">Ci-après dénommé(e) le/la « Stagiaire »,</span></p>
+        <p class="right"><span class="bold sc">D'autre Part.</span></p>
+
+        <!-- Article 1 -->
+        <p class="article-title" style="margin-top:16pt;">Article 1 – Objet du Stage</p>
+        <p>
+            La Société accueille le Stagiaire dans le cadre d'un stage, non conventionné,
+            effectué à titre d'observation et d'initiation au monde professionnel.
+        </p>
+        <p style="margin-top:6pt;">Le Stagiaire participera notamment aux missions suivantes :</p>
+        <t t-if="doc.job_id.internship_missions">
+            <t t-out="doc.job_id.internship_missions"/>
+        </t>
+
+        <!-- Article 2 -->
+        <p class="article-title">Article 2 - Encadrement</p>
+        <p>
+            Votre responsable de stage sera
+            <span class="bold"><t t-out="doc.job_id.internship_supervisor_id.name or '______'"/></span>,
+            qui vous accompagnera tout au long de votre expérience et supervisera vos activités.
+        </p>
+
+        <!-- Article 3 -->
+        <p class="article-title">Article 3 – Durée et Horaires</p>
+        <ul style="margin: 6pt 0 6pt 20pt;">
+            <li>
+                <span class="bold">Période du stage : </span>
+                du <span class="bold"><t t-out="doc.contract_date_start.strftime('%d/%m/%Y') if doc.contract_date_start else '__/__/____'"/></span>
+                au <span class="bold"><t t-out="doc.contract_date_end.strftime('%d/%m/%Y') if doc.contract_date_end else '__/__/____'"/></span>
+            </li>
+            <li><span class="bold">Horaires : </span>du lundi au vendredi, de 9h00 à 18h00, avec une pause d'une heure pour le déjeuner.</li>
+        </ul>
+
+        <!-- Article 4 -->
+        <p class="article-title">Article 4 - Confidentialité</p>
+        <p>
+            Le Stagiaire s'engage à garder strictement confidentielles toutes les informations,
+            données et documents auxquels il aura accès durant son stage.
+        </p>
+        <p>
+            Cet engagement se poursuit même après la fin du stage, et toute divulgation non
+            autorisée pourra entraîner des poursuites disciplinaires ou judiciaires.
+        </p>
+    </div>
+
+    <!-- PAGE 3 : ARTICLES 5-7 + SIGNATURES -->
+    <div class="page page-break">
+
+        <!-- Article 5 — read allowances from doc directly so both live versions
+             (originated_offer_id set) and preview patches (written on doc) work -->
+        <t t-set="meal"      t-value="doc.l10n_ma_meal_allowance      or (offer.l10n_ma_meal_allowance      if offer else 0)"/>
+        <t t-set="transport" t-value="doc.l10n_ma_transport_exemption  or (offer.l10n_ma_transport_exemption  if offer else 0)"/>
+        <t t-set="phone"     t-value="doc.l10n_ma_phone_allowance      or (offer.l10n_ma_phone_allowance      if offer else 0)"/>
+        <p class="article-title">Article 5 - Gratification</p>
+        <p>
+            À titre de participation et pour couvrir certains frais,
+            <span class="bold"><t t-out="doc.company_id.name or ''"/></span>
+            versera au Stagiaire une allocation de participation mensuelle d'un montant global de
+            <span class="bold">
+                <t t-out="'{:,.0f}'.format(meal + transport + phone).replace(',', ' ')"/> DHS
+            </span>,
+            répartie comme suit :
+        </p>
+        <ul style="margin: 6pt 0 6pt 20pt;">
+            <li t-if="meal">
+                <span class="bold"><t t-out="'{:,.0f}'.format(meal).replace(',', ' ')"/> MAD</span>
+                au titre de <span class="bold">panier repas</span>,
+            </li>
+            <li t-if="transport">
+                <span class="bold"><t t-out="'{:,.0f}'.format(transport).replace(',', ' ')"/> MAD</span>
+                au titre de <span class="bold">transport</span>,
+            </li>
+            <li t-if="phone">
+                <span class="bold"><t t-out="'{:,.0f}'.format(phone).replace(',', ' ')"/> MAD</span>
+                au titre de <span class="bold">téléphone / internet</span>.
+            </li>
+        </ul>
+        <p>
+            Cette gratification a un caractère purement symbolique, ne constituant ni un salaire
+            ni une contrepartie à une prestation de travail, et n'entraîne aucun lien de
+            subordination entre les parties.
+        </p>
+
+        <!-- Article 6 -->
+        <p class="article-title">Article 6 - Sécurité et Règlement Intérieur</p>
+        <p>Le Stagiaire s'engage à :</p>
+        <ul style="margin: 6pt 0 6pt 20pt;">
+            <li>Respecter les règles d'hygiène et de sécurité en vigueur dans les locaux de la Société</li>
+            <li>Suivre les instructions données par son responsable</li>
+            <li>Se conformer aux règles internes et à la charte de conduite de l'entreprise.</li>
+        </ul>
+        <p>Tout manquement grave à ces obligations pourra entraîner la rupture immédiate du stage.</p>
+
+        <!-- Article 7 -->
+        <p class="article-title">Article 7 - Assurance et Responsabilité</p>
+        <p>
+            Le Stagiaire s'engage à fournir à la Société, avant le début du stage, une attestation
+            d'assurance responsabilité civile personnelle, couvrant les dommages matériels, corporels
+            ou immatériels qu'il pourrait causer ou subir dans le cadre de ses activités au sein de
+            <span class="bold"><t t-out="doc.company_id.name or ''"/></span>.
+        </p>
+        <p>Cette attestation est obligatoire pour valider le début du stage.</p>
+        <p>La Société décline toute responsabilité pour les incidents, accidents ou dommages survenant :</p>
+        <ul style="margin: 6pt 0 6pt 20pt;">
+            <li>En dehors des locaux de la Société ;</li>
+            <li>En dehors des horaires définis ;</li>
+            <li>Ou résultant d'un manquement du Stagiaire aux consignes de sécurité.</li>
+        </ul>
+
+        <!-- Signatures -->
+        <p class="bold" style="margin-top:24pt;">
+            Fait à <t t-out="doc.company_id.city or 'Rabat'"/>, le
+            <t t-out="datetime.date.today().strftime('%d/%m/%Y')"/>
+        </p>
+
+        <table class="sig-table">
+            <tr>
+                <td class="sig-right">
+                    <p class="bold">La Société :</p>
+                    <p><t t-out="doc.company_id.name or ''"/></p>
+                    <br/><br/><br/><br/><br/><br/>
+                </td>
+                <td class="sig-left">
+                    <p class="bold">Le/La Stagiaire :</p>
+                    <p><t t-out="civility"/> <t t-out="doc.employee_id.name or ''"/></p>
+                    <br/><br/><br/><br/><br/><br/>
+                </td>
+                
+            </tr>
+        </table>
+    </div>
+</template>
+
+<!-- ================================================================
+     WRAPPER + REPORT ACTION
+     ================================================================ -->
+<template id="report_lettre_engagement">
+    <t t-call="web.basic_layout">
+        <t t-call="achmitech_hr_payroll.report_lettre_engagement_assets"/>
+        <t t-foreach="docs" t-as="doc">
+            <t t-call="achmitech_hr_payroll.report_lettre_engagement_document"/>
+        </t>
+    </t>
+</template>
+
+<record id="action_report_lettre_engagement" model="ir.actions.report">
+    <field name="name">Lettre d'Engagement de Stage</field>
+    <field name="model">hr.version</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">achmitech_hr_payroll.report_lettre_engagement</field>
+    <field name="report_file">achmitech_hr_payroll.report_lettre_engagement</field>
+    <field name="binding_model_id" ref="hr.model_hr_version"/>
+    <field name="binding_type">report</field>
+    <field name="print_report_name">'Lettre Engagement Stage - %s' % object.employee_id.name</field>
+</record>
+
+</odoo>

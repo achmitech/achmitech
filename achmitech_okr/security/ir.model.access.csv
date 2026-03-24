@@ -8,10 +8,10 @@ access_okr_metric_definition_manager,okr.metric.definition manager,model_okr_met
 access_okr_node_metric_user,okr.node.metric user,model_okr_node_metric,achmitech_okr.group_okr_user,1,0,0,0
 access_okr_node_metric_manager,okr.node.metric manager,model_okr_node_metric,achmitech_okr.group_okr_manager,1,1,1,1
 
-access_staffing_plan_user,staffing.plan user,model_staffing_plan,achmitech_okr.group_okr_user,1,0,0,0
+access_staffing_plan_user,staffing.plan user,model_staffing_plan,achmitech_okr.group_okr_user,1,1,0,0
 access_staffing_plan_manager,staffing.plan manager,model_staffing_plan,achmitech_okr.group_okr_manager,1,1,1,1
 
-access_staffing_need_user,staffing.need user,model_staffing_need,achmitech_okr.group_okr_user,1,0,0,0
+access_staffing_need_user,staffing.need user,model_staffing_need,achmitech_okr.group_okr_user,1,1,1,0
 access_staffing_need_manager,staffing.need manager,model_staffing_need,achmitech_okr.group_okr_manager,1,1,1,1
 
 access_okr_recontact_log_user,okr.recontact.log user,model_okr_recontact_log,achmitech_okr.group_okr_user,1,1,1,0

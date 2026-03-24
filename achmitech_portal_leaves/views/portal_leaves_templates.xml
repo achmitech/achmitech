@@ -556,16 +556,35 @@
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label" for="date_from_half">
-                                                Date <span class="text-danger">*</span>
+                                                Date de début <span class="text-danger">*</span>
                                             </label>
                                             <input type="date" name="date_from" id="date_from_half"
                                                    class="form-control" disabled="disabled"/>
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label" for="date_from_period">
-                                                Période <span class="text-danger">*</span>
+                                                Période de début <span class="text-danger">*</span>
                                             </label>
                                             <select name="date_from_period" id="date_from_period"
+                                                    class="form-select" disabled="disabled">
+                                                <option value="am">Matin</option>
+                                                <option value="pm">Après-midi</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label" for="date_to_half">
+                                                Date de fin <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="date" name="date_to" id="date_to_half"
+                                                   class="form-control" disabled="disabled"/>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label" for="date_to_period">
+                                                Période de fin <span class="text-danger">*</span>
+                                            </label>
+                                            <select name="date_to_period" id="date_to_period"
                                                     class="form-select" disabled="disabled">
                                                 <option value="am">Matin</option>
                                                 <option value="pm">Après-midi</option>

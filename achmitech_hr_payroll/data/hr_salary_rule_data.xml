@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Disable MEDICAL_ALW: not on reference payslip; its rate (2.26%) is identical to E_AMO,
+             causing double-counting in categories['UNTAXABLE_DED'] and inflating the IR base. -->
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_payroll_rules_medical_alw" model="hr.salary.rule">
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = False</field>
+        </record>
+
+        <!-- Disable JOB_LOSS_ALW: not on reference payslip; excluding it from UNTAXABLE_DED
+             yields the correct IR base (7 288,88) matching the official payslip. -->
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_payroll_rules_job_loss_allowance" model="hr.salary.rule">
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = False</field>
+        </record>
+
+        <!-- Fix E_CNSS (rub 460): CNSS base = cotisable gross, capped at ceiling.
+             Cotisable = BASIC + SENIORITY (all ALW rules except prime d'ancienneté are
+             non-cotisable in Morocco). Adding new allowances to the contract requires no
+             formula change — they are automatically excluded from the cotisable base.
+             Reference payslip: base 6 000 (capped), rate 4.480%, retenue 268,80. -->
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_payroll_rules_employee_cnss" model="hr.salary.rule">
+            <field name="amount_python_compute">
+cnss_coef = payslip._rule_parameter('l10n_ma_cnss') / 100
+cnss_ceil = payslip._rule_parameter('l10n_ma_cnss_max')
+cotisable = result_rules['BASIC']['total'] + result_rules['SENIORITY']['total']
+result = min(cotisable, cnss_ceil) * cnss_coef
+            </field>
+        </record>
+
+        <!-- Fix GROSS_TAXABLE (rub 400 "Salaire Brut imposable"): display cotisable base.
+             Cotisable = BASIC + SENIORITY. All other ALW allowances are non-imposable. -->
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_rule_taxable_gross" model="hr.salary.rule">
+            <field name="amount_python_compute">
+result = result_rules['BASIC']['total'] + result_rules['SENIORITY']['total']
+            </field>
+        </record>
+
+        <!-- Fix E_AMO (rub 459): AMO base = cotisable gross (BASIC + SENIORITY).
+             Reference payslip: base 10 390, rate 2.260%, retenue 234,81. -->
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_payroll_rules_employee_amo" model="hr.salary.rule">
+            <field name="amount_python_compute">
+amo_coef = payslip._rule_parameter('l10n_ma_amo') / 100
+cotisable = result_rules['BASIC']['total'] + result_rules['SENIORITY']['total']
+result = max(0, cotisable) * amo_coef
+            </field>
+        </record>
+
+        <!-- Fix GROSS_INCOME_TAX (rub 490): cotisable base + 2025 Frais Professionnels.
+             Cotisable = BASIC + SENIORITY. All other ALW rules are non-imposable.
+             2025 FP: cotisable ≤ 6 500/month → 35% max 2 500; > 6 500/month → 25% max 2 916,67.
+             Reference payslip: base 7 288,88, rate 30%, retenue 686,66. -->
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_rule_gross_income_tax" model="hr.salary.rule">
+            <field name="amount_python_compute">
+tax_breakdown = payslip._rule_parameter('l10n_ma_income_tax_breakdown')
+cotisable = result_rules['BASIC']['total'] + result_rules['SENIORITY']['total']
+# IR base: subtract UNTAXABLE_DED (CNSS, AMO, CIMR...)
+gross_after_ded = cotisable - categories['UNTAXABLE_DED']
+# Frais Professionnels 2025
+if cotisable &lt;= 6500:
+    frais_prof = min(cotisable * 0.35, 2500)
+else:
+    frais_prof = min(cotisable * 0.25, 35000 / 12)
+net_taxable = max(0, gross_after_ded - frais_prof)
+result = 0
+for max_gross, coef, deduction in tax_breakdown:
+    if net_taxable > max_gross:
+        continue
+    result = net_taxable * (coef / 100) - deduction
+    break
+            </field>
+        </record>
+
+        <!-- Update IR brackets to 2025 Finance Law rates.
+             0% band extended from 30 000 to 40 000 MAD/year (3 333,33/month). -->
+        <record id="l10n_ma_hr_payroll.l10n_ma_rule_parameter_income_tax_breakdown_values_2017" model="hr.rule.parameter.value">
+            <field name="parameter_value">[
+                (    3333.33,  0,       0),
+                (    5000.00, 10,  333.33),
+                (    6666.67, 20,  833.33),
+                (    8333.33, 30, 1500.00),
+                (   15000.00, 34, 1833.33),
+                (9999999999.99, 38, 2433.33),
+            ]</field>
+        </record>
+
+        <!-- Restore correct NET formula. -->
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_payroll_salary_ma_structure_base_net_salary_rule" model="hr.salary.rule">
+            <field name="amount_python_compute">
+result = result_rules['GROSS']['total'] - categories['UNTAXABLE_DED'] - result_rules['NET_INCOME_TAX']['total']
+            </field>
+        </record>
+
+        <!-- Fix SOCIAL_CONTRIBUTION: hide when net &lt; 20 000 MAD threshold. -->
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_rule_social_contribution" model="hr.salary.rule">
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+virtual_net = result_rules['GROSS']['total'] - categories['UNTAXABLE_DED'] - result_rules['NET_INCOME_TAX']['total']
+result = virtual_net > payslip._rule_parameter('l10n_ma_min_net_for_soc_contr')
+            </field>
+        </record>
+
+        <!-- Fix FAMILY_CHARGE: 2026 Finance Law (Art. 74-I CGI) raised reduction from 500 to
+             600 MAD/year per dependent (spouse + each child), capped at 6 persons = 3 600/year.
+             Monthly rate = 600/12 = 50 MAD per person. Applicable from 1 January 2026. -->
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_rule_family_charge" model="hr.salary.rule">
+            <field name="amount_python_compute">
+result = 0
+if version.employee_id.marital == 'married':
+    result += 50
+if version.employee_id.children:
+    result += min(300, 50 * version.employee_id.children)
+            </field>
+        </record>
+
+        <!-- Fix MEAL_A: when BASIC = 0 (e.g. stagiaires paid only via allowances),
+             the 20% cap would zero out the meal allowance. Use full amount when no base wage. -->
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_rule_meal" model="hr.salary.rule">
+            <field name="name">Indemnité de panier repas</field>
+            <field name="amount_python_compute">
+basic = result_rules['BASIC']['total']
+result = version.l10n_ma_meal_allowance if basic == 0 else min(version.l10n_ma_meal_allowance, 0.2 * basic)
+            </field>
+        </record>
+
+        <!-- French labels for simulator dialog (Calcul de la valeur nette) -->
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_payroll_rules_employee_cnss" model="hr.salary.rule">
+            <field name="name">CNSS Salariale</field>
+        </record>
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_payroll_rules_employee_amo" model="hr.salary.rule">
+            <field name="name">AMO Salariale</field>
+        </record>
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_payroll_rules_total_untaxable_ded" model="hr.salary.rule">
+            <field name="name">Total Déductions Non Imposables</field>
+        </record>
+
+        <!-- Disable HRA and DA: Indian/Gulf concepts, not used in Moroccan payroll. -->
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_rule_hra" model="hr.salary.rule">
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = False</field>
+        </record>
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_rule_da" model="hr.salary.rule">
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = False</field>
+        </record>
+
+        <!-- Fix CIMR/PRO_CONTRIBUTION: only apply when employee has a CIMR number. -->
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_payroll_rules_cimr" model="hr.salary.rule">
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = bool(employee.l10n_ma_cimr_number)</field>
+        </record>
+
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_payroll_rules_pro_contribution" model="hr.salary.rule">
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = bool(employee.l10n_ma_cimr_number)</field>
+        </record>
+
+        <!-- SMIG horaire — 2026 Finance Law: 17.92 MAD/h (effective 1 Jan 2026).
+             Used by the 2HAJOB structure BASIC rule: hours × smig_horaire. -->
+        <record id="l10n_ma_rule_parameter_smig_horaire" model="hr.rule.parameter">
+            <field name="name">SMIG Horaire (Maroc)</field>
+            <field name="code">l10n_ma_smig_horaire</field>
+            <field name="country_id" ref="base.ma"/>
+        </record>
+
+        <record id="l10n_ma_rule_parameter_smig_horaire_2026" model="hr.rule.parameter.value">
+            <field name="rule_parameter_id" ref="l10n_ma_rule_parameter_smig_horaire"/>
+            <field name="date_from">2026-01-01</field>
+            <field name="parameter_value">17.92</field>
+        </record>
+
+    </data>
+</odoo>

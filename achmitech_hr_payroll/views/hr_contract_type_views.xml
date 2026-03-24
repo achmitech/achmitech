@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_contract_type_view_form_sign_docs" model="ir.ui.view">
+        <field name="name">hr.contract.type.form.sign.documents</field>
+        <field name="model">hr.contract.type</field>
+        <field name="inherit_id" ref="hr.hr_contract_type_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <notebook>
+                    <page string="Documents de signature" name="sign_documents">
+                        <field name="sign_document_ids">
+                            <list editable="bottom">
+                                <field name="sequence" widget="handle"/>
+                                <field name="report_id"/>
+                                <field name="employee_label"/>
+                                <field name="employer_label"/>
+                            </list>
+                        </field>
+                        <p class="text-muted">
+                            Ces rapports QWeb seront générés automatiquement lors de la soumission
+                            d'une offre salariale et joints à la demande de signature.
+                        </p>
+                    </page>
+                </notebook>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,590 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     SHARED STYLES
+════════════════════════════════════════════════════════════════════ -->
+<template id="report_contract_styles">
+    <style>
+        body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #000; }
+        p { margin: 0 0 8pt 0; text-align: justify; line-height: 1.5; }
+        h1 { font-size: 12pt; font-weight: bold; text-align: center; margin: 0 0 6pt 0; text-transform: uppercase; letter-spacing: 1pt; }
+        h2 { font-size: 11pt; font-weight: bold; text-align: center; margin: 0 0 6pt 0; text-transform: uppercase; }
+        h3 { font-size: 10pt; font-weight: bold; margin: 10pt 0 5pt 0; text-transform: uppercase; }
+        .center { text-align: center; }
+        .right  { text-align: right; }
+        .bold   { font-weight: bold; }
+        .sc     { font-variant: small-caps; font-weight: bold; }
+        .italic { font-style: italic; }
+        hr { border: none; border-top: 1px solid #000; margin: 16pt 0; }
+        .cover-page  { padding-top: 35mm; }
+        .cover-block { text-align: center; margin: 28pt 0; }
+        .cover-block p { text-align: center; }
+        .cover-block h1 { font-size: 13pt; margin-bottom: 4pt; }
+        .article-title { font-variant: small-caps; font-weight: bold; margin: 16pt 0 6pt 0; }
+        .article-body  { margin-left: 0; }
+        .sub-item      { margin: 6pt 0 6pt 24pt; text-align: justify; }
+        .sub-item-num  { display: inline-block; width: 30pt; font-weight: bold; vertical-align: top; }
+        .sub-item-text { display: inline-block; width: 420pt; vertical-align: top; }
+        .indent        { margin-left: 30pt; text-align: justify; }
+        .bullet        { margin: 3pt 0 3pt 50pt; }
+        td, th         { border: 1px solid #fff; }
+        .sig-table     { width: 100%; border-collapse: collapse; margin-top: 30pt; }
+        .sig-left      { width: 50%; vertical-align: top; padding-right: 10pt; border: 1px solid #fff; }
+        .sig-right     { width: 50%; vertical-align: top; padding-left: 10pt; border: 1px solid #fff; }
+        .page-break    { page-break-before: always; padding-top: 12pt; }
+        .initials-bar  { position: fixed; bottom: 4mm; width: 100%; font-size: 8pt; color: #555; }
+        .initials-left { float: left; }
+        .initials-right{ float: right; }
+        @page { size: A4; margin: 2.5cm 2.5cm 2.5cm 2.5cm; }
+    </style>
+</template>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     CDI — DOCUMENT BODY
+════════════════════════════════════════════════════════════════════ -->
+<template id="report_contract_cdi_document">
+        <!-- Initials bar — appears on every page via position:fixed -->
+        <div class="initials-bar">
+            <span class="initials-left">Initiales L'Employeur : ______</span>
+            <span class="initials-right">Initiales Le Salarié : ______</span>
+        </div>
+        <t t-set="civility" t-value="'Madame' if doc.sex == 'female' else 'Monsieur'"/>
+        <!-- PAGE 1 : COUVERTURE -->
+        <div class="page">
+            <div class="cover-page">
+                <hr/>
+                <div class="cover-block">
+                    <h1>Contrat de Travail</h1>
+                    <h1>A Duree Indeterminee</h1>
+                </div>
+                <hr/>
+                <div class="cover-block">
+                    <p class="sc" style="font-size:11pt;">Entre</p>
+                </div>
+                <div class="cover-block">
+                    <p class="sc" style="font-size:11pt;">La Societe</p>
+                    <p class="bold" style="font-size:12pt; text-transform:uppercase;">
+                        <t t-out="doc.company_id.name"/>
+                    </p>
+                </div>
+                <div class="cover-block">
+                    <p class="bold" style="font-size:11pt;">Et</p>
+                </div>
+                <div class="cover-block">
+                    <p class="sc" style="font-size:12pt;">
+                        <t t-out="civility"/> <t t-out="doc.employee_id.name or ''"/>
+                    </p>
+                </div>
+                <hr/>
+                <div class="cover-block">
+                    <p class="sc" style="font-size:11pt;">
+                        En date du&#160;
+                        <t t-set="offer_date" t-value="doc.originated_offer_id.create_date.date() if doc.originated_offer_id else None"/>
+                        <t t-out="offer_date.strftime('%d/%m/%Y') if offer_date else '__/__/____'"/>
+                    </p>
+                </div>
+                <hr/>
+            </div>
+        </div>
+
+        <!-- PAGE 2 : PRÉAMBULE + ARTICLE 1 -->
+        <div class="page page-break">
+            <h2 style="margin-bottom:16pt;">Contrat de Travail A Duree Indeterminee</h2>
+
+            <p class="article-title" style="margin-bottom:12pt;">Entre Les Soussignes :</p>
+
+            <!-- Bloc Employeur -->
+            <p style="text-align:justify; margin-bottom:4pt;">
+                La société <span class="bold"><t t-out="doc.company_id.name"/></span>,
+                société à responsabilité limitée, au capital de <span class="bold">100.000,00 MAD</span>,
+                dont le siège social est fixé : <span class="bold">Avenue Al Majd Riad Al Fath imm 06 B09, RABAT</span>,
+                inscrite au Registre de Commerce de Rabat sous le numéro <span class="bold">171181</span>,
+                représentée par Monsieur <span class="bold">Aziz ACHMIT</span>,
+                agissant en qualité de <span class="bold">Gérant</span>,
+                titulaire de la CIN N° <span class="bold">W199934</span>,
+                dûment habilité aux fins des présentes,
+            </p>
+            <p style="text-align:right; margin-bottom:2pt;">Ci-après désignée par sa dénomination sociale ou par le terme « l'Employeur » ou « la Société »,</p>
+            <p class="bold" style="text-align:right; margin-bottom:14pt;">D'une Part,</p>
+            <p class="bold" style="margin:14pt 0; font-size:11pt;">Et</p>
+
+            <!-- Bloc Salarié -->
+            <p style="text-align:justify; margin-bottom:4pt;">
+                <span class="sc"><t t-out="civility"/> <t t-out="doc.employee_id.name or ''"/></span>,
+                <t t-if="doc.country_id">ressortissant(e) de <span class="bold"><t t-out="doc.country_id.name"/></span>,</t>
+                né(e) le <span class="bold"><t t-out="doc.employee_id.birthday.strftime('%d/%m/%Y') if doc.employee_id.birthday else '__/__/____'"/></span>
+                à <span class="bold"><t t-out="doc.employee_id.place_of_birth or '___________'"/></span>,
+                titulaire de la Carte d'Identité Nationale N°&#160;:
+                <span class="bold"><t t-out="doc.employee_id.l10n_ma_cin_number or '_________'"/></span>,
+                demeurant à l'adresse :
+                <span class="bold"><t t-out="', '.join(filter(None, [doc.private_street, doc.private_zip, doc.private_city])) or '___________'"/></span>,
+            </p>
+            <p style="text-align:right; margin-bottom:2pt;">Ci-après dénommé(e) « le Salarié »,</p>
+            <p class="bold" style="text-align:right; margin-bottom:14pt;">D'autre Part.</p>
+
+            <p class="bold" style="margin:20pt 0 16pt 0;">Il A Été Convenu Ce Qui Suit :</p>
+            <hr style="margin:0 0 16pt 0;"/>
+
+            <p class="article-title">Article 1 - Engagement - Informations Administratives</p>
+            <table style="width:100%;border-collapse:collapse;">
+                <tr>
+                    <td style="width:35pt;vertical-align:top;font-weight:bold;">1.1</td>
+                    <td style="text-align:justify;">Le Salarié, qui se déclare libre de tout engagement de travail ou de collaboration à l'égard d'un autre employeur ou d'une tierce personne à la date de conclusion du présent contrat et ne pas détenir directement ou indirectement des intérêts dans des entreprises concurrentes.</td>
+                </tr>
+                <tr><td colspan="2" style="height:6pt;"/></tr>
+                <tr>
+                    <td style="vertical-align:top;font-weight:bold;">1.2</td>
+                    <td style="text-align:justify;">Le Salarié est embauché(e) par la Société en qualité <span class="bold"><t t-out="doc.job_id.name or '___________'"/></span></td>
+                </tr>
+                <tr><td colspan="2" style="height:6pt;"/></tr>
+                <tr>
+                    <td style="vertical-align:top;font-weight:bold;">1.3</td>
+                    <td style="text-align:justify;">Toute modification des renseignements administratifs donnés par le Salarié au moment de son recrutement devra être portée immédiatement à la connaissance de l'Employeur.</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- PAGE 3 : ARTICLES 2–5 -->
+        <div class="page page-break">
+            <p class="article-title">Article 2 - Duree</p>
+            <p>
+                Le présent contrat (ci-après désigné par le «&#160;<span class="bold">Contrat</span>&#160;») est conclu pour une durée
+                indéterminée avec effet à compter
+                du <span class="bold"><t t-out="doc.contract_date_start.strftime('%d/%m/%Y') if doc.contract_date_start else '__/__/____'"/></span>.
+            </p>
+            <p>
+                Le présent Contrat demeure soumis à une période d'essai d'une durée de trois (3) mois au cours de laquelle
+                chacune des parties pourra rompre le contrat sans formalité et sans indemnité. Après une semaine de service,
+                chaque partie doit accorder un préavis de huit jours ouvrés.
+            </p>
+            <p>La période d'essai peut être renouvelée une seule fois.</p>
+            <br/>
+
+            <p class="article-title">Article 3 - Fonctions et Attributions</p>
+            <p>
+                Le Salarié assumera les fonctions de
+                <span class="bold"><t t-out="doc.job_id.name or '___________'"/></span>
+                conformément aux conditions stipulées dans le Contrat ainsi que dans le descriptif du poste joint en Annexe aux présentes.
+            </p>
+            <table style="width:100%;border-collapse:collapse;">
+                <tr>
+                    <td style="width:35pt;vertical-align:top;font-weight:bold;">3.1</td>
+                    <td style="text-align:justify;">Le Salarié s'engage à assurer toute mission qui pourrait lui être confiée dans le cadre de ses fonctions, de ses responsabilités et de ses compétences.</td>
+                </tr>
+                <tr><td colspan="2" style="height:6pt;"/></tr>
+                <tr>
+                    <td style="vertical-align:top;font-weight:bold;">3.2</td>
+                    <td style="text-align:justify;">Les fonctions du Salarié pourront être amenées à évoluer et à être modifiées si la Société le juge nécessaire et compte tenu des évolutions de celle-ci sans que cela puisse constituer une modification substantielle du présent contrat de travail.</td>
+                </tr>
+                <tr><td colspan="2" style="height:6pt;"/></tr>
+                <tr>
+                    <td style="vertical-align:top;font-weight:bold;">3.3</td>
+                    <td style="text-align:justify;">Le Salarié sera tenu d'exercer ses fonctions au mieux des intérêts de la Société et de respecter les principes de courtoisie, de politesse, de comportement vis-à-vis tant de sa hiérarchie ou des autres employés de l'Employeur que de la clientèle ou des fournisseurs de l'Employeur.</td>
+                </tr>
+            </table>
+            <br/>
+
+            <p class="article-title">Article 4 - Lieu de Travail</p>
+            <t t-set="work_city" t-value="(doc.client_id.city or doc.company_id.city or '_______').upper()"/>
+            <p>Le lieu de travail est situé à <span class="bold" t-esc="work_city"/>.</p>
+            <p>Toutefois, l'Employeur se réserve le droit, pour des raisons liées à l'organisation et/ou au bon fonctionnement de la Société de modifier le lieu de travail actuel du Salarié. Celui-ci pourra être amené à exercer son activité à titre temporaire ou permanent, en tout lieu du territoire national.</p>
+            <br/>
+
+            <p class="article-title">Article 5 - Duree et Horaires de Travail</p>
+            <table style="width:100%;border-collapse:collapse;">
+                <tr>
+                    <td style="width:35pt;vertical-align:top;font-weight:bold;">5.1</td>
+                    <td style="text-align:justify;">Le Salarié est soumis à la durée légale du travail en vigueur en application de la législation et/ou réglementation applicable, à savoir quarante-quatre (44) heures par semaine.</td>
+                </tr>
+                <tr><td colspan="2" style="height:6pt;"/></tr>
+                <tr>
+                    <td style="vertical-align:top;font-weight:bold;">5.2</td>
+                    <td style="text-align:justify;">L'horaire de travail sera déterminé et modifié par l'Employeur dans le respect de la législation et/ou réglementation applicable.</td>
+                </tr>
+                <tr><td colspan="2" style="height:6pt;"/></tr>
+                <tr>
+                    <td style="vertical-align:top;font-weight:bold;">5.3</td>
+                    <td style="text-align:justify;">Cette durée et ces horaires de travail ainsi que leur aménagement n'ont qu'une valeur indicative et pourront être modifiés en fonction des différents impératifs inhérents à l'exercice des missions du Salarié.</td>
+                </tr>
+                <tr><td colspan="2" style="height:6pt;"/></tr>
+                <tr>
+                    <td style="vertical-align:top;font-weight:bold;">5.4</td>
+                    <td style="text-align:justify; font-weight:bold;">Procédures</td>
+                </tr>
+            </table>
+            <p style="margin-left:35pt;text-align:justify;">Le Salarié s'engage à compléter chaque mois sa feuille de présence dans le logiciel de suivi des temps de la Société et à la transmettre avant le dernier jour du mois à son responsable hiérarchique.</p>
+            <p style="margin-left:35pt;text-align:justify;">Le Salarié prêtera la plus grande attention à l'exactitude de ce document, notamment la répartition entre jours de travail, congés, maladie etc… et répartition des jours entre les différents projets, si applicable.</p>
+            <p style="margin-left:35pt;text-align:justify;">Si le Salarié intervient hors des locaux de l'Employeur, la feuille de présence validée par son responsable hiérarchique attestera seule du travail effectif du Salarié. Pour éviter tout litige, le Salarié fera viser sa feuille de temps par un responsable opérationnel présent dans les locaux où il interviendra.</p>
+            <p style="margin-left:35pt;text-align:justify;">L'absence de feuille de temps, le refus ou le retard à la communiquer pourront entraîner des sanctions jusqu'au licenciement.</p>
+        </div>
+
+        <!-- PAGE 4 : ARTICLES 6–9 -->
+        <div class="page page-break">
+            <p class="article-title">Article 6 - Conges Payes</p>
+            <table style="width:100%;border-collapse:collapse;">
+                <tr>
+                    <td style="width:35pt;vertical-align:top;font-weight:bold;">6.1</td>
+                    <td style="text-align:justify;">Le Salarié bénéficiera chaque année de Dix Huit (18) jours ouvrés au titre des congés payés. En cas d'année incomplète, la durée des congés est calculée à raison d'un jour et demi de travail effectif par mois de service.</td>
+                </tr>
+                <tr><td colspan="2" style="height:6pt;"/></tr>
+                <tr>
+                    <td style="vertical-align:top;font-weight:bold;">6.2</td>
+                    <td style="text-align:justify;">La date des congés sera arrêtée d'un commun accord entre le Salarié et son Employeur, compte tenu des nécessités du service. Elle devra faire l'objet d'une autorisation écrite.</td>
+                </tr>
+            </table>
+            <br/>
+
+            <p class="article-title">Article 7 - Absences</p>
+            <table style="width:100%;border-collapse:collapse;">
+                <tr>
+                    <td style="width:35pt;vertical-align:top;font-weight:bold;">7.1</td>
+                    <td style="text-align:justify;">Le Salarié devra avertir aussitôt que possible l'Employeur de tout empêchement interrompant son activité.</td>
+                </tr>
+                <tr><td colspan="2" style="height:6pt;"/></tr>
+                <tr>
+                    <td style="vertical-align:top;font-weight:bold;">7.2</td>
+                    <td style="text-align:justify;">En cas d'indisponibilité provoquée par une maladie ou un accident, le Salarié devra en aviser la Société, en confirmant son absence par un certificat médical transmis dans les quarante-huit (48) heures de la cessation d'activité, précisant la nature et la durée probable de cette indisponibilité.</td>
+                </tr>
+            </table>
+            <br/>
+
+            <p class="article-title">Article 8 - Remuneration</p>
+            <p>
+                En contrepartie de ses services, le Salarié percevra une rémunération annuelle brute globale
+                de <span class="bold"><t t-out="doc.sign_wage_annual_gross or ''"/> (<t t-out="doc.sign_wage_annual_gross_words or ''"/>)</span>
+                qui lui sera versée en douze (12) mensualités.
+            </p>
+            <p>Sur ce salaire seront opérées les déductions fiscales, sociales et de prévoyances applicables, au regard de la réglementation marocaine et des usages en vigueur chez l'Employeur.</p>
+            <br/>
+
+            <p class="article-title">Article 9 - Regime de Retraite et de Prevoyance</p>
+            <p>Le Salarié sera affilié(e) au régime général de la sécurité sociale et a tout régime social complémentaire s'appliquant à son statut et résultant des usages en vigueur dans la Société.</p>
+            <p>Le Salarié accepte que soient prélevées sur sa rémunération les cotisations salariales afférentes à ces régimes ainsi qu'à tous les autres qui pourraient éventuellement leur être substitués ou ajoutés à l'avenir.</p>
+        </div>
+
+        <!-- PAGE 5 : ARTICLES 10–13 -->
+        <div class="page page-break">
+            <p class="article-title">Article 10 - Conditions de Travail</p>
+            <p>Le Salarié devra respecter les usages et règlements qui régissent et régiront le personnel de l'Employeur. Le Salarié s'engage à prendre connaissance et à se conformer aux différents règlements et codes de conduites en vigueur chez l'Employeur.</p>
+            <br/>
+
+            <p class="article-title">Article 11 - Secret Professionnel</p>
+            <p>Le Salarié est tenu au secret professionnel envers l'Employeur. Ainsi, que ce soit en cours d'exécution du Contrat ou après la rupture de celui-ci, le Salarié s'engage formellement à ne divulguer, à qui que ce soit, des renseignements de tous ordres, commerciaux, techniques de gestion dont il aurait pu avoir connaissance à raison de l'exécution du présent Contrat.</p>
+            <br/>
+
+            <p class="article-title">Article 12 - Propriete Intellectuelle</p>
+            <p>Les documents mis à la disposition du Salarié sont la propriété de l'Employeur et le Salarié ne pourra en conserver copie ou les remettre à un tiers sans l'accord préalable écrit de l'Employeur.</p>
+            <p>Le Salarié cède expressément à l'Employeur à titre exclusif et gratuit, au fur et à mesure de leur réalisation, l'ensemble des droits de propriété intellectuelle afférents à ses réalisations pour le compte de ce dernier.</p>
+            <br/>
+
+            <p class="article-title">Article 13 - Exclusivite</p>
+            <p>Pendant la toute la durée du présent contrat, le Salarié s'engage à consacrer toute son activité professionnelle à la société et/ou à ses filiales et à apporter tous ses soins pour l'exécution des fonctions qui lui sont confiées en vertu du présent contrat.</p>
+            <p>Il s'interdit, sauf accord préalable, d'exercer, directement ou indirectement à titre gratuit ou onéreux toute autre activité professionnelle, concurrente ou non de celle de la société et/ou de ses filiales.</p>
+            <br/>
+
+            <p class="article-title">Article 14 - Non-Concurrence - Loyaute</p>
+            <p>Le Salarié reconnaît qu'il sera amené à travailler pour l'Employeur selon des méthodes propres à ce dernier.</p>
+            <p>C'est pourquoi le Salarié s'interdit directement ou indirectement, en cas de rupture du présent Contrat, pour quelque motif que ce soit&#160;:</p>
+            <p class="indent">(i)&#160;&#160; de débaucher ou tenter de débaucher toute personne employée par l'Employeur (soit pour son compte, soit pour celui de toute autre personne)&#160;;</p>
+            <p class="indent">(ii)&#160; de travailler, à quelque titre que ce soit pour une entreprise ayant une activité concurrente de celle de la Société, ou à s'intéresser directement ou indirectement à toutes activités pouvant concurrencer les activités de la Société.</p>
+            <p>Cette interdiction de concurrence est limitée à une durée de deux (2) ans à compter de la date de départ du Salarié et couvre la région de Rabat.</p>
+            <p>Par ailleurs, en dehors de la clause de non-concurrence et même si celle-ci n'est pas d'application, dans le cadre de son obligation de loyauté inhérente à tout contrat de travail, le salarié s'interdit d'entreprendre une nouvelle activité dans des conditions déloyales envers la Société.</p>
+        </div>
+
+        <!-- PAGE 6 : ARTICLES 15–17 -->
+        <div class="page page-break">
+            <p class="article-title">Article 15 - Restitution A L'issue Du Contrat de Travail</p>
+            <p>A l'issue du présent Contrat de Travail, quel que soit le motif de la rupture, (même pendant la période d'essai), le Salarié s'engage à restituer tous les biens meubles ou immeubles, notamment documents, fichiers informatiques, notes, correspondances, tenues de travail ou autres, de quelque nature ou forme que ce soit (écrit, audio, vidéo, informatique ou autres), ainsi que toutes copies qu'il aura reçues ou qu'il détenait et qui appartiennent à l'Employeur.</p>
+            <br/>
+
+            <p class="article-title">Article 16 - Resiliation</p>
+            <table style="width:100%;border-collapse:collapse;">
+                <tr>
+                    <td style="width:35pt;vertical-align:top;font-weight:bold;">16.1</td>
+                    <td style="text-align:justify;">La résiliation du présent engagement par l'une ou l'autre des Parties sera notifiée par écrit. La date de remise constituera la date de notification de la dénonciation du Contrat.</td>
+                </tr>
+                <tr><td colspan="2" style="height:6pt;"/></tr>
+                <tr>
+                    <td style="vertical-align:top;font-weight:bold;">16.2</td>
+                    <td style="text-align:justify;">Le préavis réciproque en cas de cessation des relations contractuelles est fixé conformément aux dispositions du code de travail à&#160;:</td>
+                </tr>
+            </table>
+            <p class="bullet">▪&#160; Un mois pour une ancienneté de moins d'un an&#160;;</p>
+            <p class="bullet">▪&#160; Deux mois pour une ancienneté d'un an à cinq ans&#160;;</p>
+            <p class="bullet">▪&#160; Trois mois pour une ancienneté de plus de cinq ans.</p>
+            <table style="width:100%;border-collapse:collapse;margin-top:4pt;">
+                <tr>
+                    <td style="width:35pt;vertical-align:top;font-weight:bold;">16.3</td>
+                    <td style="text-align:justify;">Le présent Contrat pourra être résilié à tout moment par l'Employeur en cas de faute grave et ce, sans indemnité ni préavis, conformément aux dispositions du code du travail et sans préjudice pour l'Employeur d'intenter une action en dommages-intérêts à l'encontre du Salarié.</td>
+                </tr>
+                <tr><td colspan="2" style="height:6pt;"/></tr>
+                <tr>
+                    <td style="vertical-align:top;font-weight:bold;">16.4</td>
+                    <td style="text-align:justify;">Les Parties conviennent qu'outre les cas visés audit code, seront considérées comme fautes graves les manquements aux obligations résultant du présent Contrat ainsi que l'inobservation des règlements et autres instructions de l'Employeur.</td>
+                </tr>
+                <tr><td colspan="2" style="height:6pt;"/></tr>
+                <tr>
+                    <td style="vertical-align:top;font-weight:bold;">16.5</td>
+                    <td style="text-align:justify;">Le présent Contrat pourra également être résilié pour faute non grave du Salarié si les sanctions disciplinaires prévues à l'article 37 du code du travail ont été appliquées et épuisées dans l'année.</td>
+                </tr>
+            </table>
+            <br/>
+
+            <p class="article-title">Article 17 - Reglementation et Legislation Applicable</p>
+            <table style="width:100%;border-collapse:collapse;">
+                <tr>
+                    <td style="width:35pt;vertical-align:top;font-weight:bold;">17.1</td>
+                    <td style="text-align:justify;">Toutes les conditions de travail non précisées dans le présent Contrat sont soumises à la réglementation du travail en vigueur.</td>
+                </tr>
+                <tr><td colspan="2" style="height:6pt;"/></tr>
+                <tr>
+                    <td style="vertical-align:top;font-weight:bold;">17.2</td>
+                    <td style="text-align:justify;">Le présent Contrat est soumis à la loi marocaine.</td>
+                </tr>
+                <tr><td colspan="2" style="height:6pt;"/></tr>
+                <tr>
+                    <td style="vertical-align:top;font-weight:bold;">17.3</td>
+                    <td style="text-align:justify;">La juridiction compétente en cas de différend est celle dans le ressort duquel est situé le siège social de l'Employeur.</td>
+                </tr>
+            </table>
+            <br/>
+
+            <p class="article-title">Article 18 - Validite</p>
+            <p>La période de validité de la présente proposition de contrat de travail est fixée à 8 jours à compter de sa date d'établissement. Après l'expiration de la période de validité, si le présent contrat n'a pas été retourné signer à la Société, la Société ne sera plus tenue par les termes du présent contrat.</p>
+        </div>
+
+        <!-- PAGE 7 : SIGNATURE -->
+        <div class="page page-break">
+            <p class="bold" style="margin-bottom:4pt;">
+                Fait A Rabat, Le
+                <t t-out="datetime.date.today().strftime('%d/%m/%Y')"/>
+            </p>
+            <p>En deux (2) exemplaires originaux, Un (1) pour l'Employeur et un (1) pour le Salarié.</p>
+            <br/><br/>
+            <table class="sig-table">
+                <tr>
+                    <td class="sig-left">
+                        <p class="bold">L'Employeur</p>
+                        <p class="bold">La Société <t t-out="doc.company_id.name"/></p>
+                        <span id="sig-cdi-employer"></span>
+                    </td>
+                    <td class="sig-right">
+                        <p class="bold">Le Salarié</p>
+                        <p class="bold"><t t-out="civility"/> <t t-out="doc.employee_id.name or ''"/></p>
+                        <p class="italic" style="font-size:9pt; margin-top:4pt;">Lu et approuvé - Bon pour accord</p>
+                        <span id="sig-cdi-employee"></span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+</template>
+
+<template id="report_contract_cdi">
+    <t t-call="web.basic_layout">
+        <t t-foreach="docs" t-as="doc">
+            <t t-call="achmitech_hr_payroll.report_contract_styles"/>
+            <t t-call="achmitech_hr_payroll.report_contract_cdi_document"/>
+        </t>
+    </t>
+</template>
+
+<record id="action_report_contract_cdi" model="ir.actions.report">
+    <field name="name">Contrat CDI</field>
+    <field name="model">hr.version</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">achmitech_hr_payroll.report_contract_cdi</field>
+    <field name="report_file">achmitech_hr_payroll.report_contract_cdi</field>
+</record>
+
+
+<!-- ══════════════════════════════════════════════════════════════════
+     ORDRE DE MISSION — DOCUMENT BODY
+════════════════════════════════════════════════════════════════════ -->
+<template id="report_mission_order_document">
+        <t t-set="civility" t-value="'Madame' if doc.sex == 'female' else 'Monsieur'"/>
+        <!-- Initials bar — appears on every page via position:fixed -->
+        <div class="initials-bar">
+            <span class="initials-left">Initiales L'Employeur : ______</span>
+            <span class="initials-right">Initiales Le Salarié : ______</span>
+        </div>
+        <!-- PAGE 1 : CORPS DE L'ORDRE DE MISSION -->
+        <div class="page">
+            <p class="right" style="font-size:9pt; margin-bottom:16pt;">
+                <t t-out="doc.mission_order_ref or ''"/>
+            </p>
+
+            <h1 style="font-size:16pt; font-weight:normal; text-align:center; margin-bottom:8pt;">Ordre de Mission</h1>
+            <p class="center" style="margin-bottom:16pt;">
+                Référence&#160;: <t t-out="doc.mission_order_ref or ''"/>
+            </p>
+
+            <p><span class="bold">Concernant&#160;: <t t-out="doc.employee_id.name or ''"/></span></p>
+            <t t-if="doc.country_id"><p><span class="bold">Ressortissant(e) de&#160;: <t t-out="doc.country_id.name"/></span></p></t>
+            <p class="bold" style="margin-bottom:12pt;">
+                Demeurant&#160;:
+                <t t-out="', '.join(filter(None, [doc.private_street, doc.private_zip, doc.private_city])) or '___________'"/>
+            </p>
+            <p style="margin-bottom:12pt;">Dénommé ci-après <em>« le Salarié »</em></p>
+
+            <t t-if="doc.client_id">
+                <p style="margin-bottom:12pt; text-align:justify;">
+                    Dans le cadre de ses fonctions, le Salarié sera amené à intervenir chez un client de la
+                    société <span class="bold"><t t-out="doc.company_id.name"/>.</span>
+                </p>
+                <p><span class="bold">Client&#160;: </span><t t-out="doc.client_id.name"/></p>
+                <p><span class="bold">Mission&#160;: </span><t t-out="doc.job_id.name or ''"/></p>
+                <p><span class="bold">Adresse site&#160;: </span><t t-out="doc.client_id.city or 'RABAT'"/></p>
+                <p style="margin-bottom:12pt;"><span class="bold">Démarrage&#160;: </span>
+                    <t t-out="doc.contract_date_start.strftime('%d/%m/%Y') if doc.contract_date_start else '__/__/____'"/>
+                </p>
+            </t>
+            <t t-else="">
+                <p style="margin-bottom:12pt; text-align:justify;">
+                    Dans le cadre de ses fonctions, le Salarié sera amené à intervenir dans les locaux du groupe
+                    <span class="bold"><t t-out="doc.company_id.name"/></span>, celui de ses filiales ou ses clients.
+                </p>
+                <p><span class="bold">Mission&#160;: </span><t t-out="doc.job_id.name or ''"/></p>
+                <p><span class="bold">Adresse site&#160;: </span>LOCAUX <t t-out="(doc.company_id.name or '').upper()"/>-<t t-out="(doc.company_id.city or 'RABAT').upper()"/></p>
+                <p><span class="bold">Démarrage&#160;: </span>
+                    <t t-out="doc.contract_date_start.strftime('%d/%m/%Y') if doc.contract_date_start else '__/__/____'"/>
+                </p>
+                <t t-set="mission_end" t-value="doc.contract_date_start.replace(month=12, day=31) if doc.contract_date_start else None"/>
+                <p style="margin-bottom:12pt;"><span class="bold">Fin d'activité&#160;: </span>
+                    <t t-out="mission_end.strftime('%d/%m/%Y') if mission_end else '__/__/____'"/>
+                    (date renouvelable par tacite reconduction)
+                </p>
+            </t>
+
+            <!-- Indemnités block — conditionnel -->
+            <t t-if="doc.l10n_ma_transport_exemption or doc.l10n_ma_phone_allowance or doc.l10n_ma_meal_allowance or doc.l10n_ma_kilometric_exemption">
+                <p class="bold" style="margin-bottom:8pt;">Dans le cadre de sa mission, le collaborateur bénéficiera des frais suivants&#160;:</p>
+                <t t-if="doc.l10n_ma_kilometric_exemption">
+                    <p class="indent">Il sera versé une indemnité kilométrique forfaitaire de
+                        <span class="bold"><t t-out="int(doc.l10n_ma_kilometric_exemption)"/> dirhams</span> par mois.</p>
+                </t>
+                <t t-if="doc.l10n_ma_transport_exemption">
+                    <p class="indent">Il sera versé une indemnité forfaitaire de transport de
+                        <span class="bold"><t t-out="int(doc.l10n_ma_transport_exemption)"/> dirhams</span> par mois.</p>
+                </t>
+                <t t-if="doc.l10n_ma_phone_allowance">
+                    <p class="indent">Le Salarié devant être joignable et pouvoir travailler à distance, il bénéficiera
+                        du remboursement de Téléphone&#160;/&#160;Internet dans la limite de
+                        <span class="bold"><t t-out="int(doc.l10n_ma_phone_allowance)"/> dirhams</span> par mois.</p>
+                </t>
+                <t t-if="doc.l10n_ma_meal_allowance">
+                    <p class="indent">Le Salarié bénéficiera d'une prime de panier de
+                        <span class="bold"><t t-out="int(doc.l10n_ma_meal_allowance)"/> dirhams</span>
+                        par mois en raison du travail continu.</p>
+                </t>
+                <p style="text-align:justify;margin-top:8pt;">Ces frais sont mentionnés sur le bulletin de salaires et versés chaque mois au collaborateur.
+                    Ils seront proratisés les mois d'entrée et de sortie, ainsi qu'en cas d'absence de longue durée (hors congés).</p>
+            </t>
+
+            <br/>
+            <p>Fait à Rabat, en double exemplaire, le
+                <t t-out="datetime.date.today().strftime('%d/%m/%Y')"/>
+            </p>
+            <br/><br/>
+            <table class="sig-table">
+                <tr>
+                    <td class="sig-left" style="text-align:center;">
+                        <p class="bold">La Société</p>
+                        <span id="sig-om-employer"></span>
+                        <br/>
+                        <p class="bold italic"><t t-out="doc.company_id.name"/></p>
+                    </td>
+                    <td class="sig-right" style="text-align:center;">
+                        <p class="bold">Le Salarié*</p>
+                        <span id="sig-om-employee"></span>
+                        <br/>
+                        <p class="italic" style="font-size:9pt;">Le retour de l'ordre de mission signé<br/>Conditionne le paiement des notes de frais.</p>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- PAGE 2 : CONDITIONS GÉNÉRALES (statique) -->
+        <div class="page page-break">
+            <h2 style="margin-bottom:16pt;">Conditions Generales D'execution De La Mission</h2>
+            <ol style="margin:0; padding-left:20pt; text-align:justify; line-height:1.5;">
+                <li style="margin-bottom:6pt;">Toute action du <em>Salarié</em> auprès de(s) Clients, sans accord préalable de <em>la Société</em>, ayant pour but ou pour effet la non-conclusion et/ou la rupture anticipée du et/ou des contrats liant le(s) Client(s) à <em>la Société</em>, sera qualifiée de faute grave.</li>
+                <li style="margin-bottom:6pt;">Le matériel mis à disposition du salarié par la société (téléphone portable, ordinateur portable, véhicule…) est réservé à un usage exclusivement professionnel.</li>
+                <li style="margin-bottom:6pt;">Ce matériel mis à disposition du salarié reste la propriété de l'entreprise, il devra lui être restitué à la fin de la mission, en cas de rupture du contrat de travail pour quelque motif que ce soit, à la fin du préavis ou, en l'absence de préavis, au lendemain de la notification de rupture du contrat de travail.</li>
+                <li style="margin-bottom:6pt;">Le Salarié respecte les directives, plans de travail et instructions (écrites ou verbales) émanant de la Direction de la Société et/ou de ses supérieurs hiérarchiques et ce dans le cadre des méthodes et du savoir-faire de la Société.</li>
+                <li style="margin-bottom:6pt;">En tout lieu, le Salarié garde comme unique supérieur hiérarchique auquel il rend compte, le Responsable de la Société désigné à cet effet.</li>
+                <li style="margin-bottom:6pt;">L'acceptation de son ordre de mission par le Salarié fait partie intégrante des obligations découlant de son contrat de travail.</li>
+                <li style="margin-bottom:6pt;">Le refus d'effectuer une mission en violation des obligations issues du contrat de travail du Salarié, sera qualifié de faute grave.</li>
+                <li style="margin-bottom:6pt;">Le Salarié s'engage à transmettre à son responsable hiérarchique immédiat, par tout moyen, le relevé d'activité mensuel en vigueur dans la Société dont un modèle figure en annexe du contrat de travail, au plus tard le dernier jour travaillé de chaque mois.</li>
+                <li style="margin-bottom:6pt;">Le Salarié reconnaît que, lorsqu'il est amené à intervenir hors des locaux de la Société, le relevé d'activité mensuel, validé par la personne qui lui sera désignée par son supérieur hiérarchique direct, est le seul document attestant de son travail effectif.</li>
+                <li style="margin-bottom:6pt;">Le refus ou l'absence de remise en temps et en heure du document validé présumera de l'absence du Salarié et sera donc susceptible d'entraîner une sanction, pouvant aller jusqu'au licenciement pour faute grave.</li>
+                <li style="margin-bottom:6pt;">Si, dans le cadre de ses activités pour le compte de la Société, le Salarié vient à effectuer un déplacement hors du site habituel d'intervention il doit au préalable, dès qu'il en a connaissance, prévenir le Service Paye par tout moyen écrit à sa disposition, en respectant un préavis raisonnable.</li>
+                <li style="margin-bottom:6pt;">Si ce déplacement entraîne des frais particuliers, la Société les remboursera au Salarié dans les conditions en vigueur en son sein : sur présentation d'une « note de frais » en vigueur dans la Société, accompagné des justificatifs, et après accord du Responsable hiérarchique de la Société.</li>
+                <li style="margin-bottom:6pt;">L'usage du propre véhicule du Salarié pour les besoins du service est strictement interdit, sauf : souscription par les soins du Salarié d'une police d'assurance garantissant expressément l'usage "professionnel", ou autorisation expresse accordée par le Service Paye de la Société.</li>
+            </ol>
+            <br/>
+            <p class="bold" style="margin-top:12pt;">Les conditions générales d'exécution de la mission doivent être respectées.</p>
+        </div>
+
+</template>
+
+<template id="report_mission_order">
+    <t t-call="web.basic_layout">
+        <t t-foreach="docs" t-as="doc">
+            <t t-call="achmitech_hr_payroll.report_contract_styles"/>
+            <t t-call="achmitech_hr_payroll.report_mission_order_document"/>
+        </t>
+    </t>
+</template>
+
+<record id="action_report_mission_order" model="ir.actions.report">
+    <field name="name">Ordre de Mission</field>
+    <field name="model">hr.version</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">achmitech_hr_payroll.report_mission_order</field>
+    <field name="report_file">achmitech_hr_payroll.report_mission_order</field>
+</record>
+
+
+<!-- ══════════════════════════════════════════════════════════════════
+     QUICK PREVIEW from offer form (hr.contract.salary.offer)
+════════════════════════════════════════════════════════════════════ -->
+<template id="report_contract_offer_document">
+        <div class="page">
+            <h2 style="text-align:center;">Aperçu contrat — <t t-out="doc.applicant_id.partner_name or ''"/></h2>
+            <p><b>Client&#160;:</b> <t t-out="doc.client_id.name or ''"/></p>
+            <p><b>Mission&#160;:</b> <t t-out="doc.mission_order_ref or ''"/></p>
+            <p><b>Poste&#160;:</b> <t t-out="doc.employee_job_id.name or ''"/></p>
+            <p><b>Démarrage&#160;:</b> <t t-out="str(doc.contract_start_date) if doc.contract_start_date else ''"/></p>
+            <p><b>Salaire mensuel brut&#160;:</b> <t t-out="doc.contract_template_id.wage or 0"/> MAD</p>
+            <t t-if="doc.l10n_ma_transport_exemption or doc.l10n_ma_phone_allowance or doc.l10n_ma_meal_allowance or doc.l10n_ma_kilometric_exemption">
+                <br/><p><b>Indemnités&#160;:</b></p>
+                <t t-if="doc.l10n_ma_transport_exemption"><p>Transport&#160;: <t t-out="int(doc.l10n_ma_transport_exemption)"/> MAD/mois</p></t>
+                <t t-if="doc.l10n_ma_phone_allowance"><p>Téléphone&#160;: <t t-out="int(doc.l10n_ma_phone_allowance)"/> MAD/mois</p></t>
+                <t t-if="doc.l10n_ma_meal_allowance"><p>Panier&#160;: <t t-out="int(doc.l10n_ma_meal_allowance)"/> MAD/mois</p></t>
+                <t t-if="doc.l10n_ma_kilometric_exemption"><p>Kilométrique&#160;: <t t-out="int(doc.l10n_ma_kilometric_exemption)"/> MAD/mois</p></t>
+            </t>
+        </div>
+</template>
+
+<template id="report_contract_offer">
+    <t t-call="web.basic_layout">
+        <t t-foreach="docs" t-as="doc">
+            <t t-call="achmitech_hr_payroll.report_contract_styles"/>
+            <t t-call="achmitech_hr_payroll.report_contract_offer_document"/>
+        </t>
+    </t>
+</template>
+
+<record id="action_report_contract_offer" model="ir.actions.report">
+    <field name="name">Aperçu contrat</field>
+    <field name="model">hr.contract.salary.offer</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">achmitech_hr_payroll.report_contract_offer</field>
+    <field name="report_file">achmitech_hr_payroll.report_contract_offer</field>
+    <field name="binding_model_id" ref="hr_contract_salary.model_hr_contract_salary_offer"/>
+    <field name="binding_type">report</field>
+</record>
+
+</odoo>
