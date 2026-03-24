@@ -10,13 +10,26 @@ class HrVersion(models.Model):
     sign_wage_annual_gross = fields.Char(compute='_compute_sign_wage_annual_gross')
     sign_wage_annual_gross_words = fields.Char(compute='_compute_sign_wage_annual_gross')
 
-    @api.depends('originated_offer_id.final_yearly_costs', 'wage')
+    @api.depends(
+        'wage',
+        'l10n_ma_transport_exemption',
+        'l10n_ma_phone_allowance',
+        'l10n_ma_meal_allowance',
+        'l10n_ma_kilometric_exemption',
+    )
     def _compute_sign_wage_annual_gross(self):
         for version in self:
-            # Prefer the offer's final yearly cost (employer cost); fall back
-            # to wage * 12 so preview patches (no originated_offer_id) work.
-            annual = version.originated_offer_id.final_yearly_costs or (version.wage * 12)
-            version.sign_wage_annual_gross = f"{annual:,.2f} MAD".replace(',', '\u202f')
+            monthly = (
+                (version.wage or 0)
+                + (version.l10n_ma_transport_exemption or 0)
+                + (version.l10n_ma_phone_allowance or 0)
+                + (version.l10n_ma_meal_allowance or 0)
+                + (version.l10n_ma_kilometric_exemption or 0)
+            )
+            annual = monthly * 12
+            # French number format: narrow-space thousands separator, comma decimal
+            formatted = f"{annual:,.2f}".replace(',', '\u202f').replace('.', ',')
+            version.sign_wage_annual_gross = f"{formatted} MAD"
             version.sign_wage_annual_gross_words = num2words(int(annual), lang='fr') + ' dirhams'
     client_id = fields.Many2one(
         'res.partner',
@@ -60,22 +73,6 @@ class HrContractSalaryOffer(models.Model):
     amo_sal_wage = fields.Monetary(compute='_compute_salary', store=True, string="AMO Salariale")
     ir_wage = fields.Monetary(compute='_compute_salary', store=True, string="IR")
 
-    def write(self, vals):
-        # Adjust FYC by the indemnity delta so the base simulation keeps the correct gross.
-        # Indemnities are non-cotisable: employer pays them on top, no social contributions apply.
-        fyc_updates = {}
-        if any(f in vals for f in self._INDEMNITY_FIELDS):
-            for offer in self:
-                old_total = sum(offer[f] for f in offer._INDEMNITY_FIELDS)
-                new_total = sum(vals.get(f, offer[f]) for f in offer._INDEMNITY_FIELDS)
-                delta = new_total - old_total
-                if delta:
-                    fyc_updates[offer.id] = offer.final_yearly_costs + delta * 12
-        res = super().write(vals)
-        for offer in self:
-            if offer.id in fyc_updates:
-                offer.write({'final_yearly_costs': fyc_updates[offer.id]})
-        return res
 
     @requires_hr_version_context()
     def _get_version(self):

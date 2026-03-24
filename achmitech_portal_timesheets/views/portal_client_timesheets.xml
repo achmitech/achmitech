@@ -7,7 +7,7 @@
     <!-- Enable the portal_client_category section and compute the is_ts_client flag -->
     <xpath expr="//div[hasclass('o_portal_docs')]" position="before">
       <t t-set="portal_client_category_enable" t-value="True"/>
-      <t t-set="_ts_projects" t-value="request.env['project.project'].sudo().search([('partner_id', '=', request.env.user.partner_id.id), ('allow_timesheets', '=', True)])"/>
+      <t t-set="_ts_projects" t-value="request.env['project.project'].sudo().search([('partner_id', '=', request.env.user.partner_id.id), ('allow_timesheets', '=', True), ('company_id', '=', request.env.company.id)])"/>
       <t t-set="is_ts_client" t-value="bool(_ts_projects)"/>
       <t t-if="is_ts_client">
         <t t-set="client_ts_count" t-value="request.env['account.analytic.line'].sudo().search_count([('project_id', 'in', _ts_projects.ids), ('task_id', '!=', False), ('validated', '=', False)])"/>

@@ -72,6 +72,7 @@ class ReportTimesheetInterim(models.AbstractModel):
             ("date", ">=", date_from),
             ("date", "<=", date_to),
             ("company_id", "=", employee.company_id.id),
+            ("validated", "=", True),
         ]
 
         # Optional filters: only include lines for the selected project/task.
@@ -205,11 +206,27 @@ class ReportTimesheetInterim(models.AbstractModel):
                 lt_low = lt.lower()
                 info = {"code": "MALADIE", "label": lt, "color": "#F4B183"} if ("malad" in lt_low or "sick" in lt_low) \
                        else {"code": "CONGE", "label": lt, "color": "#00B0F0"}
-                
+
+                is_half_day = lv.holiday_status_id.request_unit == "half_day"
+                period_from = lv.request_date_from_period or "am"
+                period_to = lv.request_date_to_period or "pm"
+
                 cur = max(d0, period_start)
                 end = min(d1, period_end)
                 while cur <= end:
-                    overlay_by_date[cur] = info
+                    if is_half_day:
+                        # Determine which half of the day is absent
+                        if cur == d0 and cur == d1:
+                            half = period_from  # single half-day: am or pm
+                        elif cur == d0:
+                            half = period_from  # first day: absent from start period
+                        elif cur == d1:
+                            half = period_to    # last day: absent until end period
+                        else:
+                            half = None         # middle days: full day absent
+                        overlay_by_date[cur] = {**info, "half": half}
+                    else:
+                        overlay_by_date[cur] = {**info, "half": None}
                     cur += timedelta(days=1)
 
             # Public holidays: include leaves from the employee's company OR with no company
@@ -238,9 +255,14 @@ class ReportTimesheetInterim(models.AbstractModel):
 
             cra = cra_from_hours(h)
 
-            # rule: leave/holiday days show 0 if not worked
+            # For half-day leaves: only force CRA=0 if employee didn't work at all.
+            # For full-day leaves/holidays: force CRA=0 whenever there are no worked hours.
+            is_half_day_overlay = overlay and overlay.get("half") is not None
             if h <= 0 and overlay:
                 cra = 0
+            elif is_half_day_overlay and h > 0:
+                # Worked the other half — cap at 0.5 (can't be a full day with half absent)
+                cra = min(cra, 0.5)
 
             # Show a code only when there is an overlay and there are no worked hours.
             status_code = overlay["code"] if (overlay and h <= 0) else ""
@@ -248,7 +270,11 @@ class ReportTimesheetInterim(models.AbstractModel):
             total_cra += cra
 
             # Background color selection (priority order)
-            if h > 0:
+            # Half-day leave takes priority over green: the 0.5 CRA value already
+            # communicates that the other half was worked.
+            if is_half_day_overlay:
+                bg = overlay["color"]
+            elif h > 0:
                 bg = "#78db7d"
             elif overlay:
                 bg = overlay["color"]
@@ -261,7 +287,7 @@ class ReportTimesheetInterim(models.AbstractModel):
                 "label": str(d.day),
                 "cra_value": cra,
                 "bg": bg,
-                "status_code": status_code,  # or (overlay["code"] if overlay and h <= 0 else "")
+                "status_code": status_code,
             })
 
         # Header for "congés prévisionnels": next 3 months starting from period_start month.
@@ -351,17 +377,34 @@ class ReportTimesheetInterim(models.AbstractModel):
             if not d0 or not d1:
                 continue
 
+            lt = (lv.holiday_status_id.display_name or "").lower()
+            is_conge = not ("malad" in lt or "sick" in lt)
+            if not is_conge:
+                continue
+
+            is_half_day = lv.holiday_status_id.request_unit == "half_day"
+            period_from = lv.request_date_from_period or "am"
+            period_to = lv.request_date_to_period or "pm"
+
             cur = max(d0, window_start)
             end = min(d1, window_end)
             while cur <= end:
-                # Option: count only CONGE type (exclude MALADIE etc.)
-                lt = (lv.holiday_status_id.display_name or "").lower()
-                is_conge = not ("malad" in lt or "sick" in lt)
-                if is_conge:
-                    for m in months:
-                        if cur.year == m["year"] and cur.month == m["month"]:
-                            m["planned_days"] += 1
-                            break
+                if is_half_day:
+                    if cur == d0 and cur == d1:
+                        increment = 0.5   # single half-day
+                    elif cur == d0 and period_from == "pm":
+                        increment = 0.5   # first day: only afternoon absent
+                    elif cur == d1 and period_to == "am":
+                        increment = 0.5   # last day: only morning absent
+                    else:
+                        increment = 1.0   # full day (middle days or full boundary)
+                else:
+                    increment = 1.0
+
+                for m in months:
+                    if cur.year == m["year"] and cur.month == m["month"]:
+                        m["planned_days"] += increment
+                        break
                 cur += timedelta(days=1)
 
         return [{"name": m["name"], "year": m["year"], "planned_days": m["planned_days"]} for m in months]
