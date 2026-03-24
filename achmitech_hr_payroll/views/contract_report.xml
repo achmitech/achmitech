@@ -80,7 +80,8 @@
                 <div class="cover-block">
                     <p class="sc" style="font-size:11pt;">
                         En date du&#160;
-                        <t t-out="doc.contract_date_start.strftime('%d/%m/%Y') if doc.contract_date_start else '__/__/____'"/>
+                        <t t-set="offer_date" t-value="doc.originated_offer_id.create_date.date() if doc.originated_offer_id else None"/>
+                        <t t-out="offer_date.strftime('%d/%m/%Y') if offer_date else '__/__/____'"/>
                     </p>
                 </div>
                 <hr/>
@@ -449,8 +450,9 @@
                 <p><span class="bold">Démarrage&#160;: </span>
                     <t t-out="doc.contract_date_start.strftime('%d/%m/%Y') if doc.contract_date_start else '__/__/____'"/>
                 </p>
+                <t t-set="mission_end" t-value="doc.contract_date_start.replace(month=12, day=31) if doc.contract_date_start else None"/>
                 <p style="margin-bottom:12pt;"><span class="bold">Fin d'activité&#160;: </span>
-                    <t t-out="doc.contract_date_end.strftime('%d/%m/%Y') if doc.contract_date_end else '__/__/____'"/>
+                    <t t-out="mission_end.strftime('%d/%m/%Y') if mission_end else '__/__/____'"/>
                     (date renouvelable par tacite reconduction)
                 </p>
             </t>
@@ -459,21 +461,21 @@
             <t t-if="doc.l10n_ma_transport_exemption or doc.l10n_ma_phone_allowance or doc.l10n_ma_meal_allowance or doc.l10n_ma_kilometric_exemption">
                 <p class="bold" style="margin-bottom:8pt;">Dans le cadre de sa mission, le collaborateur bénéficiera des frais suivants&#160;:</p>
                 <t t-if="doc.l10n_ma_kilometric_exemption">
-                    <p class="indent">Il sera versé des indemnités kilométriques mensuelles forfaitaires de transport de
+                    <p class="indent">Il sera versé une indemnité kilométrique forfaitaire de
                         <span class="bold"><t t-out="int(doc.l10n_ma_kilometric_exemption)"/> dirhams</span> par mois.</p>
                 </t>
                 <t t-if="doc.l10n_ma_transport_exemption">
-                    <p class="indent">Il sera versé une indemnité mensuelle forfaitaire de transport de
+                    <p class="indent">Il sera versé une indemnité forfaitaire de transport de
                         <span class="bold"><t t-out="int(doc.l10n_ma_transport_exemption)"/> dirhams</span> par mois.</p>
                 </t>
                 <t t-if="doc.l10n_ma_phone_allowance">
                     <p class="indent">Le Salarié devant être joignable et pouvoir travailler à distance, il bénéficiera
                         du remboursement de Téléphone&#160;/&#160;Internet dans la limite de
-                        <span class="bold"><t t-out="int(doc.l10n_ma_phone_allowance)"/> Dhs</span> par mois.</p>
+                        <span class="bold"><t t-out="int(doc.l10n_ma_phone_allowance)"/> dirhams</span> par mois.</p>
                 </t>
                 <t t-if="doc.l10n_ma_meal_allowance">
-                    <p class="indent">Le Salarié bénéficiera d'une prime de panier mensuelle de
-                        <span class="bold"><t t-out="int(doc.l10n_ma_meal_allowance)"/> Dhs</span>
+                    <p class="indent">Le Salarié bénéficiera d'une prime de panier de
+                        <span class="bold"><t t-out="int(doc.l10n_ma_meal_allowance)"/> dirhams</span>
                         par mois en raison du travail continu.</p>
                 </t>
                 <p style="text-align:justify;margin-top:8pt;">Ces frais sont mentionnés sur le bulletin de salaires et versés chaque mois au collaborateur.
