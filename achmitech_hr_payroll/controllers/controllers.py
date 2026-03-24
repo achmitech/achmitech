@@ -286,7 +286,8 @@ class HrContractSalaryAchmitech(PayrollHrContractSalary):
                 fallback = offer.contract_template_id.sign_template_id if is_update else None
                 if not fallback:
                     fallback = request.env['sign.template'].sudo().search(
-                        [('active', '=', True)], limit=1)
+                        [('active', '=', True),
+                         ('company_id', '=', request.env.company.id)], limit=1)
                 if fallback:
                     offer.sudo().write({'sign_template_id': fallback.id})
                     _logger.info(
@@ -363,6 +364,7 @@ class AchmitechSignContract(SignContract):
             sr = req_item.sign_request_id
             version = request.env['hr.version'].sudo().search([
                 ('sign_request_ids', 'in', sr.ids),
+                ('company_id', '=', request.env.company.id),
                 '|', ('active', '=', True), ('active', '=', False),
             ], limit=1)
             if version and sr.template_id and sr.template_id.id not in [

@@ -28,6 +28,7 @@ class AchPortalTimesheetTask(HrTimesheetProjectPortal):
             values['timesheets'] = request.env['account.analytic.line'].sudo().search([
                 ('task_id', '=', task.id),
                 ('employee_id', '=', employee.id),
+                ('company_id', '=', employee.company_id.id),
             ], order='date asc')
         return values
 
@@ -48,6 +49,7 @@ class PortalTimesheet(CustomerPortal):
         return request.env["project.project"].sudo().search([
             ("partner_id", "=", partner.id),
             ("allow_timesheets", "=", True),
+            ("company_id", "=", request.env.company.id),
         ])
 
     def _task_redirect(self, task):
