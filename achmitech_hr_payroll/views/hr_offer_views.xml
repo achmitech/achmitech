@@ -15,8 +15,8 @@
                     invisible="not id or not contract_template_id"/>
             </xpath>
             <xpath expr="//group[@name='group_offer']" position="inside">
-                <field name="client_id" options="{'no_create': True}"/>
-                <field name="mission_order_ref"/>
+                <field name="client_id" options="{'no_create': True}" readonly="state in ['half_signed', 'full_signed']"/>
+                <field name="mission_order_ref" readonly="state in ['half_signed', 'full_signed']"/>
             </xpath>
             <xpath expr="//group[@name='salary_simulation_group']" position="after">
                 <group string="Indemnités" name="group_indemnities">
