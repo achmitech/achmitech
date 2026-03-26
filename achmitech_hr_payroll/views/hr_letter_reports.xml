@@ -43,79 +43,13 @@
     <t t-set="civility" t-value="'Madame' if doc.sex == 'female' else 'Monsieur'"/>
     <t t-set="employee" t-value="doc.employee_id"/>
 
-    <style>
-        .attest-header  { width: 100%; border-collapse: collapse; margin-bottom: 10pt; }
-        .attest-logo    { width: 35%; vertical-align: middle; border: 1px solid #fff; }
-        .attest-title   { width: 65%; vertical-align: middle; text-align: right; border: 1px solid #fff; }
-        .attest-title h1 { font-family: Arial, sans-serif; font-size: 20pt; color: #1E7EC8;
-                           font-variant: small-caps; margin: 0; }
-        .attest-divider { border: none; border-top: 2px solid #000; margin: 8pt 0; }
-        .attest-addr    { width: 100%; border-collapse: collapse; margin-top: 10pt; }
-        .attest-addr-left  { width: 55%; vertical-align: top; border: 1px solid #fff; }
-        .attest-addr-right { width: 45%; vertical-align: top; text-align: right; border: 1px solid #fff; }
-        .stagiaire-box  { border: 1px solid #000; padding: 8pt; display: inline-block; text-align: left; min-width: 140pt; }
-        .footer-bar     { position: fixed; bottom: 0; left: 0; right: 0;
-                          border-top: 2px solid #1E7EC8; padding: 4pt 6pt;
-                          font-size: 7.5pt; color: #1E7EC8; }
-        .footer-bar-left  { float: left; }
-        .footer-bar-right { float: right; font-weight: bold; }
-    </style>
-
     <div class="page">
 
-        <!-- Fixed footer bar -->
-        <div class="footer-bar">
-            <span class="footer-bar-left">
-                ACHMITECH, SOCIETE A RESPONSABILITE LIMITEE, AU CAPITAL DE 100.000,00 MAD<br/>
-                AVENUE AL MAJD RIAD AL FATH IMM 6 B9 10150 RABAT
-            </span>
-            <span class="footer-bar-right">
-                RC : 153365<br/>
-                TP : 25561179<br/>
-                IF : 50335459
-            </span>
-        </div>
-
-        <!-- Header: logo + title -->
-        <table class="attest-header">
-            <tr>
-                <td class="attest-logo">
-                    <img t-att-src="image_data_uri(doc.company_id.logo)" style="height:45pt;"/>
-                </td>
-                <td class="attest-title">
-                    <h1>Attestation de Stage</h1>
-                </td>
-            </tr>
-        </table>
-        <hr class="attest-divider"/>
-
-        <!-- Address + Stagiaire block -->
-        <table class="attest-addr">
-            <tr>
-                <td class="attest-addr-left">
-                    <p class="bold"><t t-out="doc.company_id.name or 'ACHMITECH SARL'"/></p>
-                    <p>Adresse : Avenue Al Majd Riad Al Fath</p>
-                    <p>Imm 6 B9 10150 Rabat</p>
-                    <p>Tel : 05 37 79 04 70</p>
-                    <p>E-Mail : Contact@achmitech.com</p>
-                </td>
-                <td class="attest-addr-right">
-                    <div class="stagiaire-box">
-                        <p class="bold" style="text-align:center; margin-bottom:6pt;">Stagiaire</p>
-                        <p>Nom : <span class="bold"><t t-out="employee.name or ''"/></span></p>
-                        <p>
-                            Sexe :&#160;F&#160;<t t-if="doc.sex == 'female'">&#x2611;</t><t t-else="">&#x2610;</t>
-                            &#160;&#160;M&#160;<t t-if="doc.sex == 'male'">&#x2611;</t><t t-else="">&#x2610;</t>
-                        </p>
-                    </div>
-                </td>
-            </tr>
-        </table>
-
-        <!-- Objet -->
-        <p class="objet" style="margin-top:18pt;">Objet : ATTESTATION DE STAGE</p>
-        <br/>
-
+        <!-- Title -->
+        <h2 style="text-align: center; font-variant: small-caps; font-size: 18pt; margin-bottom: 50pt;">
+            Attestation de Stage
+        </h2>
+        <br/><br/><br/><br/>
         <!-- Body -->
         <p style="line-height:1.8;">
             Je soussigné Mr <span class="bold">Aziz ACHMIT</span> le Directeur Général de la société
@@ -124,8 +58,6 @@
             <span class="bold"><t t-out="employee.name or ''"/></span>,
             titulaire de la Carte d'Identité Nationale N°
             <span class="bold"><t t-out="employee.l10n_ma_cin_number or '__________'"/></span>,
-            étudiant(e) à
-            <span class="bold"><t t-out="employee.study_school or '__________________'"/></span>,
             a effectué un stage en tant que
             <span class="bold"><t t-out="doc.job_id.name or '__________________'"/></span>
             au sein de notre société à l'adresse
@@ -137,20 +69,25 @@
         <p>
             La présente attestation est délivrée à l'intéressé(e) pour servir et valoir ce que de droit.
         </p>
-        <br/><br/>
+        <br/><br/><br/><br/><br/><br/><br/>
 
-        <!-- Fait à / signature -->
-        <table style="width:100%; border-collapse:collapse;">
+        <!-- Fait à + signature bloc -->
+        <table style="width:100%; border-collapse:collapse; margin-top: 10pt;">
             <tr>
                 <td style="width:50%; vertical-align:top; border:1px solid #fff;">
-                    <p>
+                    <p style="font-size:12pt;">
                         Fait à <span class="bold"><t t-out="doc.company_id.city or 'Rabat'"/></span>,
                         le <span class="bold"><t t-out="datetime.date.today().strftime('%d/%m/%Y')"/></span>
                     </p>
                 </td>
-                <td style="width:50%; vertical-align:top; text-align:right; border:1px solid #fff;">
-                    <p class="bold">Le Directeur Général</p>
+            </tr>
+            <tr>
+                <td style="width:50%; vertical-align:top; border:1px solid #fff;">
+                    <p class="bold underline" style="font-size:12pt;">La Société :</p>
                     <br/><br/><br/><br/><br/>
+                    <p style="font-size:12pt;">_______________</p>
+                    <p style="font-size:12pt;">Aziz ACHMIT</p>
+                    <p style="font-size:12pt;">Gérant</p>
                 </td>
             </tr>
         </table>
@@ -159,10 +96,12 @@
 </template>
 
 <template id="report_attestation_stage">
-    <t t-call="web.basic_layout">
-        <t t-call="achmitech_hr_payroll.report_hr_letters_assets"/>
+    <t t-call="web.html_container">
         <t t-foreach="docs" t-as="doc">
-            <t t-call="achmitech_hr_payroll.report_attestation_stage_document"/>
+            <t t-call="web.external_layout">
+                <t t-call="achmitech_hr_payroll.report_hr_letters_assets"/>
+                <t t-call="achmitech_hr_payroll.report_attestation_stage_document"/>
+            </t>
         </t>
     </t>
 </template>
@@ -192,17 +131,9 @@
 
     <div class="page">
 
-        <!-- Sender block (left) -->
-        <p class="bold"><t t-out="company.name or ''"/></p>
-        <p><t t-out="company.street or 'Avenue Al Majd Riad Al Fath Imm 06'"/></p>
-        <p><t t-out="company.city or 'Rabat'"/></p>
-
         <!-- Recipient block (right) -->
-        <div style="text-align:right; margin-top:-42pt; margin-bottom:20pt;">
-            <p class="bold"><t t-out="employee.name or ''"/></p>
-            <p><t t-out="address or ''"/></p>
-        </div>
-        <div style="clear:both; margin-bottom:16pt;"/>
+        <p class="bold" style="text-align:right; margin:0;"><t t-out="employee.name or ''"/></p>
+        <p style="text-align:right; margin-bottom:20pt;"><t t-out="address or ''"/></p>
 
         <!-- Objet -->
         <p class="objet">Objet : Renouvellement de la période d'essai</p>
@@ -214,7 +145,7 @@
 
         <!-- Body -->
         <p>
-            Vous avez intégré notre entreprise <span class="bold"><t t-out="company.name or ''"/></span>,
+            Vous avez intégré notre entreprise <span class="bold"><t t-out="company.name or 'ACHMITECH SARL'"/></span>,
             en tant que <span class="bold"><t t-out="version.job_id.name or '__________________'"/></span>,
             depuis le <span class="bold"><t t-out="version.contract_date_start.strftime('%d/%m/%Y') if version.contract_date_start else '__/__/____'"/></span>.
             Votre contrat prévoit une période d'essai de <em>trois mois</em>.
@@ -278,10 +209,12 @@
 </template>
 
 <template id="report_renouvellement_pe">
-    <t t-call="web.basic_layout">
-        <t t-call="achmitech_hr_payroll.report_hr_letters_assets"/>
+    <t t-call="web.html_container">
         <t t-foreach="docs" t-as="doc">
-            <t t-call="achmitech_hr_payroll.report_renouvellement_pe_document"/>
+            <t t-call="web.external_layout">
+                <t t-call="achmitech_hr_payroll.report_hr_letters_assets"/>
+                <t t-call="achmitech_hr_payroll.report_renouvellement_pe_document"/>
+            </t>
         </t>
     </t>
 </template>
@@ -309,17 +242,9 @@
 
     <div class="page">
 
-        <!-- Sender block -->
-        <p class="bold"><t t-out="company.name or ''"/></p>
-        <p><t t-out="company.street or 'Avenue Al Majd Riad Al Fath'"/></p>
-        <p>Imm 6 B9, <t t-out="company.city or 'Rabat'"/></p>
-
-        <!-- Recipient block -->
-        <div style="text-align:right; margin-top:-42pt; margin-bottom:20pt;">
-            <p class="bold"><t t-out="employee.name or ''"/></p>
-            <p><t t-out="address or ''"/></p>
-        </div>
-        <div style="clear:both; margin-bottom:16pt;"/>
+        <!-- Recipient block (right) -->
+        <p class="bold" style="text-align:right; margin:0;"><t t-out="employee.name or ''"/></p>
+        <p style="text-align:right; margin-bottom:20pt;"><t t-out="address or ''"/></p>
 
         <!-- Objet -->
         <p class="objet">Objet : Rupture de votre période d'essai</p>
@@ -332,7 +257,7 @@
 
         <!-- Body -->
         <p>
-            Vous avez intégré notre entreprise, <span class="bold"><t t-out="company.name or ''"/></span>,
+            Vous avez intégré notre entreprise, <span class="bold"><t t-out="company.name or 'ACHMITECH SARL'"/></span>,
             en tant que <span class="bold"><t t-out="version.job_id.name or '__________________'"/></span>,
             depuis le <span class="bold"><t t-out="version.contract_date_start.strftime('%d/%m/%Y') if version.contract_date_start else '__/__/____'"/></span>.
             Votre contrat prévoit une période d'essai de <em>trois mois</em>.
@@ -397,10 +322,12 @@
 </template>
 
 <template id="report_rupture_pe">
-    <t t-call="web.basic_layout">
-        <t t-call="achmitech_hr_payroll.report_hr_letters_assets"/>
+    <t t-call="web.html_container">
         <t t-foreach="docs" t-as="doc">
-            <t t-call="achmitech_hr_payroll.report_rupture_pe_document"/>
+            <t t-call="web.external_layout">
+                <t t-call="achmitech_hr_payroll.report_hr_letters_assets"/>
+                <t t-call="achmitech_hr_payroll.report_rupture_pe_document"/>
+            </t>
         </t>
     </t>
 </template>
@@ -426,40 +353,11 @@
     <t t-set="civility" t-value="'Madame' if version.sex == 'female' else 'Monsieur'"/>
     <t t-set="address" t-value="', '.join(filter(None, [employee.private_street, employee.private_city]))"/>
 
-    <style>
-        .amenag-header  { width: 100%; border-collapse: collapse; margin-bottom: 10pt; }
-        .amenag-logo    { width: 35%; vertical-align: middle; border: 1px solid #fff; }
-        .amenag-title   { width: 65%; vertical-align: middle; text-align: right; border: 1px solid #fff; }
-        .amenag-title h1 { font-family: Arial, sans-serif; font-size: 16pt; color: #1E7EC8;
-                           font-variant: small-caps; margin: 0; text-transform: uppercase; }
-    </style>
-
     <div class="page">
 
-        <!-- Header: logo + title -->
-        <table class="amenag-header">
-            <tr>
-                <td class="amenag-logo">
-                    <img t-att-src="image_data_uri(doc.version_id.company_id.logo)" style="height:45pt;"/>
-                </td>
-                <td class="amenag-title">
-                    <h1>Aménagement de la durée<br/>de votre stage</h1>
-                </td>
-            </tr>
-        </table>
-        <hr style="border:none; border-top:1px solid #000; margin-bottom:14pt;"/>
-
-        <!-- Sender block -->
-        <p class="bold"><t t-out="company.name or ''"/></p>
-        <p><t t-out="company.street or 'Avenue Al Majd Riad Al Fath'"/></p>
-        <p>Imm 6 B9, <t t-out="company.city or 'Rabat'"/></p>
-
-        <!-- Recipient block -->
-        <div style="text-align:right; margin-top:-42pt; margin-bottom:20pt;">
-            <p class="bold"><t t-out="employee.name or ''"/></p>
-            <p><t t-out="address or ''"/></p>
-        </div>
-        <div style="clear:both; margin-bottom:16pt;"/>
+        <!-- Recipient block (right) -->
+        <p class="bold" style="text-align:right; margin:0;"><t t-out="employee.name or ''"/></p>
+        <p style="text-align:right; margin-bottom:20pt;"><t t-out="address or ''"/></p>
 
         <!-- Objet -->
         <p class="objet">Objet : Aménagement de la durée de votre stage</p>
@@ -491,7 +389,7 @@
         <br/>
         <p style="text-align:justify;">
             Nous vous remercions pour votre implication durant votre présence au sein de
-            <t t-out="company.name or 'ACHMITECH'"/>
+            <t t-out="company.name or 'ACHMITECH SARL'"/>
             et vous souhaitons pleine réussite dans la poursuite de vos projets professionnels.
         </p>
         <br/>
@@ -540,10 +438,12 @@
 </template>
 
 <template id="report_amenagement_stage">
-    <t t-call="web.basic_layout">
-        <t t-call="achmitech_hr_payroll.report_hr_letters_assets"/>
+    <t t-call="web.html_container">
         <t t-foreach="docs" t-as="doc">
-            <t t-call="achmitech_hr_payroll.report_amenagement_stage_document"/>
+            <t t-call="web.external_layout">
+                <t t-call="achmitech_hr_payroll.report_hr_letters_assets"/>
+                <t t-call="achmitech_hr_payroll.report_amenagement_stage_document"/>
+            </t>
         </t>
     </t>
 </template>
@@ -575,13 +475,13 @@
             <t t-if="employee.departure_date">Certificat de Travail</t>
             <t t-else="">Attestation de Travail</t>
         </h2>
-
+        <br/><br/><br/><br/>
         <!-- Body — single position -->
         <t t-if="len(versions) &lt;= 1">
             <t t-set="v" t-value="versions[0] if versions else employee.version_id"/>
             <p style="font-size: 12pt; line-height: 2.4; text-align: justify;">
                 Je soussigné Mr <span class="bold">Aziz ACHMIT</span>,
-                Gérant de la société <span class="bold"><t t-out="company.name or ''"/></span>,
+                Gérant de la société <span class="bold"><t t-out="company.name or 'ACHMITECH SARL'"/></span>,
                 certifie par la présente que
                 <span class="bold"><t t-out="civility"/> <t t-out="employee.name or ''"/></span>,
                 titulaire de la Carte d'Identité Nationale N°&#160;<span class="bold"><t t-out="employee.l10n_ma_cin_number or '__________'"/></span>,
@@ -606,7 +506,7 @@
         <t t-else="">
             <p style="font-size: 12pt; line-height: 2.0; text-align: justify;">
                 Je soussigné Mr <span class="bold">Aziz ACHMIT</span>,
-                Gérant de la société <span class="bold"><t t-out="company.name or ''"/></span>,
+                Gérant de la société <span class="bold"><t t-out="company.name or 'ACHMITECH SARL'"/></span>,
                 certifie par la présente que
                 <span class="bold"><t t-out="civility"/> <t t-out="employee.name or ''"/></span>,
                 titulaire de la Carte d'Identité Nationale N°&#160;<span class="bold"><t t-out="employee.l10n_ma_cin_number or '__________'"/></span>,
