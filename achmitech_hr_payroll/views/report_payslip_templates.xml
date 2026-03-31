@@ -142,7 +142,7 @@
   <tbody>
     <!-- Loop: all visible lines except GROSS (598) and NET (599), sorted by category then sequence -->
     <t t-set="_cat_order" t-value="{'BASIC': 0, 'ALW': 1, 'UNTAXABLE_DED': 2, 'DED': 3, 'SALC': 4}"/>
-    <t t-foreach="sorted(o.line_ids.filtered(lambda l: l.appears_on_payslip and l.salary_rule_id.code not in ('GROSS', 'NET', 'ROUND') and l.total != 0), key=lambda l: (_cat_order.get(l.salary_rule_id.category_id.code, 9), l.sequence))" t-as="line">
+    <t t-foreach="sorted(o.line_ids.filtered(lambda l: l.appears_on_payslip and l.salary_rule_id.code not in ('GROSS', 'NET', 'ROUND') and (l.total != 0 or l.salary_rule_id.code == 'CONGE_NON_PAYE')), key=lambda l: (_cat_order.get(l.salary_rule_id.category_id.code, 9), l.sequence))" t-as="line">
       <t t-set="cat"     t-value="line.salary_rule_id.category_id.code"/>
       <t t-set="is_gain" t-value="cat in gain_cat"/>
       <t t-set="is_ded"  t-value="cat in ded_cat"/>
