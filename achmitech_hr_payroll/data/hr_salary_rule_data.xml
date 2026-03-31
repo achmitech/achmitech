@@ -16,6 +16,52 @@
             <field name="condition_python">result = False</field>
         </record>
 
+        <!-- Split BASIC into WORK100 days (rub 102) + paid leave LEAVE120 (rub 114).
+             Official Moroccan payslips show these as separate lines.
+             Both rules are in the BASIC category so categories['BASIC'] = combined total,
+             keeping CNSS, AMO, IR and employer contributions correct without changes. -->
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_payroll_salary_ma_structure_base_basic_salary_rule" model="hr.salary.rule">
+            <field name="name">Salaire de base</field>
+            <field name="amount_python_compute">
+if payslip.date_from.day == 1:
+    leave90_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.work_entry_type_id.code == 'LEAVE90')
+    leave120_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.work_entry_type_id.code == 'LEAVE120')
+    work_days = 26 - leave90_days - leave120_days
+else:
+    work_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.work_entry_type_id.code == 'WORK100')
+result = version.wage * work_days / 26
+            </field>
+        </record>
+
+        <record id="achmitech_hr_rule_conge_paye" model="hr.salary.rule">
+            <field name="name">Congé</field>
+            <field name="code">CONGE_PAYE</field>
+            <field name="sequence">1</field>
+            <field name="struct_id" ref="l10n_ma_hr_payroll.hr_payroll_salary_ma_structure_base"/>
+            <field name="category_id" ref="hr_payroll.BASIC"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = any(wd.work_entry_type_id.code == 'LEAVE120' for wd in payslip.worked_days_line_ids)</field>
+            <field name="amount_select">code</field>
+            <field name="appears_on_payslip" eval="True"/>
+            <field name="amount_python_compute">
+leave_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.work_entry_type_id.code == 'LEAVE120')
+result = version.wage * leave_days / 26
+            </field>
+        </record>
+
+        <record id="achmitech_hr_rule_conge_non_paye" model="hr.salary.rule">
+            <field name="name">Congé non-payé</field>
+            <field name="code">CONGE_NON_PAYE</field>
+            <field name="sequence">2</field>
+            <field name="struct_id" ref="l10n_ma_hr_payroll.hr_payroll_salary_ma_structure_base"/>
+            <field name="category_id" ref="hr_payroll.BASIC"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = any(wd.work_entry_type_id.code == 'LEAVE90' for wd in payslip.worked_days_line_ids)</field>
+            <field name="amount_select">code</field>
+            <field name="appears_on_payslip" eval="True"/>
+            <field name="amount_python_compute">result = 0.0</field>
+        </record>
+
         <!-- Fix E_CNSS (rub 460): CNSS base = cotisable gross, capped at ceiling.
              Cotisable = BASIC + SENIORITY (all ALW rules except prime d'ancienneté are
              non-cotisable in Morocco). Adding new allowances to the contract requires no
@@ -23,10 +69,10 @@
              Reference payslip: base 6 000 (capped), rate 4.480%, retenue 268,80. -->
         <record id="l10n_ma_hr_payroll.l10n_ma_hr_payroll_rules_employee_cnss" model="hr.salary.rule">
             <field name="amount_python_compute">
-cnss_coef = payslip._rule_parameter('l10n_ma_cnss') / 100
 cnss_ceil = payslip._rule_parameter('l10n_ma_cnss_max')
-cotisable = result_rules['BASIC']['total'] + result_rules['SENIORITY']['total']
-result = min(cotisable, cnss_ceil) * cnss_coef
+cotisable = categories['BASIC'] + result_rules['SENIORITY']['total']
+result = min(cotisable, cnss_ceil)
+result_rate = payslip._rule_parameter('l10n_ma_cnss')
             </field>
         </record>
 
@@ -34,7 +80,7 @@ result = min(cotisable, cnss_ceil) * cnss_coef
              Cotisable = BASIC + SENIORITY. All other ALW allowances are non-imposable. -->
         <record id="l10n_ma_hr_payroll.l10n_ma_hr_rule_taxable_gross" model="hr.salary.rule">
             <field name="amount_python_compute">
-result = result_rules['BASIC']['total'] + result_rules['SENIORITY']['total']
+result = categories['BASIC'] + result_rules['SENIORITY']['total']
             </field>
         </record>
 
@@ -42,34 +88,46 @@ result = result_rules['BASIC']['total'] + result_rules['SENIORITY']['total']
              Reference payslip: base 10 390, rate 2.260%, retenue 234,81. -->
         <record id="l10n_ma_hr_payroll.l10n_ma_hr_payroll_rules_employee_amo" model="hr.salary.rule">
             <field name="amount_python_compute">
-amo_coef = payslip._rule_parameter('l10n_ma_amo') / 100
-cotisable = result_rules['BASIC']['total'] + result_rules['SENIORITY']['total']
-result = max(0, cotisable) * amo_coef
+cotisable = categories['BASIC'] + result_rules['SENIORITY']['total']
+result = max(0, cotisable)
+result_rate = payslip._rule_parameter('l10n_ma_amo')
             </field>
         </record>
 
-        <!-- Fix GROSS_INCOME_TAX (rub 490): cotisable base + 2025 Frais Professionnels.
-             Cotisable = BASIC + SENIORITY. All other ALW rules are non-imposable.
-             2025 FP: cotisable ≤ 6 500/month → 35% max 2 500; > 6 500/month → 25% max 2 916,67.
-             Reference payslip: base 7 288,88, rate 30%, retenue 686,66. -->
+        <!-- Fix GROSS_INCOME_TAX: returns net_taxable so NET_INCOME_TAX can read it.
+             Hidden from the printed payslip (appears_on_payslip=False); the template reads
+             its total via _l10n_ma_ir_display() to display Base + Taux on the IR row.
+             Cotisable = BASIC + SENIORITY. FP 2025: ≤6500 → 35% max 2500; >6500 → 25% max 2916,67. -->
         <record id="l10n_ma_hr_payroll.l10n_ma_hr_rule_gross_income_tax" model="hr.salary.rule">
+            <field name="appears_on_payslip" eval="False"/>
             <field name="amount_python_compute">
-tax_breakdown = payslip._rule_parameter('l10n_ma_income_tax_breakdown')
-cotisable = result_rules['BASIC']['total'] + result_rules['SENIORITY']['total']
-# IR base: subtract UNTAXABLE_DED (CNSS, AMO, CIMR...)
+cotisable = categories['BASIC'] + result_rules['SENIORITY']['total']
 gross_after_ded = cotisable - categories['UNTAXABLE_DED']
-# Frais Professionnels 2025
 if cotisable &lt;= 6500:
     frais_prof = min(cotisable * 0.35, 2500)
 else:
     frais_prof = min(cotisable * 0.25, 35000 / 12)
-net_taxable = max(0, gross_after_ded - frais_prof)
-result = 0
+result = max(0, gross_after_ded - frais_prof)
+            </field>
+        </record>
+
+        <!-- Fix NET_INCOME_TAX (rub 490-IR → Retenue column): compute IR from net_taxable.
+             GROSS_INCOME_TAX.total is now net_taxable, so recompute IR here independently.
+             appears_on_payslip forced True so it shows in Retenue column on the payslip. -->
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_rule_net_income_tax" model="hr.salary.rule">
+            <field name="name">Impôt sur le Revenu</field>
+            <field name="appears_on_payslip" eval="True"/>
+            <field name="amount_python_compute">
+tax_breakdown = payslip._rule_parameter('l10n_ma_income_tax_breakdown')
+net_taxable = result_rules['GROSS_INCOME_TAX']['total']
+ir_gross = 0
 for max_gross, coef, deduction in tax_breakdown:
     if net_taxable > max_gross:
         continue
-    result = net_taxable * (coef / 100) - deduction
+    ir_gross = net_taxable * (coef / 100) - deduction
     break
+fam_charge = result_rules['FAMILY_CHARGE']['total']
+result = max(0, ir_gross - fam_charge)
             </field>
         </record>
 
@@ -82,14 +140,42 @@ for max_gross, coef, deduction in tax_breakdown:
                 (    6666.67, 20,  833.33),
                 (    8333.33, 30, 1500.00),
                 (   15000.00, 34, 1833.33),
-                (9999999999.99, 38, 2433.33),
+                (9999999999.99, 37, 2283.33),
             ]</field>
         </record>
 
-        <!-- Restore correct NET formula. -->
+        <!-- Restore correct NET formula.
+             categories['DED'] includes TOTAL_UT_DED (mirrors CNSS+AMO), NET_INCOME_TAX, attachments,
+             AND SALC employer rules (because SALC.parent_id = DED).
+             Adding back categories['SALC'] removes employer contributions from the subtraction.
+             Result: GROSS − TOTAL_UT_DED − NET_INCOME_TAX − attachments (all employee-side deductions). -->
         <record id="l10n_ma_hr_payroll.l10n_ma_hr_payroll_salary_ma_structure_base_net_salary_rule" model="hr.salary.rule">
             <field name="amount_python_compute">
-result = result_rules['GROSS']['total'] - categories['UNTAXABLE_DED'] - result_rules['NET_INCOME_TAX']['total']
+result = result_rules['GROSS']['total'] - categories['DED'] + categories['SALC']
+            </field>
+        </record>
+
+        <!-- Prorate allowances by paid days using 26-day Moroccan standard divisor.
+             paid_days = WORK100 + paid leave (LEAVE120) days. -->
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_rule_kilometric_exemption" model="hr.salary.rule">
+            <field name="amount_python_compute">
+if payslip.date_from.day == 1:
+    leave90_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.work_entry_type_id.code == 'LEAVE90')
+    paid_days = 26 - leave90_days
+else:
+    paid_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.is_paid and wd.code != 'OUT')
+result = version.l10n_ma_kilometric_exemption * paid_days / 26
+            </field>
+        </record>
+
+        <record id="l10n_ma_hr_payroll.l10n_ma_hr_rule_transportation_exemption" model="hr.salary.rule">
+            <field name="amount_python_compute">
+if payslip.date_from.day == 1:
+    leave90_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.work_entry_type_id.code == 'LEAVE90')
+    paid_days = 26 - leave90_days
+else:
+    paid_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.is_paid and wd.code != 'OUT')
+result = version.l10n_ma_transport_exemption * paid_days / 26
             </field>
         </record>
 
@@ -97,7 +183,7 @@ result = result_rules['GROSS']['total'] - categories['UNTAXABLE_DED'] - result_r
         <record id="l10n_ma_hr_payroll.l10n_ma_hr_rule_social_contribution" model="hr.salary.rule">
             <field name="condition_select">python</field>
             <field name="condition_python">
-virtual_net = result_rules['GROSS']['total'] - categories['UNTAXABLE_DED'] - result_rules['NET_INCOME_TAX']['total']
+virtual_net = result_rules['GROSS']['total'] - categories['DED'] + categories['SALC']
 result = virtual_net > payslip._rule_parameter('l10n_ma_min_net_for_soc_contr')
             </field>
         </record>
@@ -115,13 +201,20 @@ if version.employee_id.children:
             </field>
         </record>
 
-        <!-- Fix MEAL_A: when BASIC = 0 (e.g. stagiaires paid only via allowances),
-             the 20% cap would zero out the meal allowance. Use full amount when no base wage. -->
+        <!-- MEAL_A: prorate by paid_days/26. Cap against full monthly wage (not prorated BASIC)
+             to avoid double-prorating. When BASIC=0 (stagiaires), fall back to fixed amount. -->
         <record id="l10n_ma_hr_payroll.l10n_ma_hr_rule_meal" model="hr.salary.rule">
             <field name="name">Indemnité de panier repas</field>
             <field name="amount_python_compute">
-basic = result_rules['BASIC']['total']
-result = version.l10n_ma_meal_allowance if basic == 0 else min(version.l10n_ma_meal_allowance, 0.2 * basic)
+if payslip.date_from.day == 1:
+    leave90_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.work_entry_type_id.code == 'LEAVE90')
+    paid_days = 26 - leave90_days
+else:
+    paid_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.is_paid and wd.code != 'OUT')
+if not version.wage or paid_days == 0:
+    result = version.l10n_ma_meal_allowance
+else:
+    result = min(version.l10n_ma_meal_allowance, 0.2 * version.wage) * paid_days / 26
             </field>
         </record>
 
@@ -132,8 +225,15 @@ result = version.l10n_ma_meal_allowance if basic == 0 else min(version.l10n_ma_m
         <record id="l10n_ma_hr_payroll.l10n_ma_hr_payroll_rules_employee_amo" model="hr.salary.rule">
             <field name="name">AMO Salariale</field>
         </record>
+        <!-- Fix TOTAL_UT_DED formula: original l10n_ma erroneously reads categories['DED']
+             instead of categories['UNTAXABLE_DED'], giving 0 at its sequence (30).
+             Correct formula sums E_CNSS + E_AMO so the Retenue total = TOTAL_UT_DED + NET_INCOME_TAX. -->
         <record id="l10n_ma_hr_payroll.l10n_ma_hr_payroll_rules_total_untaxable_ded" model="hr.salary.rule">
             <field name="name">Total Déductions Non Imposables</field>
+            <field name="appears_on_payslip" eval="False"/>
+            <field name="amount_python_compute">
+result = categories['UNTAXABLE_DED']
+            </field>
         </record>
 
         <!-- Disable HRA and DA: Indian/Gulf concepts, not used in Moroccan payroll. -->
@@ -155,6 +255,87 @@ result = version.l10n_ma_meal_allowance if basic == 0 else min(version.l10n_ma_m
         <record id="l10n_ma_hr_payroll.l10n_ma_hr_payroll_rules_pro_contribution" model="hr.salary.rule">
             <field name="condition_select">python</field>
             <field name="condition_python">result = bool(employee.l10n_ma_cimr_number)</field>
+        </record>
+
+        <!-- ── Employer (SALC) contributions for MARMONTHLY ───────────────────────────────
+             These are hidden from the printed payslip (appears_on_payslip=False):
+             they feed _l10n_ma_cout_total() (GROSS + SALC total) but are NOT counted
+             in sum_retenue (which requires appears_on_payslip=True).
+             Cotisable base = BASIC + SENIORITY (same as employee contributions).
+        ── -->
+
+        <!-- C_CNSS_E: CNSS patronale (prestations sociales long terme + court terme).
+             Rate: 8.98% of cotisable capped at social_benefit_employer_max (6 000 MAD/month).
+             Reference for this payslip: 8.98% × 6 000 = 538,80. -->
+        <record id="l10n_ma_cnss_employer_rule" model="hr.salary.rule">
+            <field name="name">CNSS Patronale</field>
+            <field name="code">C_CNSS_E</field>
+            <field name="sequence">100</field>
+            <field name="struct_id" ref="l10n_ma_hr_payroll.hr_payroll_salary_ma_structure_base"/>
+            <field name="category_id" ref="l10n_ma_hr_payroll.SALC"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="appears_on_payslip" eval="False"/>
+            <field name="amount_python_compute">
+cotisable = categories['BASIC'] + result_rules['SENIORITY']['total']
+cnss_ceil = payslip._rule_parameter('l10n_ma_social_benefit_employer_max')
+result = min(cotisable, cnss_ceil)
+result_rate = payslip._rule_parameter('l10n_ma_social_benefit_employer')
+            </field>
+        </record>
+
+        <!-- C_AF_E: Allocations familiales CNSS patronale.
+             Rate: 6.40% of cotisable gross (no ceiling). -->
+        <record id="l10n_ma_af_employer_rule" model="hr.salary.rule">
+            <field name="name">Allocations Familiales Patronale</field>
+            <field name="code">C_AF_E</field>
+            <field name="sequence">101</field>
+            <field name="struct_id" ref="l10n_ma_hr_payroll.hr_payroll_salary_ma_structure_base"/>
+            <field name="category_id" ref="l10n_ma_hr_payroll.SALC"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="appears_on_payslip" eval="False"/>
+            <field name="amount_python_compute">
+cotisable = categories['BASIC'] + result_rules['SENIORITY']['total']
+result = max(0, cotisable)
+result_rate = payslip._rule_parameter('l10n_ma_family_allocation_employer')
+            </field>
+        </record>
+
+        <!-- C_AMO_E: AMO patronale.
+             Rate: 4.11% of cotisable gross. -->
+        <record id="l10n_ma_amo_employer_rule" model="hr.salary.rule">
+            <field name="name">AMO Patronale</field>
+            <field name="code">C_AMO_E</field>
+            <field name="sequence">102</field>
+            <field name="struct_id" ref="l10n_ma_hr_payroll.hr_payroll_salary_ma_structure_base"/>
+            <field name="category_id" ref="l10n_ma_hr_payroll.SALC"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="appears_on_payslip" eval="False"/>
+            <field name="amount_python_compute">
+cotisable = categories['BASIC'] + result_rules['SENIORITY']['total']
+result = max(0, cotisable)
+result_rate = payslip._rule_parameter('l10n_ma_amo_employer')
+            </field>
+        </record>
+
+        <!-- C_TFP_E: Taxe de Formation Professionnelle.
+             Rate: 1.60% of cotisable gross. -->
+        <record id="l10n_ma_tfp_employer_rule" model="hr.salary.rule">
+            <field name="name">Taxe de Formation Professionnelle</field>
+            <field name="code">C_TFP_E</field>
+            <field name="sequence">103</field>
+            <field name="struct_id" ref="l10n_ma_hr_payroll.hr_payroll_salary_ma_structure_base"/>
+            <field name="category_id" ref="l10n_ma_hr_payroll.SALC"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="appears_on_payslip" eval="False"/>
+            <field name="amount_python_compute">
+cotisable = categories['BASIC'] + result_rules['SENIORITY']['total']
+result = max(0, cotisable)
+result_rate = payslip._rule_parameter('l10n_ma_professional_training_employer')
+            </field>
         </record>
 
         <!-- SMIG horaire — 2026 Finance Law: 17.92 MAD/h (effective 1 Jan 2026).
