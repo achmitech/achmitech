@@ -158,6 +158,8 @@ result = result_rules['GROSS']['total'] - categories['DED'] + categories['SALC']
         <!-- Prorate allowances by paid days using 26-day Moroccan standard divisor.
              paid_days = WORK100 + paid leave (LEAVE120) days. -->
         <record id="l10n_ma_hr_payroll.l10n_ma_hr_rule_kilometric_exemption" model="hr.salary.rule">
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = bool(version.l10n_ma_kilometric_exemption)</field>
             <field name="amount_python_compute">
 if payslip.date_from.day == 1:
     leave90_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.work_entry_type_id.code == 'LEAVE90')
@@ -169,6 +171,8 @@ result = version.l10n_ma_kilometric_exemption * paid_days / 26
         </record>
 
         <record id="l10n_ma_hr_payroll.l10n_ma_hr_rule_transportation_exemption" model="hr.salary.rule">
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = bool(version.l10n_ma_transport_exemption)</field>
             <field name="amount_python_compute">
 if payslip.date_from.day == 1:
     leave90_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.work_entry_type_id.code == 'LEAVE90')
@@ -205,6 +209,8 @@ if version.employee_id.children:
              to avoid double-prorating. When BASIC=0 (stagiaires), fall back to fixed amount. -->
         <record id="l10n_ma_hr_payroll.l10n_ma_hr_rule_meal" model="hr.salary.rule">
             <field name="name">Indemnité de panier repas</field>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = bool(version.l10n_ma_meal_allowance)</field>
             <field name="amount_python_compute">
 if payslip.date_from.day == 1:
     leave90_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.work_entry_type_id.code == 'LEAVE90')
@@ -255,6 +261,27 @@ result = categories['UNTAXABLE_DED']
         <record id="l10n_ma_hr_payroll.l10n_ma_hr_payroll_rules_pro_contribution" model="hr.salary.rule">
             <field name="condition_select">python</field>
             <field name="condition_python">result = bool(employee.l10n_ma_cimr_number)</field>
+        </record>
+
+        <!-- PHONE_INDMNT: Indemnité de téléphone, prorated by paid days. -->
+        <record id="achmitech_hr_rule_phone_indmnt" model="hr.salary.rule">
+            <field name="name">Indemnité de telephone</field>
+            <field name="code">PHONE_INDMNT</field>
+            <field name="sequence">6</field>
+            <field name="struct_id" ref="l10n_ma_hr_payroll.hr_payroll_salary_ma_structure_base"/>
+            <field name="category_id" ref="hr_payroll.ALW"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = bool(version.l10n_ma_phone_allowance)</field>
+            <field name="amount_select">code</field>
+            <field name="appears_on_payslip" eval="True"/>
+            <field name="amount_python_compute">
+if payslip.date_from.day == 1:
+    leave90_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.work_entry_type_id.code == 'LEAVE90')
+    paid_days = 26 - leave90_days
+else:
+    paid_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.is_paid and wd.code != 'OUT')
+result = version.l10n_ma_phone_allowance * paid_days / 26
+            </field>
         </record>
 
         <!-- ── Employer (SALC) contributions for MARMONTHLY ───────────────────────────────
