@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+<template id="report_payslip_ma" inherit_id="l10n_ma_hr_payroll.report_payslip_ma" primary="True">
+<xpath expr="." position="replace">
+<t t-call="web.external_layout">
+<div class="page" style="font-family: Arial, Helvetica, sans-serif; font-size: 9pt; color: #000;">
+
+<!-- Pre-fetch computed values via model methods (no complex Python in t-value) -->
+<t t-set="gain_cat"    t-value="{'BASIC', 'ALW', 'SOCIAL_ALW'}"/>
+<t t-set="ded_cat"     t-value="{'DED', 'SALC', 'DEDIRPP', 'UNTAXABLE_DED'}"/>
+<t t-set="info_cat"    t-value="{'GROSS', 'INCOME_TAX', 'O_TOTALS'}"/>
+<t t-set="sum_gain"    t-value="o._l10n_ma_sum_gain()"/>
+<t t-set="sum_retenue" t-value="o._l10n_ma_sum_retenue()"/>
+<t t-set="cout_total"  t-value="o._l10n_ma_cout_total()"/>
+<t t-set="work_days"   t-value="o._l10n_ma_work_days_count()"/>
+<t t-set="net_words"   t-value="o._l10n_ma_net_words()"/>
+<t t-set="matricule"   t-value="o._l10n_ma_matricule()"/>
+<t t-set="conges"      t-value="o._l10n_ma_annual_leave()"/>
+<t t-set="hire_date"   t-value="o._l10n_ma_hire_date()"/>
+<t t-set="ir_display"  t-value="o._l10n_ma_ir_display()"/>
+<t t-set="gross_line"  t-value="o.line_ids.filtered(lambda l: l.salary_rule_id.code == 'GROSS')[:1]"/>
+<t t-set="salc_base"   t-value="sum(l.total for l in o.line_ids if l.salary_rule_id.category_id.code in ('BASIC', 'ALW'))"/>
+<t t-set="net_line"    t-value="o.line_ids.filtered(lambda l: l.salary_rule_id.code == 'NET')[:1]"/>
+<t t-set="leave120_days" t-value="sum(wd.number_of_days for wd in o.worked_days_line_ids if wd.work_entry_type_id.code == 'LEAVE120')"/>
+<t t-set="leave90_days"  t-value="sum(wd.number_of_days for wd in o.worked_days_line_ids if wd.work_entry_type_id.code == 'LEAVE90')"/>
+<t t-set="basic_days"    t-value="(26 - leave90_days - leave120_days) if o.date_from.day == 1 else sum(wd.number_of_days for wd in o.worked_days_line_ids if wd.work_entry_type_id.code == 'WORK100')"/>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     SECTION 1 — HEADER: Period (left) + Company box (right)
+     ══════════════════════════════════════════════════════════════════ -->
+<table style="width:100%; border-collapse:separate; border-spacing:0; margin-bottom:6px;">
+  <tr>
+    <td style="width:40%; vertical-align:bottom; padding-bottom:4px; padding-right:8px;">
+      <div style="font-size:9.5pt;">
+        <span style="font-weight:bold;">Période :</span>
+        <span t-field="o.date_from" t-options="{'format': 'MMMM yyyy'}"/>
+        ( Du <span t-field="o.date_from"/> Au <span t-field="o.date_to"/> )
+      </div>
+    </td>
+    <td style="width:60%; vertical-align:middle;">
+      <table style="width:100%; font-size:9pt; border:1px solid #000; border-collapse:collapse;">
+        <tr>
+          <td style="text-align:center; font-size:13pt; font-weight:bold; padding:3px; letter-spacing:1px; border-bottom:1px solid #000;">BULLETIN DE PAIE</td>
+        </tr>
+        <tr>
+          <td style="font-weight:bold; padding:4px 6px; background:#d9d9d9;">Raison sociale : <span style="font-weight:normal;" t-field="o.company_id.name"/></td>
+        </tr>
+        <tr>
+          <td style="font-weight:bold; padding:4px 6px; background:#d9d9d9;">Affiliation CNSS : <span style="font-weight:normal;" t-field="o.company_id.l10n_ma_social_security_organization"/></td>
+        </tr>
+        <tr>
+          <td style="font-weight:bold; padding:4px 6px; background:#d9d9d9; vertical-align:top;">Adresse : <span style="font-weight:normal;" t-if="o.company_id.street" t-field="o.company_id.street"/>
+            <t t-if="o.company_id.city">, <span style="font-weight:normal;" t-field="o.company_id.city"/></t></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     SECTION 2 — EMPLOYEE INFO (2 rows)
+     ══════════════════════════════════════════════════════════════════ -->
+<table style="width:100%; border-collapse:collapse; border:1px solid #000; margin-bottom:0;">
+  <thead>
+    <tr style="background:#d9d9d9; font-weight:bold; text-align:center; font-size:8.5pt;">
+      <th style="border:1px solid #999; padding:2px 4px; width:10%;">Matricule</th>
+      <th style="border:1px solid #999; padding:2px 4px; width:28%; text-align:left;">Nom et Prénom</th>
+      <th style="border:1px solid #999; padding:2px 4px; width:15%;">N° C.N.S.S</th>
+      <th style="border:1px solid #999; padding:2px 4px; width:13%;">N° C.I.N.</th>
+      <th style="border:1px solid #999; padding:2px 4px; width:12%;">D.Naissance</th>
+      <th style="border:1px solid #999; padding:2px 4px; width:12%;">D.Embauche</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="text-align:center; font-size:9pt;">
+      <td style="border:1px solid #999; padding:3px 4px;"><t t-out="matricule"/></td>
+      <td style="border:1px solid #999; padding:3px 4px; font-weight:bold; text-align:left;">
+        <span t-field="o.employee_id.legal_name"/>
+      </td>
+      <td style="border:1px solid #999; padding:3px 4px;">
+        <span t-field="o.employee_id.l10n_ma_cnss_number"/>
+      </td>
+      <td style="border:1px solid #999; padding:3px 4px;">
+        <span t-field="o.employee_id.l10n_ma_cin_number"/>
+      </td>
+      <td style="border:1px solid #999; padding:3px 4px;">
+        <t t-if="o.employee_id.birthday">
+          <span t-field="o.employee_id.birthday" t-options="{'format': 'dd/MM/yyyy'}"/>
+        </t>
+      </td>
+      <td style="border:1px solid #999; padding:3px 4px;">
+        <t t-out="hire_date"/>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<table style="width:100%; border-collapse:collapse; border:1px solid #000; border-top:0; margin-bottom:6px;">
+  <thead>
+    <tr style="background:#d9d9d9; font-weight:bold; font-size:8.5pt;">
+      <th style="border:1px solid #999; padding:2px 4px; width:40%; text-align:left;">Adresse</th>
+      <th style="border:1px solid #999; padding:2px 4px; width:40%; text-align:left;">Fonction</th>
+      <th style="border:1px solid #999; padding:2px 4px; width:10%; text-align:center;">CIMR</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="font-size:9pt;">
+      <td style="border:1px solid #999; padding:3px 4px;">
+        <t t-if="o.version_id.private_street">
+          <span t-field="o.version_id.private_street"/>
+        </t>
+        <t t-if="o.version_id.private_city">
+          <t t-if="o.version_id.private_street"> </t>
+          <span t-field="o.version_id.private_city"/>
+        </t>
+      </td>
+      <td style="border:1px solid #999; padding:3px 4px;">
+        <span t-if="o.version_id.job_id" t-field="o.version_id.job_id"/>
+      </td>
+      <td style="border:1px solid #999; padding:3px 4px; text-align:center;">
+        <span t-if="o.employee_id.l10n_ma_cimr_number" t-field="o.employee_id.l10n_ma_cimr_number"/>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     SECTION 3 — SALARY LINES TABLE
+     ══════════════════════════════════════════════════════════════════ -->
+<table style="width:100%; border-collapse:collapse; border:1px solid #000; margin-bottom:0;">
+  <thead>
+    <tr style="background:#d9d9d9; font-weight:bold; font-size:9pt; border-bottom:1px solid #000;">
+      <th style="border-right:1px solid #999; padding:3px 5px; width:8%; text-align:left;">N° Rub.</th>
+      <th style="border-right:1px solid #999; padding:3px 5px; text-align:left;">Libellé</th>
+      <th style="border-right:1px solid #999; padding:3px 5px; width:16%; text-align:right;">Base en DHS</th>
+      <th style="border-right:1px solid #999; padding:3px 5px; width:14%; text-align:right;">Taux / nombre</th>
+      <th style="border-right:1px solid #999; padding:3px 5px; width:12%; text-align:right;">Gain</th>
+      <th style="border-right:1px solid #999; padding:3px 5px; width:12%; text-align:right;">Retenue</th>
+      <th style="padding:3px 5px; width:12%; text-align:right;">P. patronale</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Loop: all visible lines except GROSS (598) and NET (599), sorted by category then sequence -->
+    <t t-set="_cat_order" t-value="{'BASIC': 0, 'ALW': 1, 'UNTAXABLE_DED': 2, 'DED': 3, 'SALC': 4}"/>
+    <t t-foreach="sorted(o.line_ids.filtered(lambda l: l.appears_on_payslip and l.salary_rule_id.code not in ('GROSS', 'NET', 'ROUND') and l.total != 0), key=lambda l: (_cat_order.get(l.salary_rule_id.category_id.code, 9), l.sequence))" t-as="line">
+      <t t-set="cat"     t-value="line.salary_rule_id.category_id.code"/>
+      <t t-set="is_gain" t-value="cat in gain_cat"/>
+      <t t-set="is_ded"  t-value="cat in ded_cat"/>
+      <t t-set="is_info" t-value="cat in info_cat"/>
+      <tr>
+        <td style="border-right:1px solid #eee; padding:2px 5px; color:#666; font-size:8.5pt;">
+          <t t-out="line.salary_rule_id.l10n_ma_rubric_number or ''"/>
+        </td>
+        <td style="border-right:1px solid #eee; padding:2px 5px;">
+          <t t-out="line.name"/>
+        </td>
+        <!-- Base en DHS -->
+        <td style="border-right:1px solid #eee; padding:2px 5px; text-align:right;">
+          <t t-if="line.salary_rule_id.code == 'NET_INCOME_TAX' and ir_display">
+            <t t-out="'%.2f' % ir_display['taxable']"/>
+          </t>
+          <t t-elif="is_info">
+            <t t-out="'%.2f' % line.total"/>
+          </t>
+          <t t-elif="line.salary_rule_id.code in ('BASIC', 'CONGE_PAYE', 'CONGE_NON_PAYE') and line.quantity == 1.0">
+            <t t-out="'%.2f' % o.version_id.wage"/>
+          </t>
+          <t t-elif="line.salary_rule_id.code in ('BASIC', 'CONGE_PAYE', 'CONGE_NON_PAYE') and line.quantity != 1.0">
+            <t t-out="'%.2f' % line.amount"/>
+          </t>
+          <t t-elif="line.rate != 100.0 or line.quantity != 1.0">
+            <t t-out="'%.2f' % line.amount"/>
+          </t>
+        </td>
+        <!-- Taux / nombre -->
+        <td style="border-right:1px solid #eee; padding:2px 5px; text-align:right;">
+          <t t-if="line.salary_rule_id.code == 'NET_INCOME_TAX' and ir_display and ir_display['rate']">
+            <t t-out="'%.0f' % ir_display['rate']"/> %
+          </t>
+          <t t-elif="line.rate != 100.0">
+            <t t-out="'%.3f' % line.rate"/> %
+          </t>
+          <t t-elif="line.salary_rule_id.code == 'BASIC' and line.quantity == 1.0">
+            <t t-out="'%.3f' % basic_days"/> J
+          </t>
+          <t t-elif="line.salary_rule_id.code == 'BASIC' and line.quantity != 1.0">
+            <t t-out="'%.1f' % line.quantity"/> H
+          </t>
+          <t t-elif="line.salary_rule_id.code == 'CONGE_PAYE' and line.quantity == 1.0">
+            <t t-out="'%.3f' % leave120_days"/> J
+          </t>
+          <t t-elif="line.salary_rule_id.code == 'CONGE_PAYE' and line.quantity != 1.0">
+            <t t-out="'%.1f' % line.quantity"/> H
+          </t>
+          <t t-elif="line.salary_rule_id.code == 'CONGE_NON_PAYE' and line.quantity == 1.0">
+            <t t-out="'%.3f' % leave90_days"/> J
+          </t>
+          <t t-elif="line.salary_rule_id.code == 'CONGE_NON_PAYE' and line.quantity != 1.0">
+            <t t-out="'%.1f' % line.quantity"/> H
+          </t>
+          <t t-elif="line.quantity != 1.0">
+            <t t-out="'%.3f' % line.quantity"/>
+          </t>
+        </td>
+        <!-- Gain -->
+        <td style="border-right:1px solid #eee; padding:2px 5px; text-align:right;">
+          <t t-if="is_gain"><t t-out="'%.2f' % line.total"/></t>
+        </td>
+        <!-- Retenue -->
+        <td style="border-right:1px solid #eee; padding:2px 5px; text-align:right;">
+          <t t-if="is_ded"><t t-out="'%.2f' % line.total"/></t>
+        </td>
+        <!-- P. patronale -->
+        <td style="padding:2px 5px; text-align:right;">
+          <t t-if="cat == 'SALC'"><t t-out="'%.2f' % line.total"/></t>
+        </td>
+      </tr>
+    </t>
+
+    <!-- Employer contribution lines (SALC category, appears_on_payslip=False) -->
+    <t t-foreach="sorted(o.line_ids.filtered(lambda l: l.salary_rule_id.category_id.code == 'SALC' and l.total != 0), key=lambda l: l.sequence)" t-as="salc_line">
+      <tr>
+        <td style="border-right:1px solid #eee; padding:2px 5px; color:#666; font-size:8.5pt;">
+          <t t-out="salc_line.salary_rule_id.l10n_ma_rubric_number or ''"/>
+        </td>
+        <td style="border-right:1px solid #eee; padding:2px 5px;">
+          <t t-out="salc_line.name"/>
+        </td>
+        <!-- Base en DHS -->
+        <td style="border-right:1px solid #eee; padding:2px 5px; text-align:right;">
+          <t t-out="'%.2f' % salc_base"/>
+        </td>
+        <!-- Taux / nombre -->
+        <td style="border-right:1px solid #eee; padding:2px 5px; text-align:right;">
+          <t t-if="salc_line.rate != 100.0"><t t-out="'%.3f' % salc_line.rate"/> %</t>
+        </td>
+        <td style="border-right:1px solid #eee;"/>
+        <td style="border-right:1px solid #eee;"/>
+        <!-- P. patronale -->
+        <td style="padding:2px 5px; text-align:right;">
+          <t t-out="'%.2f' % salc_line.total"/>
+        </td>
+      </tr>
+    </t>
+
+    <!-- Rub 598 — Salaire brut global (value in Base column) -->
+    <t t-if="gross_line">
+      <tr>
+        <td style="border-right:1px solid #eee; padding:2px 5px; color:#666; font-size:8.5pt;">
+          <t t-out="gross_line.salary_rule_id.l10n_ma_rubric_number or '598'"/>
+        </td>
+        <td style="border-right:1px solid #eee; padding:2px 5px;">
+          <span t-field="gross_line.name"/>
+        </td>
+        <td style="border-right:1px solid #eee; padding:2px 5px; text-align:right;">
+          <t t-out="'%.2f' % gross_line.total"/>
+        </td>
+        <td style="border-right:1px solid #eee;"/>
+        <td style="border-right:1px solid #eee;"/>
+        <td style="border-right:1px solid #eee;"/>
+        <td/>
+      </tr>
+    </t>
+
+    <!-- Rub 599 — Gain Net (bold, value in Base column per reference) -->
+    <t t-if="net_line">
+      <tr style="font-weight:bold;">
+        <td style="border-right:1px solid #eee; padding:2px 5px; color:#666; font-size:8.5pt;">
+          <t t-out="net_line.salary_rule_id.l10n_ma_rubric_number or '599'"/>
+        </td>
+        <td style="border-right:1px solid #eee; padding:2px 5px;">Gain Net</td>
+        <td style="border-right:1px solid #eee; padding:2px 5px; text-align:right;">
+          <t t-out="'%.2f' % net_line.total"/>
+        </td>
+        <td style="border-right:1px solid #eee;"/>
+        <td style="border-right:1px solid #eee;"/>
+        <td style="border-right:1px solid #eee;"/>
+        <td/>
+      </tr>
+    </t>
+
+    <!-- Rub 670 — Arrondies (shown separately, not in totals) -->
+    <t t-set="round_line" t-value="o.line_ids.filtered(lambda l: l.salary_rule_id.code == 'ROUND')[:1]"/>
+    <t t-if="round_line and round_line.total != 0">
+      <tr>
+        <td style="border-right:1px solid #eee; padding:2px 5px; color:#666; font-size:8.5pt;">670</td>
+        <td style="border-right:1px solid #eee; padding:2px 5px;"><t t-out="round_line.name"/></td>
+        <td style="border-right:1px solid #eee;"/>
+        <td style="border-right:1px solid #eee;"/>
+        <td style="border-right:1px solid #eee; padding:2px 5px; text-align:right;">
+          <t t-out="'%.2f' % round_line.total"/>
+        </td>
+        <td style="border-right:1px solid #eee;"/>
+        <td/>
+      </tr>
+    </t>
+  </tbody>
+
+  <!-- TOTAUX row -->
+  <tfoot>
+    <tr style="border-top:1px solid #000;">
+      <td colspan="2" style="border-right:1px solid #999; padding:3px 5px; font-size:9pt;">
+        <t t-if="cout_total">
+          Coût total de la paie :
+          <strong><t t-out="'%.2f' % cout_total"/></strong>
+        </t>
+      </td>
+      <td style="border-right:1px solid #999; padding:3px 5px; text-align:right; font-weight:bold; font-size:9pt;">Totaux :</td>
+      <td style="border-right:1px solid #999;"/>
+      <td style="border-right:1px solid #999; padding:3px 5px; text-align:right; font-weight:bold; font-size:9pt;">
+        <t t-out="'%.2f' % sum_gain"/>
+      </td>
+      <td style="border-right:1px solid #999; padding:3px 5px; text-align:right; font-weight:bold; font-size:9pt;">
+        <t t-out="'%.2f' % sum_retenue"/>
+      </td>
+      <td style="padding:3px 5px; text-align:right; font-weight:bold; font-size:9pt;">
+        <t t-out="'%.2f' % sum(abs(l.total) for l in o.line_ids if l.salary_rule_id.category_id.code == 'SALC')"/>
+      </td>
+    </tr>
+  </tfoot>
+</table>
+
+<!-- NET À PAYER bar -->
+<table style="width:100%; border-collapse:collapse; border:1px solid #000; border-top:0; margin-bottom:6px;">
+  <tr style="background:#d9d9d9;">
+    <td style="padding:5px 8px; font-weight:bold; font-size:10pt; width:18%; border-right:1px solid #999;">
+      Net à payer
+    </td>
+    <td style="padding:5px 8px; font-style:italic; font-size:9pt; width:62%;  background: #3b4252; color: #fff;">
+      <t t-out="net_words"/>
+    </td>
+    <td style="padding:5px 10px; font-weight:bold; font-size:12pt; text-align:center; background: #c72e12; color: #fff">
+      <t t-out="'%.2f' % -(-o.net_wage // 1)"/>
+    </td>
+  </tr>
+</table>
+
+<!-- Mode de paiement -->
+<div style="font-size:9pt; margin-bottom:10px;">
+  <strong>Mode de paiement :</strong>
+  Virement, RIB N° :
+  <t t-if="o.employee_id.bank_account_ids">
+    <span t-field="o.employee_id.bank_account_ids[:1].acc_number"/>
+  </t>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     SECTION 5 — SITUATION GLOBALE DES CONGÉS (right side)
+     ══════════════════════════════════════════════════════════════════ -->
+<t t-if="conges">
+  <table style="width:44%; margin-left:56%; border-collapse:collapse; border:1px solid #000; font-size:9pt;">
+    <thead>
+      <tr style="background:#d9d9d9; text-align:center; font-weight:bold;">
+        <th colspan="4" style="border-bottom:1px solid #000; padding:3px 6px; font-size:9pt;">Situation globale des congés</th>
+      </tr>
+      <tr style="background:#d9d9d9; text-align:center; font-weight:bold; font-size:8.5pt;">
+        <th style="border:1px solid #999; padding:2px 4px;">Reliqu.</th>
+        <th style="border:1px solid #999; padding:2px 4px;">Droit</th>
+        <th style="border:1px solid #999; padding:2px 4px;">Pris</th>
+        <th style="border:1px solid #999; padding:2px 4px; font-size:10pt;">Solde</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="text-align:center;">
+        <td style="border:1px solid #999; padding:3px 4px;"><t t-out="'%.3f' % conges['reliqu']"/></td>
+        <td style="border:1px solid #999; padding:3px 4px;"><t t-out="'%.3f' % conges['droit']"/></td>
+        <td style="border:1px solid #999; padding:3px 4px;"><t t-out="'%.3f' % conges['pris']"/></td>
+        <td style="border:1px solid #999; padding:3px 6px; font-weight:bold;"><t t-out="'%.3f' % conges['solde']"/></td>
+      </tr>
+    </tbody>
+  </table>
+</t>
+
+</div>
+</t>
+</xpath>
+</template>
+
+<!-- Redirect payslip print action to our template -->
+<record id="hr_payroll.action_report_payslip" model="ir.actions.report">
+    <field name="report_name">achmitech_hr_payroll.report_payslip_ma_lang</field>
+    <field name="report_file">achmitech_hr_payroll.report_payslip_ma_lang</field>
+    <field name="name">Bulletin de Paie</field>
+    <field name="print_report_name">'Bulletin de Paie - %s' % (object.name)</field>
+</record>
+
+<template id="report_payslip_ma_lang">
+    <t t-call="web.html_container">
+        <t t-foreach="docs" t-as="o">
+            <t t-set="o" t-value="o.with_context(lang=o.employee_id.lang or o.env.lang)"/>
+            <t t-call="achmitech_hr_payroll.report_payslip_ma" t-lang="o.env.lang"/>
+        </t>
+    </t>
+</template>
+
+</odoo>

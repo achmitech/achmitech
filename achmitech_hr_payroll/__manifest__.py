@@ -21,7 +21,9 @@
         'views/hr_letter_wizard_views.xml',
         'views/contract_report.xml',
         'views/lettre_engagement_report.xml',
+        'views/hr_salary_rule_views.xml',
         'views/hr_letter_reports.xml',
+        'views/report_payslip_templates.xml',
     ],
     'license': 'LGPL-3',
 }

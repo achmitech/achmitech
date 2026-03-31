@@ -21,6 +21,7 @@ __pycache__/
 # Log files
 *.log
 .vscode
+.claude
 # Package files
 *.jar
 
