@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+<record id="view_hr_stc_wizard_form" model="ir.ui.view">
+    <field name="name">hr.stc.wizard.form</field>
+    <field name="model">hr.stc.wizard</field>
+    <field name="arch" type="xml">
+        <form string="Simulateur Solde de Tout Compte">
+            <sheet>
+                <h1 style="text-align:center; margin-bottom:16px;">
+                    Simulateur — Solde de Tout Compte
+                </h1>
+
+                <!-- Inputs -->
+                <group string="Informations de départ">
+                    <group>
+                        <field name="employee_id"/>
+                        <field name="departure_type"/>
+                        <field name="contract_start_date"/>
+                        <field name="departure_date"/>
+                    </group>
+                    <group>
+                        <field name="wage_type"/>
+                        <field name="weekly_hours"/>
+                        <field name="hourly_rate" readonly="wage_type == 'fixed'"/>
+                        <field name="monthly_wage" readonly="wage_type == 'hourly'"/>
+                        <field name="indemnite_transport"/>
+                        <field name="indemnite_telephone"/>
+                        <field name="indemnite_repas"/>
+                        <field name="indemnite_kilometrique"/>
+                        <field name="indemnites_imposables"/>
+                        <field name="net_salary" readonly="1"/>
+                    </group>
+                </group>
+
+                <group string="Éléments de calcul">
+                    <group>
+                        <field name="days_worked_last_month"/>
+                        <field name="notice_days"/>
+                    </group>
+                    <group>
+                        <field name="unused_leave_days"/>
+                    </group>
+                </group>
+
+                <separator string="Résultat"/>
+
+                <!-- Results -->
+                <group>
+                    <group string="Détail STC">
+                        <field name="seniority_years" widget="float" digits="[16,2]"/>
+                        <field name="last_month_salary" widget="float" digits="[16,2]"
+                               invisible="last_month_salary == 0"/>
+                        <field name="indemnite_preavis" widget="float" digits="[16,2]"
+                               invisible="indemnite_preavis == 0"/>
+                        <field name="indemnite_licenciement" widget="float" digits="[16,2]"
+                               invisible="indemnite_licenciement == 0"/>
+                        <field name="conges_payes_amount" widget="float" digits="[16,2]"
+                               invisible="conges_payes_amount == 0"/>
+                    </group>
+                    <group string="Retenues">
+                        <field name="retenue_cnss" widget="float" digits="[16,2]"
+                               invisible="retenue_cnss == 0"/>
+                        <field name="retenue_amo" widget="float" digits="[16,2]"
+                               invisible="retenue_amo == 0"/>
+                        <field name="retenue_ir" widget="float" digits="[16,2]"
+                               invisible="retenue_ir == 0"/>
+                    </group>
+                    <group>
+                        <field name="total_stc" widget="float" digits="[16,2]"/>
+                        <field name="total_retenues" widget="float" digits="[16,2]"
+                               invisible="total_retenues == 0"/>
+                        <field name="net_a_payer" widget="float" digits="[16,2]"
+                               style="font-size:14pt; font-weight:bold;"/>
+                    </group>
+                </group>
+            </sheet>
+            <footer>
+                <button string="Télécharger PDF" type="object" name="action_print_stc"
+                        class="btn-primary"/>
+                <button string="Fermer" class="btn-secondary" special="cancel"/>
+            </footer>
+        </form>
+    </field>
+</record>
+
+<record id="action_hr_stc_wizard" model="ir.actions.act_window">
+    <field name="name">Simulateur STC</field>
+    <field name="res_model">hr.stc.wizard</field>
+    <field name="view_mode">form</field>
+    <field name="target">new</field>
+</record>
+
+<menuitem
+    id="menu_hr_stc_wizard"
+    name="Simulateur STC"
+    parent="hr_payroll.menu_hr_payroll_employees"
+    action="action_hr_stc_wizard"
+    sequence="40"
+    groups="hr_payroll.group_hr_payroll_user"/>
+
+</odoo>
