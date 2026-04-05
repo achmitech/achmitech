@@ -26,7 +26,8 @@
 if payslip.date_from.day == 1:
     leave90_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.work_entry_type_id.code == 'LEAVE90')
     leave120_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.work_entry_type_id.code == 'LEAVE120')
-    work_days = 26 - leave90_days - leave120_days
+    out_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.work_entry_type_id.code == 'OUT')
+    work_days = 26 - leave90_days - leave120_days - out_days
 else:
     work_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.work_entry_type_id.code == 'WORK100')
 result = version.wage * work_days / 26
@@ -163,7 +164,8 @@ result = result_rules['GROSS']['total'] - categories['DED'] + categories['SALC']
             <field name="amount_python_compute">
 if payslip.date_from.day == 1:
     leave90_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.work_entry_type_id.code == 'LEAVE90')
-    paid_days = 26 - leave90_days
+    out_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.work_entry_type_id.code == 'OUT')
+    paid_days = 26 - leave90_days - out_days
 else:
     paid_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.is_paid and wd.code != 'OUT')
 result = version.l10n_ma_kilometric_exemption * paid_days / 26
@@ -176,7 +178,8 @@ result = version.l10n_ma_kilometric_exemption * paid_days / 26
             <field name="amount_python_compute">
 if payslip.date_from.day == 1:
     leave90_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.work_entry_type_id.code == 'LEAVE90')
-    paid_days = 26 - leave90_days
+    out_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.work_entry_type_id.code == 'OUT')
+    paid_days = 26 - leave90_days - out_days
 else:
     paid_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.is_paid and wd.code != 'OUT')
 result = version.l10n_ma_transport_exemption * paid_days / 26
@@ -214,7 +217,8 @@ if version.employee_id.children:
             <field name="amount_python_compute">
 if payslip.date_from.day == 1:
     leave90_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.work_entry_type_id.code == 'LEAVE90')
-    paid_days = 26 - leave90_days
+    out_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.work_entry_type_id.code == 'OUT')
+    paid_days = 26 - leave90_days - out_days
 else:
     paid_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.is_paid and wd.code != 'OUT')
 if not version.wage or paid_days == 0:
@@ -277,7 +281,8 @@ result = categories['UNTAXABLE_DED']
             <field name="amount_python_compute">
 if payslip.date_from.day == 1:
     leave90_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.work_entry_type_id.code == 'LEAVE90')
-    paid_days = 26 - leave90_days
+    out_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.work_entry_type_id.code == 'OUT')
+    paid_days = 26 - leave90_days - out_days
 else:
     paid_days = sum(wd.number_of_days for wd in payslip.worked_days_line_ids if wd.is_paid and wd.code != 'OUT')
 result = version.l10n_ma_phone_allowance * paid_days / 26

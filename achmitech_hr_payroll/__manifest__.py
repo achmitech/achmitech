@@ -24,6 +24,8 @@
         'views/hr_salary_rule_views.xml',
         'views/hr_letter_reports.xml',
         'views/report_payslip_templates.xml',
+        'wizard/hr_stc_wizard_views.xml',
+        'wizard/report_stc_templates.xml',
     ],
     'license': 'LGPL-3',
 }
