@@ -24,11 +24,11 @@
                         <field name="weekly_hours"/>
                         <field name="hourly_rate" readonly="wage_type == 'fixed'"/>
                         <field name="monthly_wage" readonly="wage_type == 'hourly'"/>
-                        <field name="indemnite_transport"/>
-                        <field name="indemnite_telephone"/>
-                        <field name="indemnite_repas"/>
-                        <field name="indemnite_kilometrique"/>
-                        <field name="indemnites_imposables"/>
+                        <field name="indemnite_transport" invisible="wage_type == 'hourly'"/>
+                        <field name="indemnite_telephone" invisible="wage_type == 'hourly'"/>
+                        <field name="indemnite_repas" invisible="wage_type == 'hourly'"/>
+                        <field name="indemnite_kilometrique" invisible="wage_type == 'hourly'"/>
+                        <field name="indemnites_imposables" invisible="wage_type == 'hourly'"/>
                         <field name="net_salary" readonly="1"/>
                     </group>
                 </group>
@@ -51,6 +51,14 @@
                         <field name="seniority_years" widget="float" digits="[16,2]"/>
                         <field name="last_month_salary" widget="float" digits="[16,2]"
                                invisible="last_month_salary == 0"/>
+                        <field name="last_month_transport" widget="float" digits="[16,2]"
+                               invisible="last_month_transport == 0 or wage_type == 'hourly'"/>
+                        <field name="last_month_telephone" widget="float" digits="[16,2]"
+                               invisible="last_month_telephone == 0 or wage_type == 'hourly'"/>
+                        <field name="last_month_repas" widget="float" digits="[16,2]"
+                               invisible="last_month_repas == 0 or wage_type == 'hourly'"/>
+                        <field name="last_month_kilometrique" widget="float" digits="[16,2]"
+                               invisible="last_month_kilometrique == 0 or wage_type == 'hourly'"/>
                         <field name="indemnite_preavis" widget="float" digits="[16,2]"
                                invisible="indemnite_preavis == 0"/>
                         <field name="indemnite_licenciement" widget="float" digits="[16,2]"

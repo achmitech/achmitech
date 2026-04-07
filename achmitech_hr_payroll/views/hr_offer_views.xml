@@ -59,4 +59,25 @@
         </field>
     </record>
 
+    <!-- Hide benefits section (left) and salary summary sidebar (right) from employee portal -->
+    <template id="salary_package_benefits_hide" inherit_id="hr_contract_salary.salary_package_benefits">
+        <xpath expr="//div[@id='hr_cs_configurator']" position="attributes">
+            <attribute name="style">visibility:hidden; height:0; overflow:hidden; margin:0; padding:0;</attribute>
+        </xpath>
+    </template>
+
+    <!-- Hide only the resume summary block, keep the sign/feedback buttons -->
+    <template id="salary_package_sidebar_hide" inherit_id="hr_contract_salary.salary_package_sidebar">
+        <xpath expr="//div[@name='salary_package_resume']" position="attributes">
+            <attribute name="style">display:none;</attribute>
+        </xpath>
+    </template>
+
+    <!-- Change misleading page title on employee contract portal -->
+    <template id="salary_package_title_hide" inherit_id="hr_contract_salary.salary_package">
+        <xpath expr="//h1[1]" position="replace">
+            <h1>Votre contrat de travail</h1>
+        </xpath>
+    </template>
+
 </odoo>

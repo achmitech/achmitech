@@ -40,6 +40,10 @@ class HrStcWizard(models.TransientModel):
     # ── Computed results ──────────────────────────────────────────────────────
     seniority_years = fields.Float(string='Ancienneté (années)', compute='_compute_stc')
     last_month_salary = fields.Float(string='Salaire dernier mois', compute='_compute_stc')
+    last_month_transport = fields.Float(string='Ind. transport (dernier mois)', compute='_compute_stc')
+    last_month_telephone = fields.Float(string='Ind. téléphone (dernier mois)', compute='_compute_stc')
+    last_month_repas = fields.Float(string='Ind. repas (dernier mois)', compute='_compute_stc')
+    last_month_kilometrique = fields.Float(string='Ind. kilométrique (dernier mois)', compute='_compute_stc')
     indemnite_preavis = fields.Float(string='Indemnité de préavis', compute='_compute_stc')
     indemnite_licenciement = fields.Float(string='Indemnité de licenciement', compute='_compute_stc')
     conges_payes_amount = fields.Float(string='Congés payés non pris', compute='_compute_stc')
@@ -219,17 +223,34 @@ class HrStcWizard(models.TransientModel):
                 seniority = rd.years + rd.months / 12 + rd.days / 365.25
             rec.seniority_years = seniority
 
-            total_gross = rec.monthly_wage + (rec.indemnites_imposables or 0.0) + (rec._total_non_imposable())
+            if rec.wage_type == 'hourly' and rec.hourly_rate and rec.weekly_hours:
+                effective_monthly = rec.hourly_rate * rec.weekly_hours * 52 / 12
+            else:
+                effective_monthly = rec.monthly_wage
+            taxable_base = effective_monthly + (rec.indemnites_imposables or 0.0)
+            non_imp = rec._total_non_imposable()
+            total_gross = taxable_base + non_imp
+            days = rec.days_worked_last_month
 
-            # Last month salary (prorated on total gross)
-            rec.last_month_salary = total_gross * rec.days_worked_last_month / 26 if total_gross else 0.0
+            # Last month salary (taxable base prorated)
+            rec.last_month_salary = taxable_base * days / 26 if taxable_base else 0.0
 
-            # Indemnité de préavis (on total gross)
+            # Last month non-imposable indemnities (each prorated, shown only if set)
+            rec.last_month_transport = (rec.indemnite_transport or 0.0) * days / 26
+            rec.last_month_telephone = (rec.indemnite_telephone or 0.0) * days / 26
+            rec.last_month_repas = (rec.indemnite_repas or 0.0) * days / 26
+            rec.last_month_kilometrique = (rec.indemnite_kilometrique or 0.0) * days / 26
+
+            # Indemnité de préavis (total gross × notice days / 26 — one combined line)
             rec.indemnite_preavis = total_gross * rec.notice_days / 26 if total_gross else 0.0
 
             # Indemnité de licenciement (Art. 52 — minimum 6 months, exempt from deductions)
             indemnite = 0.0
-            if rec.departure_type in ('licenciement', 'rupture_conventionnelle') and seniority >= 0.5 and rec.hourly_rate:
+            if rec.departure_type in ('licenciement', 'rupture_conventionnelle') and seniority >= 0.5:
+                hours_per_month = rec.weekly_hours * 52 / 12 if rec.weekly_hours else 191.33
+                effective_hourly = rec.hourly_rate if rec.hourly_rate else (
+                    total_gross / hours_per_month if hours_per_month else 0.0
+                )
                 ind_hours = 0.0
                 y1 = min(seniority, 5)
                 ind_hours += y1 * 96
@@ -242,23 +263,23 @@ class HrStcWizard(models.TransientModel):
                 if seniority > 15:
                     y4 = seniority - 15
                     ind_hours += y4 * 240
-                indemnite = ind_hours * rec.hourly_rate
+                indemnite = ind_hours * effective_hourly
             rec.indemnite_licenciement = indemnite
 
-            # Congés payés non pris (on total gross)
-            rec.conges_payes_amount = rec.unused_leave_days * total_gross / 26 if total_gross else 0.0
+            # Congés payés non pris (base wage only × unused days / 26)
+            rec.conges_payes_amount = rec.unused_leave_days * effective_monthly / 26 if effective_monthly else 0.0
 
             # Total gains
-            rec.total_stc = rec.last_month_salary + rec.indemnite_preavis + indemnite + rec.conges_payes_amount
+            rec.total_stc = (
+                rec.last_month_salary + rec.last_month_transport + rec.last_month_telephone +
+                rec.last_month_repas + rec.last_month_kilometrique +
+                rec.indemnite_preavis + indemnite + rec.conges_payes_amount
+            )
 
-            # Deductions applied on taxable portion only (licenciement + non-imposable indemnities are exempt)
-            # STC gains were prorated on total_gross — extract only the taxable share
-            taxable_base = rec.monthly_wage + (rec.indemnites_imposables or 0.0)
-            non_imp = rec._total_non_imposable()
-            taxable_stc_gains = (rec.last_month_salary + rec.indemnite_preavis + rec.conges_payes_amount)
-            if total_gross:
-                taxable_stc_gains = taxable_stc_gains * taxable_base / total_gross
-            cnss, amo, ir = rec._deductions_from_taxable(taxable_stc_gains)
+            # Deductions on taxable portion only (non-imposable indemnities + licenciement are exempt)
+            taxable_preavis = taxable_base * rec.notice_days / 26 if taxable_base else 0.0
+            taxable_stc = rec.last_month_salary + taxable_preavis + rec.conges_payes_amount
+            cnss, amo, ir = rec._deductions_from_taxable(taxable_stc)
             rec.retenue_cnss = cnss
             rec.retenue_amo = amo
             rec.retenue_ir = ir
