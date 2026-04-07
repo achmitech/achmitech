@@ -43,7 +43,7 @@
                             Immatriculé(e) à la CNSS sous le Numéro <strong>xxxxxxxx</strong>,
                             demeurant à <strong>xxxxxxxxxxxxxxxxx</strong>,
                         </t>
-                        reconnait avoir reçu de mon employeur la société
+                        reconnait avoir reçu de mon employeur la société 
                         <t t-if="o.employee_id and o.employee_id.company_id">
                             <strong><t t-out="o.employee_id.company_id.name"/></strong>
                             <t t-if="o.employee_id.company_id.street">
@@ -63,10 +63,10 @@
                     <!-- STC table — Gains / Retenues -->
                     <table style="width:80%; border-collapse:collapse; margin:0 auto 16px auto;">
                         <thead>
-                            <tr style="font-weight:bold;">
-                                <th style="border:1px solid #000; padding:6px; text-align:left;">Éléments de paie</th>
-                                <th style="border:1px solid #000; padding:6px; text-align:right; width:22%;">Gains</th>
-                                <th style="border:1px solid #000; padding:6px; text-align:right; width:22%;">Retenues</th>
+                            <tr>
+                                <th style="border:1px solid #000; padding:6px; text-align:left; font-weight:bold;">Éléments de paie</th>
+                                <th style="border:1px solid #000; padding:6px; text-align:right; width:22%; font-weight:bold;">Gains</th>
+                                <th style="border:1px solid #000; padding:6px; text-align:right; width:22%; font-weight:bold;">Retenues</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -79,6 +79,54 @@
                                     </td>
                                     <td style="border:1px solid #000; padding:5px; text-align:right;">
                                         <t t-out="'%.2f' % o.last_month_salary"/>
+                                    </td>
+                                    <td style="border:1px solid #000; padding:5px;"></td>
+                                </tr>
+                            </t>
+                            <t t-if="o.last_month_transport">
+                                <tr>
+                                    <td style="border:1px solid #000; padding:5px;">
+                                        Indemnité de transport
+                                        (<t t-out="'%.0f' % o.days_worked_last_month"/> jours)
+                                    </td>
+                                    <td style="border:1px solid #000; padding:5px; text-align:right;">
+                                        <t t-out="'%.2f' % o.last_month_transport"/>
+                                    </td>
+                                    <td style="border:1px solid #000; padding:5px;"></td>
+                                </tr>
+                            </t>
+                            <t t-if="o.last_month_repas">
+                                <tr>
+                                    <td style="border:1px solid #000; padding:5px;">
+                                        Indemnité de repas
+                                        (<t t-out="'%.0f' % o.days_worked_last_month"/> jours)
+                                    </td>
+                                    <td style="border:1px solid #000; padding:5px; text-align:right;">
+                                        <t t-out="'%.2f' % o.last_month_repas"/>
+                                    </td>
+                                    <td style="border:1px solid #000; padding:5px;"></td>
+                                </tr>
+                            </t>
+                            <t t-if="o.last_month_telephone">
+                                <tr>
+                                    <td style="border:1px solid #000; padding:5px;">
+                                        Indemnité de téléphone
+                                        (<t t-out="'%.0f' % o.days_worked_last_month"/> jours)
+                                    </td>
+                                    <td style="border:1px solid #000; padding:5px; text-align:right;">
+                                        <t t-out="'%.2f' % o.last_month_telephone"/>
+                                    </td>
+                                    <td style="border:1px solid #000; padding:5px;"></td>
+                                </tr>
+                            </t>
+                            <t t-if="o.last_month_kilometrique">
+                                <tr>
+                                    <td style="border:1px solid #000; padding:5px;">
+                                        Indemnité kilométrique
+                                        (<t t-out="'%.0f' % o.days_worked_last_month"/> jours)
+                                    </td>
+                                    <td style="border:1px solid #000; padding:5px; text-align:right;">
+                                        <t t-out="'%.2f' % o.last_month_kilometrique"/>
                                     </td>
                                     <td style="border:1px solid #000; padding:5px;"></td>
                                 </tr>
@@ -146,20 +194,20 @@
                             </t>
                         </tbody>
                         <tfoot>
-                            <tr style="font-weight:bold;">
-                                <td style="border:1px solid #000; padding:6px;">TOTAL</td>
-                                <td style="border:1px solid #000; padding:6px; text-align:right;">
+                            <tr>
+                                <td style="border:1px solid #000; padding:6px; font-weight:bold;">TOTAL</td>
+                                <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;">
                                     <t t-out="'%.2f' % o.total_stc"/> dhs
                                 </td>
-                                <td style="border:1px solid #000; padding:6px; text-align:right;">
+                                <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;">
                                     <t t-out="'%.2f' % o.total_retenues"/> dhs
                                 </td>
                             </tr>
-                            <tr style="font-weight:bold;">
-                                <td colspan="2" style="border:1px solid #000; padding:6px; text-align:center;">
+                            <tr>
+                                <td colspan="2" style="border:1px solid #000; padding:6px; text-align:center; font-weight:bold;">
                                     NET A PAYER
                                 </td>
-                                <td style="border:1px solid #000; padding:6px; text-align:right;">
+                                <td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold;">
                                     <t t-out="'%.2f' % o.net_a_payer"/> dhs
                                 </td>
                             </tr>
