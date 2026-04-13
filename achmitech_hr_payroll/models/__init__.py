@@ -8,3 +8,4 @@ from . import hr_letter_wizard
 from . import hr_contract_salary_offer
 from . import hr_salary_rule
 from . import hr_payslip
+from . import hr_salary_simulator_config

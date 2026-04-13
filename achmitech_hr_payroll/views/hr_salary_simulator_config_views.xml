@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="hr_salary_simulator_config_view_form" model="ir.ui.view">
+        <field name="name">hr.salary.simulator.config.view.form</field>
+        <field name="model">hr.salary.simulator.config</field>
+        <field name="arch" type="xml">
+            <form string="Configuration simulateur">
+                <sheet>
+                    <group>
+                        <field name="structure_type_id" options="{'no_open': True, 'no_create': True}"/>
+                    </group>
+                    <notebook>
+                        <page string="Indemnités (entrées)" name="inputs">
+                            <field name="input_line_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="field_id" string="Champ hr.version"/>
+                                    <field name="field_name" column_invisible="1"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Lignes de résultat" name="outputs">
+                            <field name="output_line_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="rule_ids" widget="many2many_tags"
+                                           options="{'no_create': True}"
+                                           domain="[('struct_id.type_id', '=', parent.structure_type_id)]"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="hr_salary_simulator_config_view_list" model="ir.ui.view">
+        <field name="name">hr.salary.simulator.config.view.list</field>
+        <field name="model">hr.salary.simulator.config</field>
+        <field name="arch" type="xml">
+            <list string="Configurations simulateur">
+                <field name="structure_type_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_hr_salary_simulator_config" model="ir.actions.act_window">
+        <field name="name">Configurations simulateur</field>
+        <field name="res_model">hr.salary.simulator.config</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem
+        id="menu_hr_salary_simulator_config"
+        name="Configurations simulateur"
+        action="action_hr_salary_simulator_config"
+        parent="hr_work_entry_enterprise.menu_hr_payroll_configuration"
+        sequence="99"
+        groups="hr_payroll.group_hr_payroll_manager"/>
+
+</odoo>
