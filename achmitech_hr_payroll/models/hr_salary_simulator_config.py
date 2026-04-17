@@ -16,10 +16,10 @@ class HrSalarySimulatorConfig(models.Model):
         'hr.salary.simulator.config.line', 'config_id', string='Lignes de résultat',
     )
 
-    _sql_constraints = [
-        ('unique_structure_type', 'UNIQUE(structure_type_id)',
-         'Une configuration existe déjà pour ce type de structure.'),
-    ]
+    _unique_structure_type = models.Constraint(
+        'UNIQUE(structure_type_id)',
+        'Une configuration existe déjà pour ce type de structure.',
+    )
 
 
 class HrSalarySimulatorConfigInput(models.Model):
