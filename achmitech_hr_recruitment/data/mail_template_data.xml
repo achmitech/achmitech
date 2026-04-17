@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Welcome email → employee personal email -->
+        <record id="mail_template_onboarding_welcome" model="mail.template">
+            <field name="name">[Onboarding] Bienvenue</field>
+            <field name="model_id" ref="hr.model_hr_employee"/>
+            <field name="subject">Bienvenue dans la Team {{ object.company_id.name }}, {{ object.name }} ! 🎉</field>
+            <field name="email_to">{{ object.private_email }}</field>
+            <field name="auto_delete" eval="True"/>
+            <field name="body_html" type="html">
+<div>
+    <p>Bonjour <t t-out="object.name or ''">Ayoub</t>,</p>
+
+    <p>C'est avec une grande joie que nous vous accueillons aujourd'hui au sein de l'équipe
+    <strong><t t-out="object.company_id.name or ''">ACHMITECH</t></strong> !</p>
+
+    <p>Vous rejoignez l'équipe en tant que :</p>
+
+    <p style="text-align:center; font-size:16px;">
+        <strong><t t-out="object.job_id.name or '—'">Expert ERP</t></strong>
+    </p>
+
+    <p>N'hésitez pas à vous rapprocher de votre manager ou de l'équipe RH pour toute question.</p>
+
+    <p>Encore une fois, bienvenue dans la Team
+    <strong><t t-out="object.company_id.name or ''">ACHMITECH</t></strong>
+    — nous sommes ravis de vous compter parmi nous !</p>
+
+    <p>Cordialement,<br/>L'équipe RH <t t-out="object.company_id.name or ''">ACHMITECH</t></p>
+</div>
+            </field>
+        </record>
+
+        <!-- IT notification -->
+        <record id="mail_template_onboarding_it" model="mail.template">
+            <field name="name">[Onboarding] IT</field>
+            <field name="model_id" ref="hr.model_hr_employee"/>
+            <field name="subject">[Onboarding IT] Nouvel arrivant aujourd'hui — {{ object.name }}</field>
+            <field name="email_to"></field>
+            <field name="auto_delete" eval="True"/>
+            <field name="body_html" type="html">
+<div>
+    <p>Bonjour,</p>
+
+    <p>
+        <strong><t t-out="object.name or ''">Ayoub</t></strong>
+        rejoint <strong><t t-out="object.company_id.name or ''">ACHMITECH</t></strong> aujourd'hui.
+    </p>
+
+    <table style="border-collapse:collapse; font-size:14px;">
+        <tr>
+            <td style="padding:4px 16px 4px 0;"><strong>Poste :</strong></td>
+            <td><t t-out="object.job_id.name or '—'">Expert ERP</t></td>
+        </tr>
+        <tr>
+            <td style="padding:4px 16px 4px 0;"><strong>Département :</strong></td>
+            <td><t t-out="object.department_id.name or '—'">IT</t></td>
+        </tr>
+    </table>
+
+    <p><strong>Action requise :</strong></p>
+    <ul>
+        <li>Créer l'adresse email professionnelle</li>
+        <li>Configurer les accès aux outils internes</li>
+        <li>Préparer le poste de travail</li>
+    </ul>
+
+    <p>Cordialement,<br/>L'équipe RH <t t-out="object.company_id.name or ''">ACHMITECH</t></p>
+</div>
+            </field>
+        </record>
+
+        <!-- Finance notification -->
+        <record id="mail_template_onboarding_finance" model="mail.template">
+            <field name="name">[Onboarding] Finance</field>
+            <field name="model_id" ref="hr.model_hr_employee"/>
+            <field name="subject">[Onboarding Finance] Dossier salarié — {{ object.name }}</field>
+            <field name="email_to">fatimazahra.enahari@achmitech.com</field>
+            <field name="auto_delete" eval="True"/>
+            <field name="body_html" type="html">
+<div>
+    <p>Bonjour,</p>
+
+    <p>
+        <strong><t t-out="object.name or ''">Ayoub</t></strong>
+        rejoint <strong><t t-out="object.company_id.name or ''">ACHMITECH</t></strong> aujourd'hui.
+    </p>
+
+    <table style="border-collapse:collapse; font-size:14px;">
+        <tr>
+            <td style="padding:4px 16px 4px 0;"><strong>Poste :</strong></td>
+            <td><t t-out="object.job_id.name or '—'">Expert ERP</t></td>
+        </tr>
+        <tr>
+            <td style="padding:4px 16px 4px 0;"><strong>Département :</strong></td>
+            <td><t t-out="object.department_id.name or '—'">Finance</t></td>
+        </tr>
+    </table>
+
+    <p><strong>Action requise :</strong></p>
+    <ul>
+        <li>Ouvrir le dossier administratif et salarial</li>
+        <li>Préparer les éléments de paie du premier mois</li>
+    </ul>
+
+    <p>Cordialement,<br/>L'équipe RH <t t-out="object.company_id.name or ''">ACHMITECH</t></p>
+</div>
+            </field>
+        </record>
+
+        <!-- Manager notification -->
+        <record id="mail_template_onboarding_manager" model="mail.template">
+            <field name="name">[Onboarding] Manager</field>
+            <field name="model_id" ref="hr.model_hr_employee"/>
+            <field name="subject">[Onboarding Manager] Réunion d'accueil — {{ object.name }}</field>
+            <field name="email_to"></field>
+            <field name="auto_delete" eval="True"/>
+            <field name="body_html" type="html">
+<div>
+    <p>Bonjour,</p>
+
+    <p>
+        <strong><t t-out="object.name or ''">Ayoub</t></strong>
+        rejoint votre équipe chez <strong><t t-out="object.company_id.name or ''">ACHMITECH</t></strong> aujourd'hui.
+    </p>
+
+    <table style="border-collapse:collapse; font-size:14px;">
+        <tr>
+            <td style="padding:4px 16px 4px 0;"><strong>Poste :</strong></td>
+            <td><t t-out="object.job_id.name or '—'">Expert ERP</t></td>
+        </tr>
+        <tr>
+            <td style="padding:4px 16px 4px 0;"><strong>Département :</strong></td>
+            <td><t t-out="object.department_id.name or '—'">Département</t></td>
+        </tr>
+    </table>
+
+    <p><strong>Action requise :</strong></p>
+    <ul>
+        <li>Organiser la réunion d'accueil avec <t t-out="object.name or ''">Ayoub</t></li>
+        <li>Présenter l'équipe et les missions</li>
+        <li>Accompagner l'intégration durant les premières semaines</li>
+    </ul>
+
+    <p>Cordialement,<br/>L'équipe RH <t t-out="object.company_id.name or ''">ACHMITECH</t></p>
+</div>
+            </field>
+        </record>
+
+    </data>
+</odoo>
