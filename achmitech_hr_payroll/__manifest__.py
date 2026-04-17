@@ -16,7 +16,7 @@
         'security/ir.model.access.csv',
         'views/hr_employee_views.xml',
         'views/hr_job_views.xml',
-        'views/hr_offer_views.xml',
+        #'views/hr_offer_views.xml',
         'views/hr_contract_type_views.xml',
         'views/hr_letter_wizard_views.xml',
         'views/contract_report.xml',
