@@ -22,8 +22,12 @@
         'views/contract_report.xml',
         'views/lettre_engagement_report.xml',
         'views/hr_salary_rule_views.xml',
+        'views/hr_salary_simulator_config_views.xml',
         'views/hr_letter_reports.xml',
         'views/report_payslip_templates.xml',
+        'wizard/hr_stc_wizard_views.xml',
+        'wizard/hr_salary_simulator_views.xml',
+        'wizard/report_stc_templates.xml',
     ],
     'license': 'LGPL-3',
 }

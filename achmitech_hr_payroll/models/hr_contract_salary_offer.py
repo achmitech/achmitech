@@ -4,12 +4,38 @@ from io import BytesIO
 
 import PyPDF2
 
-from odoo import models
+from odoo import models, fields, api
 from odoo.exceptions import UserError
 
 
 class HrContractSalaryOffer(models.Model):
     _inherit = 'hr.contract.salary.offer'
+
+    # ── Offer-level fields ────────────────────────────────────────────────────
+
+    client_id = fields.Many2one('res.partner', string="Client")
+    mission_order_ref = fields.Char(string="Référence ordre de mission")
+
+    l10n_ma_meal_allowance = fields.Monetary(string="Panier repas")
+    l10n_ma_transport_exemption = fields.Monetary(string="Transport")
+    l10n_ma_kilometric_exemption = fields.Monetary(string="Indemnité kilométrique")
+    l10n_ma_phone_allowance = fields.Monetary(string="Téléphone / Internet")
+
+    # ── Sign template fallback ────────────────────────────────────────────────
+
+    @api.depends('contract_template_id.sign_template_id',
+                 'contract_template_id.contract_update_template_id',
+                 'contract_type_id.sign_document_ids')
+    def _compute_sign_template_id(self):
+        """When the contract type uses our dynamic sign_document_ids flow but
+        the template has no contract_update_template_id, fall back to
+        sign_template_id so the 'Générer l'offre' button stays visible."""
+        super()._compute_sign_template_id()
+        for offer in self:
+            if not offer.sign_template_id and offer.contract_type_id.sign_document_ids:
+                offer.sign_template_id = offer.contract_template_id.sign_template_id
+
+    # ── Document preview ──────────────────────────────────────────────────────
 
     def action_preview_offer_documents(self):
         """Render all sign documents configured on the contract type using the
@@ -28,9 +54,6 @@ class HrContractSalaryOffer(models.Model):
                 % template.contract_type_id.name
             )
 
-        # Patch the template with this offer's actual values so the preview
-        # shows the real salary, job, dates, and allowances instead of blanks.
-        # A savepoint ensures the template record is restored after rendering.
         employee = self.employee_id
         patch = {
             'job_id': self.employee_job_id.id or False,
@@ -43,20 +66,13 @@ class HrContractSalaryOffer(models.Model):
             'l10n_ma_meal_allowance': self.l10n_ma_meal_allowance or 0.0,
             'l10n_ma_phone_allowance': self.l10n_ma_phone_allowance or 0.0,
             'l10n_ma_kilometric_exemption': self.l10n_ma_kilometric_exemption or 0.0,
-            # sex drives the civility (Monsieur/Madame) — safe to patch, no overlap check
             'sex': employee.sex or False,
         }
 
         Report = self.env['ir.actions.report']
 
-        # Render all documents inside a savepoint so the template write is
-        # always rolled back — the template record must stay unchanged.
         merger = PyPDF2.PdfMerger()
         with self.env.cr.savepoint():
-            # sync_contract_dates=True bypasses hr.version's date-sync override
-            # so dates are written directly without trying to propagate to
-            # sibling versions (which would fail silently on template records
-            # that have no employee_id).
             template.with_context(sync_contract_dates=True).write(patch)
             for doc_cfg in sign_docs:
                 pdf_bytes, _ = Report._render_qweb_pdf(
