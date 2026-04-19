@@ -39,6 +39,7 @@ pilotage des processus de recrutement.
         'data/mail_template_data.xml',
         'data/server_actions.xml',
         'data/cron.xml',
+        'wizard/dca_wizard.xml',
         'views/hr_recrutement_applicant_form.xml',
         'views/hr_recruitement_stage.xml',
         'views/hr_applicant_dossier_template.xml',
