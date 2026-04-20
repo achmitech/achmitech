@@ -581,11 +581,11 @@ class DcaWizard(models.TransientModel) :
         }
         template_name = template_by_model.get(self.report_models)
         if not template_name:
-            raise UserError(_('Unsupported report model for Word export.'))
+            raise UserError(_('Modèle de rapport non pris en charge pour l\'export Word.'))
 
         template_path = os.path.join(module_root, 'static', 'src', 'docx', template_name)
         if not os.path.exists(template_path):
-            raise UserError(_('Word template not found: %s') % template_name)
+            raise UserError(_('Template Word introuvable : %s') % template_name)
         return template_path
 
     # code job add function.
@@ -605,7 +605,7 @@ class DcaWizard(models.TransientModel) :
     # pipeline.
     def _render_word_report(self, applicant_data, code_job_value=''):
         if Document is None:
-            raise UserError(_('python-docx is not installed. Please install dependency: docx'))
+            raise UserError(_('La librairie python-docx n\'est pas installée. Veuillez installer la dépendance : docx'))
 
         normalized_applicant_data = self._normalize_applicant_payload_for_word(applicant_data)
         template_path = self._get_template_path()
@@ -641,19 +641,19 @@ class DcaWizard(models.TransientModel) :
     def _get_or_extract_applicant_payload(self):
         applicant_data = self.get_applicant_extracted_payload()
         if not applicant_data:
-            raise UserError(_('No extracted data found for this applicant. Please run AI scoring first.'))
+            raise UserError(_('Aucune donnée extraite trouvée pour ce candidat. Veuillez d\'abord lancer l\'analyse IA.'))
         return applicant_data
     
     def print_report(self) :
         self.ensure_one()
         if not self.applicant_id:
-            raise UserError(_('Please select a candidate before generating the report.'))
+            raise UserError(_('Veuillez sélectionner un candidat avant de générer le rapport.'))
 
         applicant_data = self._get_or_extract_applicant_payload()
         code_job_value = (self.code_job or '').strip()
 
         if self.report_type == 'PDF':
-            raise UserError(_('PDF export is not yet supported. Please use Word format.'))
+            raise UserError(_('L\'export PDF n\'est pas encore pris en charge. Veuillez utiliser le format Word.'))
 
         return self._render_word_report(applicant_data, code_job_value)
         
