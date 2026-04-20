@@ -632,8 +632,6 @@ class DcaWizard(models.TransientModel) :
             'res_model': self._name,
             'res_id': self.id,
         })
-        self.applicant_id.message_post(attachment_ids=attachment.ids)
-
         return {
             'type': 'ir.actions.act_url',
             'url': '/web/content/%s?download=true' % attachment.id,
