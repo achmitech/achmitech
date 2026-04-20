@@ -49,5 +49,15 @@ else:
             <field name="user_id" ref="base.user_admin"/>
         </record>
 
+        <record id="ir_cron_ai_scoring" model="ir.cron">
+            <field name="name">Scoring IA : traitement des candidats en attente</field>
+            <field name="model_id" ref="hr_recruitment.model_hr_applicant"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_ai_scoring()</field>
+            <field name="interval_number">5</field>
+            <field name="interval_type">minutes</field>
+            <field name="active">True</field>
+        </record>
+
     </data>
 </odoo>
