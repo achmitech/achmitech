@@ -50,6 +50,13 @@
 
           <notebook>
             <page string="Besoins en personnel">
+              <div class="mb-2">
+                <button string="Importer depuis Excel"
+                        type="object"
+                        name="action_open_needs_for_import"
+                        class="btn btn-secondary btn-sm"
+                        icon="fa-upload"/>
+              </div>
               <field name="staffing_need_ids" nolabel="1"
                      context="{'default_company_id': company_id, 'default_staffing_plan_id': id}">
                 <list editable="bottom">
