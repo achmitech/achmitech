@@ -25,10 +25,10 @@ class DcaWizard(models.TransientModel) :
 
     _name = 'dca.wizard'
     _description = 'DCA Report Generation Wizard'
-    report_models = fields.Selection([('alten', 'Alten'), ('simplified', 'Achmitech')], 'model de dossier',  required=True, default='simplified')
+    report_models = fields.Selection([('alten', 'Alten'), ('simplified', 'Achmitech')], 'Modèle  de Dossier',  required=True, default='simplified')
     applicant_id = fields.Many2one('hr.applicant', 'candidate')
     code_job = fields.Char('Reference de poste')
-    report_type = fields.Selection([('PDF', 'pdf'), ('WORD', 'word')], 'type de dossier', required=True, default='WORD')
+    report_type = fields.Selection([('PDF', 'PDF'), ('WORD', 'Word')], 'Type de Fichier', required=True, default='WORD')
     _DCA_CATEGORY_ORDER = [
         'Soft Skills',
         'Langues',
