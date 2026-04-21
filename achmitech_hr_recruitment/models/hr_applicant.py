@@ -162,7 +162,8 @@ class HrApplicant(models.Model):
             ], limit=1)
 
             if not attachment:
-                _logger.warning("AI Scoring: aucun CV trouvé pour le candidat %s, ignoré", record.id)
+                _logger.warning("AI Scoring: aucun CV trouvé pour le candidat %s", record.id)
+                record.ai_scoring_status = 'error'
                 continue
 
             cv_text = attachment.index_content or ''
@@ -185,23 +186,17 @@ class HrApplicant(models.Model):
                     method='POST',
                 )
                 urllib.request.urlopen(req, timeout=10, context=ctx)
-                record.ai_scoring_status = 'done'
                 _logger.info("AI Scoring: candidat %s envoyé à n8n", record.id)
             except urllib.error.URLError as e:
                 _logger.error("AI Scoring: échec pour le candidat %s: %s", record.id, str(e))
                 record.ai_scoring_status = 'error'
-            time.sleep(1)
+            time.sleep(3)
 
     def _cron_ai_scoring(self):
-        pending = self.search([('ai_scoring_status', '=', 'pending')], limit=5)
+        pending = self.search([('ai_scoring_status', '=', 'pending'), ('active', '=', True)], limit=5)
         if not pending:
             return
-        attachments = self.env['ir.attachment'].search([
-            ('res_model', '=', 'hr.applicant'),
-            ('res_id', 'in', pending.ids),
-        ])
-        applicant_ids_with_cv = attachments.mapped('res_id')
-        pending.filtered(lambda a: a.id in applicant_ids_with_cv)._send_to_n8n()
+        pending._send_to_n8n()
 
     def _get_alten_table_rows_from_experiences(self):
         """
