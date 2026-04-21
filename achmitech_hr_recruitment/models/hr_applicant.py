@@ -5,6 +5,7 @@ import logging
 import re
 import secrets
 import ssl
+import time
 import urllib.error
 import urllib.request
 from urllib.parse import urljoin
@@ -189,9 +190,10 @@ class HrApplicant(models.Model):
             except urllib.error.URLError as e:
                 _logger.error("AI Scoring: échec pour le candidat %s: %s", record.id, str(e))
                 record.ai_scoring_status = 'error'
+            time.sleep(1)
 
     def _cron_ai_scoring(self):
-        pending = self.search([('ai_scoring_status', '=', 'pending')])
+        pending = self.search([('ai_scoring_status', '=', 'pending')], limit=5)
         if not pending:
             return
         attachments = self.env['ir.attachment'].search([
