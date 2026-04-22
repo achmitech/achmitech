@@ -33,7 +33,7 @@
                         <field name="ai_notes" nolabel="1"/>
                     </group>
                     <group>
-                        <field name="applicant_extracted_json"/>
+                        <field name="applicant_extracted_json" invisible="1"/>
                     </group>
                     <footer>
                         <button name="action_trigger_ai_scoring" string="Lancer le scoring IA" type="object" class="btn-primary"/>
