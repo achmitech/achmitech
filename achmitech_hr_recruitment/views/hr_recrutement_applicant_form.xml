@@ -23,6 +23,22 @@
                         </list>
                     </field>
                 </page>
+                <page string="Scoring IA" name="ai_scoring">
+                    <group>
+                        <field name="ai_scoring_status"/>
+                        <field name="ai_score"/>
+                        <field name="ai_recommendation"/>
+                    </group>
+                    <group>
+                        <field name="ai_notes" nolabel="1"/>
+                    </group>
+                    <group>
+                        <field name="applicant_extracted_json" invisible="1"/>
+                    </group>
+                    <footer>
+                        <button name="action_trigger_ai_scoring" string="Lancer le scoring IA" type="object" class="btn-primary"/>
+                    </footer>
+                </page>
                 <page string="Dossier de compétence" name="applicant_dca">
                     <!-- Submission info -->
                     <group>

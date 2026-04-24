@@ -82,6 +82,18 @@ class StaffingPlan(models.Model):
             plan.client_interview_passed_sum = passed
             plan.client_interview_pass_rate = (passed / presented) if presented else 0.0
 
+    def action_open_needs_for_import(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Besoins en personnel"),
+            "res_model": "staffing.need",
+            "view_mode": "list",
+            "domain": [("staffing_plan_id", "=", self.id)],
+            "context": {"default_staffing_plan_id": self.id},
+            "target": "current",
+        }
+
     def action_migrate_assigned_to_ids(self):
         needs = self.env["staffing.need"].sudo().search([
             ("assigned_to", "!=", False),

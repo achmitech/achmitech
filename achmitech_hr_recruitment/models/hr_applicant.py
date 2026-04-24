@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 
+import json
+import logging
+import re
 import secrets
+import ssl
+import time
+import urllib.error
+import urllib.request
 from urllib.parse import urljoin
-from odoo.exceptions import UserError
 
 from odoo import models, fields, api
-
-import logging
+from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
@@ -14,6 +19,22 @@ class HrApplicant(models.Model):
     _inherit = "hr.applicant"
 
     availability_negotiable = fields.Boolean(string="Négociable", default=False)
+
+    ai_score = fields.Integer(string='Score IA', default=0)
+    ai_notes = fields.Text(string='Notes IA')
+    ai_recommendation = fields.Selection([
+        ('strong_yes', 'Fortement recommandé'),
+        ('yes', 'Recommandé'),
+        ('maybe', 'À considérer'),
+        ('no', 'Non recommandé'),
+    ], string='Recommandation IA')
+    ai_scoring_status = fields.Selection([
+        ('pending', 'En attente'),
+        ('done', 'Traité'),
+        ('error', 'Erreur'),
+        ('no_cv', 'Pas de CV'),
+    ], string='Statut scoring IA')
+    applicant_extracted_json = fields.Text(string='Données extraites (JSON)', readonly=True, copy=False)
 
     evaluation_ids = fields.One2many(
         comodel_name="hr.applicant.evaluation",
@@ -113,6 +134,70 @@ class HrApplicant(models.Model):
             f"to new stage '{new_stage.name}'."
         )
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records.write({'ai_scoring_status': 'pending'})
+        return records
+
+    def action_trigger_ai_scoring(self):
+        self._send_to_n8n()
+
+    def _send_to_n8n(self):
+        n8n_webhook_url = self.env['ir.config_parameter'].sudo().get_param(
+            'achmitech_hr_recruitment.n8n_webhook_url'
+        )
+        if not n8n_webhook_url:
+            _logger.error("AI Scoring: paramètre 'achmitech_hr_recruitment.n8n_webhook_url' non configuré")
+            return
+
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+
+        for record in self:
+            attachment = self.env['ir.attachment'].search([
+                ('res_model', '=', 'hr.applicant'),
+                ('res_id', '=', record.id),
+            ], limit=1)
+
+            if not attachment:
+                _logger.warning("AI Scoring: aucun CV trouvé pour le candidat %s", record.id)
+                record.ai_scoring_status = 'error'
+                continue
+
+            cv_text = attachment.index_content or ''
+            job_description = re.sub(r'<[^>]+>', ' ', record.job_id.description or '').strip()
+
+            payload = json.dumps({
+                'applicant_id': record.id,
+                'applicant_name': record.partner_name or '',
+                'job_position': record.job_id.name or '',
+                'job_description': job_description,
+                'stage': record.stage_id.name or '',
+                'cv_text': cv_text,
+            }).encode('utf-8')
+
+            try:
+                req = urllib.request.Request(
+                    n8n_webhook_url,
+                    data=payload,
+                    headers={'Content-Type': 'application/json'},
+                    method='POST',
+                )
+                urllib.request.urlopen(req, timeout=10, context=ctx)
+                _logger.info("AI Scoring: candidat %s envoyé à n8n", record.id)
+            except urllib.error.URLError as e:
+                _logger.error("AI Scoring: échec pour le candidat %s: %s", record.id, str(e))
+                record.ai_scoring_status = 'error'
+            time.sleep(3)
+
+    def _cron_ai_scoring(self):
+        pending = self.search([('ai_scoring_status', '=', 'pending'), ('active', '=', True)], limit=5)
+        if not pending:
+            return
+        pending._send_to_n8n()
+
     def _get_alten_table_rows_from_experiences(self):
         """
         Returns:
@@ -161,3 +246,5 @@ class HrApplicant(models.Model):
                 "value": ", ".join(skills),   # will be "" if none
             })
         return rows
+
+    
