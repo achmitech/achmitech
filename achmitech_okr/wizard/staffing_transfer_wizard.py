@@ -8,7 +8,7 @@ class StaffingTransferWizard(models.TransientModel):
     _name = "staffing.transfer.wizard"
     _description = "Assistant de transfert de besoins"
 
-    source_plan_id = fields.Many2one("staffing.plan", required=True, readonly=True)
+    source_plan_id = fields.Many2one("staffing.plan", string="Plan source", required=True, readonly=True)
     target_plan_id = fields.Many2one(
         "staffing.plan",
         string="Plan cible",
