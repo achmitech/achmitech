@@ -21,3 +21,6 @@ access_okr_recontact_log_recruiter,okr.recontact.log recruiter,model_okr_reconta
 access_okr_recontact_wizard_user,okr.recontact.wizard user,model_okr_recontact_wizard,achmitech_okr.group_okr_user,1,1,1,0
 access_okr_recontact_wizard_manager,okr.recontact.wizard manager,model_okr_recontact_wizard,achmitech_okr.group_okr_manager,1,1,1,1
 access_okr_recontact_wizard_recruiter,okr.recontact.wizard recruiter,model_okr_recontact_wizard,hr_recruitment.group_hr_recruitment_user,1,1,1,0
+
+access_staffing_transfer_wizard_manager,staffing.transfer.wizard manager,model_staffing_transfer_wizard,achmitech_okr.group_okr_manager,1,1,1,1
+access_staffing_transfer_wizard_line_manager,staffing.transfer.wizard.line manager,model_staffing_transfer_wizard_line,achmitech_okr.group_okr_manager,1,1,1,1

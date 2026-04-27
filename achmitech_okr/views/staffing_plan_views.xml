@@ -10,6 +10,11 @@
     <field name="arch" type="xml">
       <form string="Staffing Plan">
         <header>
+          <button name="action_transfer_needs"
+                  string="Transférer les besoins restants"
+                  type="object"
+                  class="btn-primary"
+                  groups="achmitech_okr.group_okr_manager"/>
           <button name="action_migrate_assigned_to_ids"
                   string="Migrer assigned_to → assigned_to_ids"
                   type="object"
