@@ -22,8 +22,7 @@ class StaffingNeed(models.Model):
     ], string="Urgence", default="2")
 
     date_opened = fields.Date(string="Date d'ouverture")
-    # Legacy field — kept for data migration to assigned_to_ids. Remove after migration.
-    assigned_to = fields.Many2one("res.users", string="Assigné à (ancien)")
+    
     assigned_to_ids = fields.Many2many(
         "res.users",
         "staffing_need_user_rel",
