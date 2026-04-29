@@ -46,6 +46,7 @@ class HrStcWizard(models.TransientModel):
     last_month_kilometrique = fields.Float(string='Ind. kilométrique (dernier mois)', compute='_compute_stc')
     indemnite_preavis = fields.Float(string='Indemnité de préavis', compute='_compute_stc')
     indemnite_licenciement = fields.Float(string='Indemnité de licenciement', compute='_compute_stc')
+    dommages_et_interets = fields.Float(string='Dommages et intérêts', compute='_compute_stc')
     conges_payes_amount = fields.Float(string='Congés payés non pris', compute='_compute_stc')
     # Deductions on taxable STC gains (CNSS/AMO/IR — licenciement is exempt)
     retenue_cnss = fields.Float(string='Retenue C.N.S.S', compute='_compute_stc')
@@ -266,6 +267,13 @@ class HrStcWizard(models.TransientModel):
                 indemnite = ind_hours * effective_hourly
             rec.indemnite_licenciement = indemnite
 
+            # Dommages et intérêts pour licenciement abusif (Art. 41 + 53 CDT)
+            # Formula: 1.5 × monthly gross × seniority years — exempt from deductions
+            dei = 0.0
+            if rec.departure_type == 'licenciement' and seniority >= 0.5:
+                dei = 1.5 * total_gross * seniority
+            rec.dommages_et_interets = dei
+
             # Congés payés non pris (base wage only × unused days / 26)
             rec.conges_payes_amount = rec.unused_leave_days * effective_monthly / 26 if effective_monthly else 0.0
 
@@ -273,7 +281,7 @@ class HrStcWizard(models.TransientModel):
             rec.total_stc = (
                 rec.last_month_salary + rec.last_month_transport + rec.last_month_telephone +
                 rec.last_month_repas + rec.last_month_kilometrique +
-                rec.indemnite_preavis + indemnite + rec.conges_payes_amount
+                rec.indemnite_preavis + indemnite + dei + rec.conges_payes_amount
             )
 
             # Deductions on taxable portion only (non-imposable indemnities + licenciement are exempt)

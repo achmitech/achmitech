@@ -63,6 +63,8 @@
                                invisible="indemnite_preavis == 0"/>
                         <field name="indemnite_licenciement" widget="float" digits="[16,2]"
                                invisible="indemnite_licenciement == 0"/>
+                        <field name="dommages_et_interets" widget="float" digits="[16,2]"
+                               invisible="dommages_et_interets == 0"/>
                         <field name="conges_payes_amount" widget="float" digits="[16,2]"
                                invisible="conges_payes_amount == 0"/>
                     </group>
