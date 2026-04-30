@@ -14,7 +14,7 @@
                 <!-- Inputs -->
                 <group string="Informations de départ">
                     <group>
-                        <field name="employee_id"/>
+                        <field name="employee_id" options="{'no_create': True, 'no_create_edit': True}"/>
                         <field name="departure_type"/>
                         <field name="contract_start_date"/>
                         <field name="departure_date"/>
