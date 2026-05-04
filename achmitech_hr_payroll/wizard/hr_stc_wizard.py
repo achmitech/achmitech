@@ -46,6 +46,7 @@ class HrStcWizard(models.TransientModel):
     last_month_kilometrique = fields.Float(string='Ind. kilométrique (dernier mois)', compute='_compute_stc')
     indemnite_preavis = fields.Float(string='Indemnité de préavis', compute='_compute_stc')
     indemnite_licenciement = fields.Float(string='Indemnité de licenciement', compute='_compute_stc')
+    dommages_et_interets = fields.Float(string='Dommages et intérêts', compute='_compute_stc')
     conges_payes_amount = fields.Float(string='Congés payés non pris', compute='_compute_stc')
     # Deductions on taxable STC gains (CNSS/AMO/IR — licenciement is exempt)
     retenue_cnss = fields.Float(string='Retenue C.N.S.S', compute='_compute_stc')
@@ -58,7 +59,10 @@ class HrStcWizard(models.TransientModel):
     # ── Salary conversion helpers ─────────────────────────────────────────────
 
     def _net_from_gross(self, taxable_base, non_imposable=0.0):
-        """Compute net from taxable base + exempt indemnities."""
+        """Compute net from taxable base + exempt indemnities.
+        Mirrors the custom IR salary rule: frais professionnels applied on cotisable,
+        deducted from (gross - CNSS - AMO) before bracket lookup.
+        """
         if not taxable_base and not non_imposable:
             return 0.0
         date = self.departure_date or fields.Date.today()
@@ -85,7 +89,10 @@ class HrStcWizard(models.TransientModel):
         return taxable_base - cnss - amo - ir + non_imposable
 
     def _deductions_from_taxable(self, taxable_gains):
-        """Compute CNSS, AMO, IR on taxable STC gains. Returns (cnss, amo, ir)."""
+        """Compute CNSS, AMO, IR on taxable gains. Returns (cnss, amo, ir).
+        Mirrors the custom IR salary rule: frais_pro on cotisable (= taxable_gains),
+        deducted from (gains - CNSS - AMO) before bracket lookup.
+        """
         if not taxable_gains:
             return 0.0, 0.0, 0.0
         date = self.departure_date or fields.Date.today()
@@ -241,7 +248,7 @@ class HrStcWizard(models.TransientModel):
             rec.last_month_repas = (rec.indemnite_repas or 0.0) * days / 26
             rec.last_month_kilometrique = (rec.indemnite_kilometrique or 0.0) * days / 26
 
-            # Indemnité de préavis (total gross × notice days / 26 — one combined line)
+            # Indemnité de préavis (full gross × notice days / 26)
             rec.indemnite_preavis = total_gross * rec.notice_days / 26 if total_gross else 0.0
 
             # Indemnité de licenciement (Art. 52 — minimum 6 months, exempt from deductions)
@@ -266,6 +273,12 @@ class HrStcWizard(models.TransientModel):
                 indemnite = ind_hours * effective_hourly
             rec.indemnite_licenciement = indemnite
 
+            # Dommages et intérêts (Art. 41 + 53 CDT)
+            dei = 0.0
+            if rec.departure_type == 'licenciement' and seniority >= 0.5:
+                dei = 1.5 * total_gross * seniority
+            rec.dommages_et_interets = dei
+
             # Congés payés non pris (base wage only × unused days / 26)
             rec.conges_payes_amount = rec.unused_leave_days * effective_monthly / 26 if effective_monthly else 0.0
 
@@ -273,9 +286,10 @@ class HrStcWizard(models.TransientModel):
             rec.total_stc = (
                 rec.last_month_salary + rec.last_month_transport + rec.last_month_telephone +
                 rec.last_month_repas + rec.last_month_kilometrique +
-                rec.indemnite_preavis + indemnite + rec.conges_payes_amount
+                rec.indemnite_preavis + indemnite + dei + rec.conges_payes_amount
             )
 
+            # Deductions on taxable portion only (non-imposable indemnities + licenciement are exempt)
             # Deductions on taxable portion only (non-imposable indemnities + licenciement are exempt)
             taxable_preavis = taxable_base * rec.notice_days / 26 if taxable_base else 0.0
             taxable_stc = rec.last_month_salary + taxable_preavis + rec.conges_payes_amount

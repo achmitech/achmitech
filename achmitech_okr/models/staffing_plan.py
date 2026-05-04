@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import fields, models, api, _
+from odoo.exceptions import UserError
 
 class StaffingPlan(models.Model):
     _name = "staffing.plan"
@@ -113,6 +114,27 @@ class StaffingPlan(models.Model):
                 "type": "success",
                 "sticky": True,
             },
+        }
+
+    def action_transfer_needs(self):
+        self.ensure_one()
+        transferable = self.staffing_need_ids.filtered(
+            lambda n: n.state != "closed" and n.positions_filled < n.number_of_positions
+        )
+        if not transferable:
+            raise UserError(_("Aucun besoin avec des postes restants à transférer."))
+
+        wizard = self.env["staffing.transfer.wizard"].create({
+            "source_plan_id": self.id,
+            "line_ids": [(0, 0, {"need_id": need.id}) for need in transferable],
+        })
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Transférer les besoins restants"),
+            "res_model": "staffing.transfer.wizard",
+            "res_id": wizard.id,
+            "view_mode": "form",
+            "target": "new",
         }
 
     @api.model_create_multi
