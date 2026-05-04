@@ -59,42 +59,39 @@ class HrStcWizard(models.TransientModel):
     # ── Salary conversion helpers ─────────────────────────────────────────────
 
     def _net_from_gross(self, taxable_base, non_imposable=0.0):
-        """Compute net from taxable base + exempt indemnities."""
+        """Compute net from taxable base + exempt indemnities.
+        Mirrors the custom IR salary rule: frais professionnels applied on cotisable,
+        deducted from (gross - CNSS - AMO) before bracket lookup.
+        """
         if not taxable_base and not non_imposable:
             return 0.0
         date = self.departure_date or fields.Date.today()
         param = self.env['hr.rule.parameter']
         cnss_rate = param._get_parameter_from_code('l10n_ma_cnss', date) / 100.0
         cnss_ceil = param._get_parameter_from_code('l10n_ma_cnss_max', date)
-        medical_rate = param._get_parameter_from_code('l10n_ma_medical_alw', date) / 100.0
-        job_loss_rate = param._get_parameter_from_code('l10n_ma_job_loss', date) / 100.0
-        job_loss_ceil = param._get_parameter_from_code('l10n_ma_job_loss_max', date)
-        cimr_rate = param._get_parameter_from_code('l10n_ma_cimr', date) / 100.0
-        cimr_ceil = param._get_parameter_from_code('l10n_ma_cimr_max', date)
+        amo_rate = param._get_parameter_from_code('l10n_ma_amo', date) / 100.0
         ir_brackets = param._get_parameter_from_code('l10n_ma_income_tax_breakdown', date)
 
         cnss = min(taxable_base, cnss_ceil) * cnss_rate
-        job_loss = min(job_loss_ceil, taxable_base * job_loss_rate)
-        e_amo = taxable_base * job_loss_rate
-        medical = taxable_base * medical_rate
-        cimr = min(cimr_ceil, taxable_base * cimr_rate)
-        pro = taxable_base * cimr_rate
-        gross_taxable = max(0.0, taxable_base - cnss - job_loss - e_amo - medical - cimr - pro)
+        amo = taxable_base * amo_rate
+        if taxable_base <= 6500:
+            frais_pro = min(taxable_base * 0.35, 2500.0)
+        else:
+            frais_pro = min(taxable_base * 0.25, 35000.0 / 12)
+        net_imposable = max(0.0, taxable_base - cnss - amo - frais_pro)
 
         ir = 0.0
         for ceiling, rate, deduction in ir_brackets:
-            if gross_taxable <= ceiling:
-                ir = max(gross_taxable * rate / 100.0 - deduction, 0.0)
+            if net_imposable <= ceiling:
+                ir = max(net_imposable * rate / 100.0 - deduction, 0.0)
                 break
 
-        return taxable_base - cnss - job_loss - e_amo - medical - cimr - pro - ir + non_imposable
+        return taxable_base - cnss - amo - ir + non_imposable
 
     def _deductions_from_taxable(self, taxable_gains):
-        """Compute CNSS, AMO, IR on taxable STC gains. Returns (cnss, amo, ir).
-
-        Mirrors the l10n_ma GROSS_TAXABLE formula: brackets are applied to
-        (gross - social deductions) directly — frais professionnels are already
-        baked into the bracket deduction values and must NOT be deducted separately.
+        """Compute CNSS, AMO, IR on taxable gains. Returns (cnss, amo, ir).
+        Mirrors the custom IR salary rule: frais_pro on cotisable (= taxable_gains),
+        deducted from (gains - CNSS - AMO) before bracket lookup.
         """
         if not taxable_gains:
             return 0.0, 0.0, 0.0
@@ -102,28 +99,21 @@ class HrStcWizard(models.TransientModel):
         param = self.env['hr.rule.parameter']
         cnss_rate = param._get_parameter_from_code('l10n_ma_cnss', date) / 100.0
         cnss_ceil = param._get_parameter_from_code('l10n_ma_cnss_max', date)
-        medical_rate = param._get_parameter_from_code('l10n_ma_medical_alw', date) / 100.0
-        job_loss_rate = param._get_parameter_from_code('l10n_ma_job_loss', date) / 100.0
-        job_loss_ceil = param._get_parameter_from_code('l10n_ma_job_loss_max', date)
-        cimr_rate = param._get_parameter_from_code('l10n_ma_cimr', date) / 100.0
-        cimr_ceil = param._get_parameter_from_code('l10n_ma_cimr_max', date)
+        amo_rate = param._get_parameter_from_code('l10n_ma_amo', date) / 100.0
         ir_brackets = param._get_parameter_from_code('l10n_ma_income_tax_breakdown', date)
 
-        # Mirror l10n_ma UNTAXABLE_DED rules exactly
-        cnss = min(taxable_gains, cnss_ceil) * cnss_rate          # E_CNSS
-        job_loss = min(job_loss_ceil, taxable_gains * job_loss_rate)  # JOB_LOSS_ALW (capped)
-        e_amo = taxable_gains * job_loss_rate                      # E_AMO (same rate, no cap)
-        medical = taxable_gains * medical_rate                     # MEDICAL_ALW
-        cimr = min(cimr_ceil, taxable_gains * cimr_rate)           # CIMR (capped)
-        pro = taxable_gains * cimr_rate                            # PRO_CONTRIBUTION (no cap)
-        amo = medical  # what shows on the retenue line = medical_alw
-
-        gross_taxable = max(0.0, taxable_gains - cnss - job_loss - e_amo - medical - cimr - pro)
+        cnss = min(taxable_gains, cnss_ceil) * cnss_rate
+        amo = taxable_gains * amo_rate
+        if taxable_gains <= 6500:
+            frais_pro = min(taxable_gains * 0.35, 2500.0)
+        else:
+            frais_pro = min(taxable_gains * 0.25, 35000.0 / 12)
+        net_imposable = max(0.0, taxable_gains - cnss - amo - frais_pro)
 
         ir = 0.0
         for ceiling, rate, deduction in ir_brackets:
-            if gross_taxable <= ceiling:
-                ir = max(gross_taxable * rate / 100.0 - deduction, 0.0)
+            if net_imposable <= ceiling:
+                ir = max(net_imposable * rate / 100.0 - deduction, 0.0)
                 break
 
         return cnss, amo, ir
@@ -258,16 +248,15 @@ class HrStcWizard(models.TransientModel):
             rec.last_month_repas = (rec.indemnite_repas or 0.0) * days / 26
             rec.last_month_kilometrique = (rec.indemnite_kilometrique or 0.0) * days / 26
 
-            # Indemnité de préavis (taxable base only — non-imposable allowances not owed for unworked days)
-            rec.indemnite_preavis = taxable_base * rec.notice_days / 26 if taxable_base else 0.0
+            # Indemnité de préavis (full gross × notice days / 26)
+            rec.indemnite_preavis = total_gross * rec.notice_days / 26 if total_gross else 0.0
 
             # Indemnité de licenciement (Art. 52 — minimum 6 months, exempt from deductions)
-            # Base: taxable_base only (non-imposable allowances are expense reimbursements, not salary)
-            # Divisor: 191h/month (standard Moroccan HR practice)
             indemnite = 0.0
             if rec.departure_type in ('licenciement', 'rupture_conventionnelle') and seniority >= 0.5:
+                hours_per_month = rec.weekly_hours * 52 / 12 if rec.weekly_hours else 191.33
                 effective_hourly = rec.hourly_rate if rec.hourly_rate else (
-                    taxable_base / 191.0 if taxable_base else 0.0
+                    total_gross / hours_per_month if hours_per_month else 0.0
                 )
                 ind_hours = 0.0
                 y1 = min(seniority, 5)
@@ -285,10 +274,9 @@ class HrStcWizard(models.TransientModel):
             rec.indemnite_licenciement = indemnite
 
             # Dommages et intérêts (Art. 41 + 53 CDT)
-            # Base: taxable_base only — non-imposable allowances excluded per same legal principle
             dei = 0.0
             if rec.departure_type == 'licenciement' and seniority >= 0.5:
-                dei = 1.5 * taxable_base * seniority
+                dei = 1.5 * total_gross * seniority
             rec.dommages_et_interets = dei
 
             # Congés payés non pris (base wage only × unused days / 26)
@@ -301,6 +289,7 @@ class HrStcWizard(models.TransientModel):
                 rec.indemnite_preavis + indemnite + dei + rec.conges_payes_amount
             )
 
+            # Deductions on taxable portion only (non-imposable indemnities + licenciement are exempt)
             # Deductions on taxable portion only (non-imposable indemnities + licenciement are exempt)
             taxable_preavis = taxable_base * rec.notice_days / 26 if taxable_base else 0.0
             taxable_stc = rec.last_month_salary + taxable_preavis + rec.conges_payes_amount
