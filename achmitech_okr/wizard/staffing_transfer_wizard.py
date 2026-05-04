@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import fields, models, api, _
 from odoo.exceptions import UserError
-import logging
-_logger = logging.getLogger(__name__)
+
 
 class StaffingTransferWizard(models.TransientModel):
     _name = "staffing.transfer.wizard"
@@ -25,22 +24,7 @@ class StaffingTransferWizard(models.TransientModel):
         if not lines:
             raise UserError(_("Aucun besoin sélectionné avec des postes restants."))
 
-        StaffingNeed = self.env["staffing.need"]
-        for line in lines:
-            need = line.need_id
-            StaffingNeed.create({
-                "staffing_plan_id": self.target_plan_id.id,
-                "name": need.name,
-                "partner_id": need.partner_id.id or False,
-                "technology": need.technology or False,
-                "seniority_min": need.seniority_min,
-                "urgency": need.urgency,
-                "margin_rate": need.margin_rate,
-                "date_opened": need.date_opened,
-                "number_of_positions": line.remaining_positions,
-                "assigned_to_ids": [(6, 0, need.assigned_to_ids.ids)],
-                "state": "draft",
-            })
+        lines.mapped("need_id").write({"staffing_plan_id": self.target_plan_id.id})
 
         return {
             "type": "ir.actions.client",

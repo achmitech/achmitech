@@ -38,7 +38,7 @@
                         ]"
                         invisible="is_pool_applicant"
                         readonly="presented_to_client_date"
-                        options="{'no_create': True}"/>
+                        options="{'no_create': True, 'no_open': True}"/>
                     <field name="rejection_source" invisible="application_status != 'refused'" readonly="1"/>
                     <field name="presented_to_client_date" readonly="1" invisible="not presented_to_client_date"/>
                     <field name="client_interview_status" readonly="1" invisible="not is_client_interview_stage"/>
