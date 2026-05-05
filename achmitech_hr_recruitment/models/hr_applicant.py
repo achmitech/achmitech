@@ -169,6 +169,12 @@ class HrApplicant(models.Model):
             cv_text = attachment.index_content or ''
             job_description = re.sub(r'<[^>]+>', ' ', record.job_id.description or '').strip()
 
+            if not job_description:
+                _logger.warning("AI Scoring: fiche de poste vide pour le candidat %s, ignoré", record.id)
+                record.ai_scoring_status = 'error'
+                record.ai_notes = "Fiche de poste non renseignée, analyse ignorée."
+                continue
+
             payload = json.dumps({
                 'applicant_id': record.id,
                 'applicant_name': record.partner_name or '',
