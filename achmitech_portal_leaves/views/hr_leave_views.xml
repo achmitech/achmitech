@@ -6,16 +6,9 @@
         <field name="inherit_id" ref="hr_holidays.hr_leave_view_form"/>
         <field name="arch" type="xml">
 
-            <!-- Add client_validate to status bar (single validation types) -->
-            <xpath expr="//field[@name='state'][@statusbar_visible='confirm,validate']"
-                   position="attributes">
-                <attribute name="statusbar_visible">confirm,client_validate,validate</attribute>
-            </xpath>
-
-            <!-- Add client_validate to status bar (double validation types) -->
-            <xpath expr="//field[@name='state'][@statusbar_visible='confirm,validate,validate1']"
-                   position="attributes">
-                <attribute name="statusbar_visible">confirm,client_validate,validate1,validate</attribute>
+            <!-- Add confirmation on "Back to Approval" to warn about leave manager notification -->
+            <xpath expr="//button[@name='action_back_to_approval']" position="attributes">
+                <attribute name="confirm">Cette action remet la demande en attente d'approbation et envoie une nouvelle notification au responsable congés de l'employé. Continuer ?</attribute>
             </xpath>
 
             <!-- HR override buttons (visible only in client_validate, manager only) -->
