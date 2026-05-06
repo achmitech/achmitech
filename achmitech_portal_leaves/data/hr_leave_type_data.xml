@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Congés exceptionnels — Article 274 du Code du Travail marocain -->
+    <!-- requires_allocation=False : droits légaux accordés sur événement, sans quota annuel -->
+    <!-- notify_client_on_confirm=True : client informé mais ne peut pas bloquer (droit légal) -->
+    <!-- support_document=True : justificatif obligatoire (acte de mariage, acte de naissance, etc.) -->
+
+    <record id="leave_type_mariage_employe" model="hr.leave.type">
+        <field name="name">Mariage de l'employé</field>
+        <field name="leave_validation_type">manager</field>
+        <field name="requires_allocation" eval="False"/>
+        <field name="request_unit">day</field>
+        <field name="support_document" eval="True"/>
+        <field name="notify_client_on_confirm" eval="True"/>
+        <field name="color">1</field>
+    </record>
+
+    <record id="leave_type_mariage_enfant" model="hr.leave.type">
+        <field name="name">Mariage d'un enfant</field>
+        <field name="leave_validation_type">manager</field>
+        <field name="requires_allocation" eval="False"/>
+        <field name="request_unit">day</field>
+        <field name="support_document" eval="True"/>
+        <field name="notify_client_on_confirm" eval="True"/>
+        <field name="color">1</field>
+    </record>
+
+    <record id="leave_type_naissance" model="hr.leave.type">
+        <field name="name">Naissance d'un enfant</field>
+        <field name="leave_validation_type">manager</field>
+        <field name="requires_allocation" eval="False"/>
+        <field name="request_unit">day</field>
+        <field name="support_document" eval="True"/>
+        <field name="notify_client_on_confirm" eval="True"/>
+        <field name="color">3</field>
+    </record>
+
+    <record id="leave_type_deces_conjoint" model="hr.leave.type">
+        <field name="name">Décès du conjoint</field>
+        <field name="leave_validation_type">manager</field>
+        <field name="requires_allocation" eval="False"/>
+        <field name="request_unit">day</field>
+        <field name="support_document" eval="True"/>
+        <field name="notify_client_on_confirm" eval="True"/>
+        <field name="color">2</field>
+    </record>
+
+    <record id="leave_type_deces_enfant" model="hr.leave.type">
+        <field name="name">Décès d'un enfant</field>
+        <field name="leave_validation_type">manager</field>
+        <field name="requires_allocation" eval="False"/>
+        <field name="request_unit">day</field>
+        <field name="support_document" eval="True"/>
+        <field name="notify_client_on_confirm" eval="True"/>
+        <field name="color">2</field>
+    </record>
+
+    <record id="leave_type_deces_parent" model="hr.leave.type">
+        <field name="name">Décès du père ou de la mère</field>
+        <field name="leave_validation_type">manager</field>
+        <field name="requires_allocation" eval="False"/>
+        <field name="request_unit">day</field>
+        <field name="support_document" eval="True"/>
+        <field name="notify_client_on_confirm" eval="True"/>
+        <field name="color">2</field>
+    </record>
+
+    <record id="leave_type_deces_frere_soeur" model="hr.leave.type">
+        <field name="name">Décès d'un frère ou d'une sœur</field>
+        <field name="leave_validation_type">manager</field>
+        <field name="requires_allocation" eval="False"/>
+        <field name="request_unit">day</field>
+        <field name="support_document" eval="True"/>
+        <field name="notify_client_on_confirm" eval="True"/>
+        <field name="color">2</field>
+    </record>
+
+    <record id="leave_type_circoncision" model="hr.leave.type">
+        <field name="name">Circoncision d'un enfant</field>
+        <field name="leave_validation_type">manager</field>
+        <field name="requires_allocation" eval="False"/>
+        <field name="request_unit">day</field>
+        <field name="support_document" eval="True"/>
+        <field name="notify_client_on_confirm" eval="True"/>
+        <field name="color">4</field>
+    </record>
+
+    <record id="leave_type_operation_chirurgicale" model="hr.leave.type">
+        <field name="name">Opération chirurgicale (conjoint ou enfant)</field>
+        <field name="leave_validation_type">manager</field>
+        <field name="requires_allocation" eval="False"/>
+        <field name="request_unit">day</field>
+        <field name="support_document" eval="True"/>
+        <field name="notify_client_on_confirm" eval="True"/>
+        <field name="color">4</field>
+    </record>
+
+</odoo>

@@ -12,6 +12,7 @@
         'security/security.xml',
         'data/mail_templates.xml',
         'data/cron.xml',
+        'data/hr_leave_type_data.xml',
         'views/hr_employee_views.xml',
         'views/hr_leave_type_views.xml',
         'views/hr_leave_views.xml',

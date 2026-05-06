@@ -71,6 +71,18 @@ class HrLeave(models.Model):
                     return False
             return True
 
+        # Block self-approval/refusal: env.user is always the real logged-in user, even under sudo().
+        if state in ('validate', 'validate1', 'refuse'):
+            current_employee = self.env.user.employee_id
+            if current_employee:
+                for leave in self:
+                    if leave.employee_id == current_employee:
+                        if raise_if_not_possible:
+                            raise UserError(_(
+                                "Vous ne pouvez pas approuver ou refuser votre propre demande de congé."
+                            ))
+                        return False
+
         # client_validate → validate or refuse: only superuser (portal controller / HR override)
         if state in ('validate', 'refuse'):
             client_val = self.filtered(lambda l: l.state == 'client_validate')
@@ -136,9 +148,14 @@ class HrLeave(models.Model):
 
     def action_refuse(self):
         """Allow HR to refuse leaves that are in client_validate state."""
+        current_employee = self.env.user.employee_id
+        if current_employee:
+            for leave in self:
+                if leave.employee_id == current_employee:
+                    raise UserError(_("Vous ne pouvez pas refuser votre propre demande de congé."))
+
         client_val = self.filtered(lambda l: l.state == 'client_validate')
         if client_val:
-            current_employee = self.env.user.employee_id
             client_val.sudo().write({
                 'state': 'refuse',
                 'second_approver_id': current_employee.id if current_employee else False,
@@ -180,10 +197,20 @@ class HrLeave(models.Model):
 
     def action_hr_force_validate(self):
         """HR force-validates the leave, bypassing client approval."""
+        current_employee = self.env.user.employee_id
+        if current_employee:
+            for leave in self:
+                if leave.employee_id == current_employee:
+                    raise UserError(_("Vous ne pouvez pas approuver votre propre demande de congé."))
         self.sudo().with_context(leave_fast_create=True)._action_validate(check_state=False)
 
     def action_hr_force_refuse(self):
         """HR force-refuses the leave, bypassing client approval."""
+        current_employee = self.env.user.employee_id
+        if current_employee:
+            for leave in self:
+                if leave.employee_id == current_employee:
+                    raise UserError(_("Vous ne pouvez pas refuser votre propre demande de congé."))
         self.sudo().write({'state': 'refuse'})
         self.sudo().mapped('meeting_id').write({'active': False})
 
