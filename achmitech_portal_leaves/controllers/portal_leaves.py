@@ -221,7 +221,8 @@ class PortalLeaves(CustomerPortal):
         leave = self._check_leave_access(leave_id)
         if leave.state == 'client_validate':
             try:
-                leave.action_client_approve()
+                with request.env.cr.savepoint():
+                    leave.action_client_approve()
                 request.session['leave_flash'] = {
                     'type': 'success',
                     'message': "Demande de congé approuvée avec succès.",
@@ -241,7 +242,8 @@ class PortalLeaves(CustomerPortal):
         reason = (post.get('reason') or '').strip()
         if leave.state == 'client_validate':
             try:
-                leave.action_client_refuse(reason=reason)
+                with request.env.cr.savepoint():
+                    leave.action_client_refuse(reason=reason)
                 request.session['leave_flash'] = {
                     'type': 'info',
                     'message': "Demande de congé refusée.",
@@ -317,12 +319,46 @@ class PortalLeaves(CustomerPortal):
             ('has_valid_allocation', '=', True),
         ])
 
+        # Compute true remaining: total accrued - all committed leaves (including future approved).
+        # Odoo's virtual_remaining_leaves has a today-cutoff so future approved leaves don't reduce
+        # the displayed balance — we compute directly to match the reporting pivot.
+        # Leaves are scoped to each allocation's active period to avoid counting old leaves
+        # from previous allocation cycles against the current one.
+        today = fields.Date.today()
+        allocations = request.env['hr.leave.allocation'].sudo().search([
+            ('employee_id', '=', employee.id),
+            ('state', '=', 'validate'),
+            ('holiday_status_id.requires_allocation', '=', True),
+            ('holiday_status_id.active', '=', True),
+            ('date_from', '<=', today),
+            '|', ('date_to', '=', False), ('date_to', '>=', today),
+        ])
+        # Group by leave type: count each leave once even if multiple allocations overlap.
+        alloc_by_type = {}
+        for alloc in allocations:
+            alloc_by_type.setdefault(alloc.holiday_status_id.id, []).append(alloc)
+
+        total_allocated = 0
+        total_committed = 0
+        for leave_type_id, type_allocs in alloc_by_type.items():
+            total_allocated += sum(a.number_of_days for a in type_allocs)
+            earliest_date = min(a.date_from for a in type_allocs)
+            committed = request.env['hr.leave'].sudo().search([
+                ('employee_id', '=', employee.id),
+                ('holiday_status_id', '=', leave_type_id),
+                ('state', '=', 'validate'),
+                ('date_from', '>=', earliest_date),
+            ])
+            total_committed += sum(committed.mapped('number_of_days'))
+        allocation_remaining = "%g" % round(total_allocated - total_committed, 2)
+        allocation_total = "%g" % round(total_allocated, 2)
+
         flash = request.session.pop('leave_flash', None)
         values = self._prepare_portal_layout_values()
         values.update({
             'employee': employee,
-            'allocation_remaining': employee.allocation_remaining_display,
-            'allocation_total': employee.allocation_display,
+            'allocation_remaining': allocation_remaining,
+            'allocation_total': allocation_total,
             'leaves': leaves,
             'leave_types': leave_types,
             'page_name': 'my_leaves',
@@ -371,6 +407,10 @@ class PortalLeaves(CustomerPortal):
 
             if not date_from:
                 raise ValueError("Veuillez remplir tous les champs obligatoires.")
+
+            today_str = fields.Date.today().strftime('%Y-%m-%d')
+            if date_from < today_str:
+                raise ValueError("Vous ne pouvez pas soumettre une demande pour une date passée.")
 
             if request_unit == 'half_day':
                 period_from = post.get('date_from_period', '').strip()
@@ -446,6 +486,37 @@ class PortalLeaves(CustomerPortal):
                     'name': name or False,
                     **vals,
                 })
+                if leave.number_of_days == 0:
+                    raise ValueError(
+                        "La période sélectionnée ne contient aucun jour ouvrable "
+                        "(jours fériés ou week-end). Veuillez choisir d'autres dates."
+                    )
+
+                # Native _check_validity excludes client_validate from virtual balance.
+                # Re-check including client_validate so pending approval requests
+                # count against the negative cap.
+                lt = leave.holiday_status_id
+                if lt.requires_allocation and lt.allows_negative:
+                    today = fields.Date.today()
+                    active_allocs = request.env['hr.leave.allocation'].sudo().search([
+                        ('employee_id', '=', employee.id),
+                        ('holiday_status_id', '=', lt.id),
+                        ('state', '=', 'validate'),
+                        ('date_from', '<=', today),
+                        '|', ('date_to', '=', False), ('date_to', '>=', today),
+                    ])
+                    total_allocated = sum(active_allocs.mapped('number_of_days'))
+                    committed = request.env['hr.leave'].sudo().search([
+                        ('employee_id', '=', employee.id),
+                        ('holiday_status_id', '=', lt.id),
+                        ('state', 'in', ['confirm', 'validate1', 'validate', 'client_validate']),
+                        ('id', '!=', leave.id),
+                    ])
+                    total_committed = sum(committed.mapped('number_of_days')) + leave.number_of_days
+                    if total_allocated - total_committed < -lt.max_allowed_negative:
+                        raise ValueError(
+                            "Solde insuffisant. Vous avez dépassé la limite de jours négatifs autorisés."
+                        )
                 if file_content:
                     request.env['ir.attachment'].sudo().create({
                         'name': uploaded_file.filename,
