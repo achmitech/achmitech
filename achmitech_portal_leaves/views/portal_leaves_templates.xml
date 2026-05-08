@@ -472,7 +472,7 @@
                                             <span class="badge bg-secondary">En cours de traitement</span>
                                         </t>
                                         <t t-elif="leave.state == 'client_validate'">
-                                            <span class="badge bg-warning text-dark">En attente du client</span>
+                                            <span class="badge bg-warning text-dark">En attente de validation</span>
                                         </t>
                                         <t t-elif="leave.state in ('validate1', 'validate')">
                                             <span class="badge bg-success">Approuvée</span>
