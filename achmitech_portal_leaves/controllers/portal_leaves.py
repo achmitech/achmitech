@@ -260,7 +260,7 @@ class PortalLeaves(CustomerPortal):
 
     _MY_LEAVES_FILTERBY = {
         'all':        {'label': "Toutes",                 'domain': []},
-        'pending':    {'label': "En attente du client",   'domain': [('state', '=', 'client_validate')]},
+        'pending':    {'label': "En attente de validation", 'domain': [('state', '=', 'client_validate')]},
         'processing': {'label': "En cours de traitement", 'domain': [('state', '=', 'confirm')]},
         'approved':   {'label': "Approuvées",             'domain': [('state', 'in', ['validate', 'validate1'])]},
         'refused':    {'label': "Refusées",               'domain': [('state', '=', 'refuse')]},
