@@ -179,7 +179,7 @@ Le tableau de bord affiche toutes les demandes avec leur statut :
 | Statut | Signification |
 |---|---|
 | **À confirmer** | Demande en cours de traitement initial |
-| **En attente du client** | En attente de la décision du client |
+| **En attente de validation** | Demande transmise, en cours de traitement |
 | **Approuvé** | Congé validé |
 | **Refusé** | Congé refusé (le motif du refus est indiqué dans l'email reçu) |
 

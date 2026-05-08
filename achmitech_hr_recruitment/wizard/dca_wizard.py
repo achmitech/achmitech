@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import unicodedata
+from datetime import date
 
 from odoo import _, fields, models
 from odoo.exceptions import UserError
@@ -42,6 +43,7 @@ class DcaWizard(models.TransientModel) :
         'Marketing',
     ]
     _LANGUAGE_LEVELS = {'A1', 'A2', 'B1', 'B2', 'C1', 'C2'}
+    _EMPTY = 'A Compléter'
 
 
     def get_applicant_extracted_payload(self) :
@@ -58,6 +60,45 @@ class DcaWizard(models.TransientModel) :
     # conversion robuste vers chaîne nettoyée.
     def _to_text(self, value):
         return str(value or '').strip()
+
+    # initiales du nom : première lettre du prénom + premières consonnes groupées du nom.
+    # ex: "Ayoub Jbili" → "AJB" (J et B sont deux consonnes initiales de "Jbili")
+    def _compute_initials(self, name):
+        vowels = set('aeiouyàâäéèêëïîôöùûüÿæœ')
+        words = self._to_text(name).split()
+        initials = []
+        for word in words:
+            letters = [c for c in word if c.isalpha()]
+            if not letters:
+                continue
+            result = letters[0].upper()
+            if (len(letters) > 1
+                    and letters[0].lower() not in vowels
+                    and letters[1].lower() not in vowels):
+                result += letters[1].upper()
+            initials.append(result)
+        return ''.join(initials)
+
+    # remplit les placeholders de l'en-tête simplifié (table[0], cellule 0).
+    # Remplace {{INITIALES}}, {{TITRE_POSTE}}, {{DISPONIBILITE}} run par run
+    # (document.paragraphs ignore les cellules de tableau).
+    def _fill_simplified_header_table(self, document, applicant_name, job_title, availability_date):
+        if not document.tables:
+            return
+        initials = self._compute_initials(applicant_name)
+        avail_str = availability_date.strftime('%d/%m/%Y') if availability_date else self._EMPTY
+        placeholder_map = {
+            '{{INITIALES}}': initials,
+            '{{TITRE_POSTE}}': self._to_text(job_title),
+            '{{DISPONIBILITE}}': avail_str,
+        }
+        for row in document.tables[0].rows:
+            for cell in row.cells:
+                for para in cell.paragraphs:
+                    for run in para.runs:
+                        for placeholder, value in placeholder_map.items():
+                            if placeholder in run.text:
+                                run.text = run.text.replace(placeholder, value)
 
     # normalise un label (minuscules, suppression accents/punctuation) pour matcher des titres Word.
     def _normalize_label(self, text):
@@ -124,7 +165,7 @@ class DcaWizard(models.TransientModel) :
 
         raw_lines = [line.strip() for line in str(value or '').split('\n') if line.strip()]
         if not raw_lines:
-            raw_lines = ['—']
+            raw_lines = [self._EMPTY]
 
         for pos, paragraph_idx in enumerate(dotted_indexes):
             if pos < len(raw_lines):
@@ -218,8 +259,7 @@ class DcaWizard(models.TransientModel) :
             for break_element in list(run_element.findall('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}br')):
                 run_element.remove(break_element)
 
-    def _prune_unused_project_sections(self, document, experiences_count):
-        project_start_table_idx = 3
+    def _prune_unused_project_sections(self, document, experiences_count, project_start_table_idx=3):
         project_pair_step = 2
 
         max_experiences = max(0, int(experiences_count or 0))
@@ -418,7 +458,8 @@ class DcaWizard(models.TransientModel) :
         return ''
 
     # remplit le docx (alten/simplified) par structure.
-    def _fill_dca_template_by_layout(self, document, applicant_data):
+    # table_offset=1 pour le modèle simplifié qui a un tableau d'en-tête supplémentaire en position 0.
+    def _fill_dca_template_by_layout(self, document, applicant_data, table_offset=0):
         skills = applicant_data.get('skills') if isinstance(applicant_data.get('skills'), dict) else {}
         education = applicant_data.get('education') if isinstance(applicant_data.get('education'), dict) else {}
         experiences = applicant_data.get('experiences') if isinstance(applicant_data.get('experiences'), list) else []
@@ -445,8 +486,12 @@ class DcaWizard(models.TransientModel) :
                         category_bucket.append(cleaned)
             category_values[category_name] = category_bucket
 
-        if len(document.tables) > 1:
-            competencies_table = document.tables[1]
+        competencies_idx = 1 + table_offset
+        formation_idx = 2 + table_offset
+        project_start_table_idx = 3 + table_offset
+
+        if len(document.tables) > competencies_idx:
+            competencies_table = document.tables[competencies_idx]
             table_to_category = {
                 'logiciels': 'Logiciels',
                 'langages': 'Langages de programmation',
@@ -464,10 +509,10 @@ class DcaWizard(models.TransientModel) :
                 if not category_name:
                     continue
                 values = category_values.get(category_name) or []
-                self._set_cell_text(row.cells[1], ', '.join(values) if values else '—')
+                self._set_cell_text(row.cells[1], ', '.join(values) if values else self._EMPTY)
 
-        if len(document.tables) > 2:
-            formation_table = document.tables[2]
+        if len(document.tables) > formation_idx:
+            formation_table = document.tables[formation_idx]
             education_parts = [
                 self._to_text(education.get('degree')),
                 self._to_text(education.get('field')),
@@ -481,16 +526,15 @@ class DcaWizard(models.TransientModel) :
                     continue
                 row_label = self._normalize_label(row.cells[0].text)
                 if row_label == 'formation':
-                    self._set_cell_text(row.cells[1], ' - '.join(education_parts) if education_parts else '—')
-                    self._set_cell_text(row.cells[2], date_education if date_education else '—')
+                    self._set_cell_text(row.cells[1], ' - '.join(education_parts) if education_parts else self._EMPTY)
+                    self._set_cell_text(row.cells[2], date_education if date_education else self._EMPTY)
                 elif row_label == 'habilitations':
-                    self._set_cell_text(row.cells[1], ', '.join(certifications) if certifications else '—')
+                    self._set_cell_text(row.cells[1], ', '.join(certifications) if certifications else self._EMPTY)
                 elif row_label == 'langues':
-                    self._set_cell_text(row.cells[1], ', '.join(language_values) if language_values else '—')
+                    self._set_cell_text(row.cells[1], ', '.join(language_values) if language_values else self._EMPTY)
 
-        self._prune_unused_project_sections(document, len(experiences))
+        self._prune_unused_project_sections(document, len(experiences), project_start_table_idx)
 
-        project_start_table_idx = 3
         project_pair_step = 2
         project_slots = max(0, (len(document.tables) - project_start_table_idx) // project_pair_step)
 
@@ -505,8 +549,8 @@ class DcaWizard(models.TransientModel) :
                 if project_idx > 0:
                     self._insert_page_break_before_table(header_table)
                 if header_table.rows and len(header_table.rows[0].cells) >= 2:
-                    self._set_cell_text(header_table.rows[0].cells[0], self._to_text(experience.get('company')) or '—')
-                    self._set_cell_text(header_table.rows[0].cells[1], self._to_text(experience.get('duration')) or '—')
+                    self._set_cell_text(header_table.rows[0].cells[0], self._to_text(experience.get('company')) or self._EMPTY)
+                    self._set_cell_text(header_table.rows[0].cells[1], self._to_text(experience.get('duration')) or self._EMPTY)
 
             if env_table_idx < len(document.tables):
                 env_table = document.tables[env_table_idx]
@@ -532,7 +576,7 @@ class DcaWizard(models.TransientModel) :
                         for item in (skills_pertinents.get(category_name) or [])
                         if self._to_text(item)
                     ]
-                    self._set_cell_text(row.cells[2], ', '.join(values) if values else '—')
+                    self._set_cell_text(row.cells[2], ', '.join(values) if values else self._EMPTY)
 
         paragraphs = document.paragraphs
         current_experience_idx = -1
@@ -563,7 +607,7 @@ class DcaWizard(models.TransientModel) :
                 continue
 
             experience = experiences[current_experience_idx] if isinstance(experiences[current_experience_idx], dict) else {}
-            resolved_value = self._pick_experience_field_text(experience, field_name) or '—'
+            resolved_value = self._pick_experience_field_text(experience, field_name) or self._EMPTY
             filled = self._fill_following_dotted_block(
                 paragraphs,
                 idx + 1,
@@ -611,6 +655,13 @@ class DcaWizard(models.TransientModel) :
         template_path = self._get_template_path()
 
         document = Document(template_path)
+        if self.report_models == 'simplified':
+            self._fill_simplified_header_table(
+                document,
+                self.applicant_id.partner_name or '',
+                self.applicant_id.job_id.name or '',
+                self.applicant_id.availability,
+            )
         if self.report_models in ('alten', 'simplified'):
             self._fill_dca_template_by_layout(document, normalized_applicant_data)
         if self.report_models == 'alten':
@@ -620,9 +671,11 @@ class DcaWizard(models.TransientModel) :
         document.save(output_stream)
         output_stream.seek(0)
 
-        filename = 'Dossier de Compétences %s.docx' % (
-            re.sub(r'[^A-Za-z0-9_\-]+', '_', self._to_text(self.applicant_id.partner_name) or 'candidate'),
-        )
+        full_name = self._to_text(self.applicant_id.partner_name) or 'candidate'
+        initials = self._compute_initials(full_name)
+        date_str = date.today().strftime('%y.%m.%d')
+        client = 'ALTEN' if self.report_models == 'alten' else 'ACHMITECH'
+        filename = '%s_DC %s_%s.docx' % (date_str, client, initials)
 
         attachment = self.env['ir.attachment'].create({
             'name': filename,
