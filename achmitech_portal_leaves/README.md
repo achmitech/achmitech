@@ -63,7 +63,8 @@ achmitech_portal_leaves/
 │   └── portal_leaves_templates.xml
 ├── data/
 │   ├── mail_templates.xml      # 5 email templates
-│   └── cron.xml                # Daily reminder cron
+│   ├── cron.xml                # Daily reminder cron
+│   └── hr_leave_type_data.xml  # Moroccan exceptional leave types (Article 274)
 ├── security/
 │   ├── ir.model.access.csv
 │   └── security.xml            # Record rules (client + interim)
@@ -108,7 +109,7 @@ Field is also mirrored on `hr.employee.public` for portal safety.
 
 #### State machine logic
 
-- **`_check_approval_update`** — extended to allow `confirm → client_validate` for all users and to restrict `client_validate → validate/refuse` to `sudo()` context only (portal controller and HR override)
+- **`_check_approval_update`** — extended to: (1) allow `confirm → client_validate` for all users; (2) restrict `client_validate → validate/refuse` to `sudo()` context only; (3) block any user from approving or refusing their own leave regardless of HR rights (`env.user.employee_id` check, not bypassed by `sudo()`)
 - **`create()`** — intercepts newly confirmed leaves: routes to `client_validate` + sends approval email, or sends notify-only email
 - **`action_approve()`** — safety net: any leave still in `confirm` that requires client approval is redirected to `client_validate` instead of being validated directly
 
@@ -118,9 +119,9 @@ Field is also mirrored on `hr.employee.public` for portal safety.
 |---|---|---|
 | `action_client_approve()` | Portal (client) | `sudo().with_context(leave_fast_create=True)._action_validate(check_state=False)` then notifies employee |
 | `action_client_refuse(reason)` | Portal (client) | Writes `state='refuse'`, stores reason, notifies employee |
-| `action_refuse()` | HR backend | Extended to allow refusal from `client_validate` state |
-| `action_hr_force_validate()` | HR backend button | Force-validates without client, same sudo+context pattern |
-| `action_hr_force_refuse()` | HR backend button | Force-refuses without client |
+| `action_refuse()` | HR backend | Extended to allow refusal from `client_validate` state; blocks self-refusal |
+| `action_hr_force_validate()` | HR backend button | Force-validates without client, same sudo+context pattern; blocks self-approval |
+| `action_hr_force_refuse()` | HR backend button | Force-refuses without client; blocks self-refusal |
 | `_cron_send_client_leave_reminders()` | Daily cron | Finds overdue `client_validate` leaves, sends reminder, sets `client_reminded=True` |
 
 > **Why `leave_fast_create=True`?**
@@ -142,14 +143,23 @@ Field is also mirrored on `hr.employee.public` for portal safety.
 
 **Access check** — `_check_leave_access(leave_id)` verifies that `client_partner_id` matches the current user's partner; returns HTTP 403 otherwise.
 
-### Interim portal: `/my/leaves`
+**Savepoint on approve/refuse** — both `team_leave_approve` and `team_leave_refuse` wrap their model call in a `savepoint()`. This is necessary because Odoo's `write()` first commits the state change to the cursor, then runs `_check_validity()`. If the check raises, the exception is caught by the controller's `except` block and the WSGI middleware would commit the partial write. The savepoint ensures the state change is rolled back before the exception surfaces.
+
+### Collaborateur portal: `/my/leaves`
 
 | Route | Method | Description |
 |---|---|---|
 | `/my/leaves` | GET | Employee's leave list + "New Leave" modal |
-| `/my/leaves/new` | POST | Creates leave; validates `date_to >= date_from` before DB; wraps ORM in `savepoint()` for clean error handling |
+| `/my/leaves/new` | POST | Creates leave with pre- and post-create validations; wraps ORM in `savepoint()` for clean rollback |
 
 **Leave type filter** — Only types with `require_client_approval` or `notify_client_on_confirm` are shown, and only those for which the employee has a valid allocation (computed via `has_valid_allocation` with `employee_id` context).
+
+**Validations in `my_leave_create`** (in order):
+1. `date_from >= today` — past dates are rejected before any DB work
+2. `leave.number_of_days == 0` — checked after ORM create (inside savepoint); rejects requests that fall entirely on public holidays or weekends, using Odoo's own duration computation which accounts for the employee's work calendar
+3. **Negative cap with `client_validate`** — native `_check_validity` ignores `client_validate` leaves when computing `virtual_remaining_leaves`, so a custom post-create check re-runs the balance calculation including all `client_validate` pending leaves; ensures stacked pending requests can't collectively exceed `max_allowed_negative`
+
+**Balance display** — `allocation_remaining` is computed directly (not from `employee.allocation_remaining_display`) to include future approved leaves and leaves in `client_validate` state. Allocations are grouped by leave type and leaves are scoped to each allocation's `date_from` to avoid counting leaves from previous allocation cycles. Only `validate` state leaves reduce the displayed balance — pending requests do not.
 
 ### Portal home page
 
@@ -163,20 +173,41 @@ Field is also mirrored on `hr.employee.public` for portal safety.
 
 ### `hr_leave_views.xml` — Leave form (HR backend)
 
-- **Status bar** shows `client_validate` stage for both single and double validation workflows
+- **Status bar** — `client_validate` is NOT in `statusbar_visible`; it only appears when it is the current state, so internal employees' leave forms show a clean `confirm → validate` progress bar
 - **HR override buttons** (visible when `state='client_validate'`, group `hr_holidays.group_hr_holidays_manager`):
   - *Forcer la validation* (btn-warning) — with confirm dialog
   - *Forcer le refus* (btn-danger) — with confirm dialog
+- **Back to Approval button** — has a confirm dialog warning that it re-notifies the employee's leave manager
 - **Client info group** (read-only): `client_partner_id`, `client_deadline`, `client_reminded`, `client_refuse_reason`
 
 ### `hr_leave_type_views.xml` — Leave type form
 
-- New group *"Approbation client (Intérimaires)"* with the three new fields
+- New group *"Approbation client (Collaborateurs)"* with the three new fields
 - `client_response_deadline_days` is hidden unless `require_client_approval=True`
 
 ### `hr_employee_views.xml` — Employee form
 
 - `client_project_id` inserted in the *Work Information* tab
+
+---
+
+## Predefined Leave Types — `data/hr_leave_type_data.xml`
+
+Moroccan exceptional leave types (Article 274 du Code du Travail), created with `noupdate="1"` so HR can adjust them freely after install:
+
+| Leave type | Config |
+|---|---|
+| Mariage de l'employé | `leave_validation_type=manager`, no allocation, support doc required, client notified |
+| Mariage d'un enfant | same |
+| Naissance d'un enfant | same |
+| Décès du conjoint | same |
+| Décès d'un enfant | same |
+| Décès du père ou de la mère | same |
+| Décès d'un frère ou d'une sœur | same |
+| Circoncision d'un enfant | same |
+| Opération chirurgicale (conjoint ou enfant) | same |
+
+> Legal durations are not enforced in code — the leave manager validates manually. `noupdate="1"` means changes made in the backend survive module upgrades.
 
 ---
 
@@ -233,7 +264,9 @@ Because Odoo ORs record rules within the same group, a user who is both a client
 
 3. **Ensure client has portal access** — the client's `res.partner` must be linked to a portal user (`base.group_portal`).
 
-4. **Verify cron is active** — *Settings → Technical → Automation → Scheduled Actions* → *Absences: rappel client en attente* (runs daily).
+4. **Verify cron is active** — *Settings → Technical → Automation → Scheduled Actions* → *Absences collaborateurs: rappel client en attente* (runs daily).
+
+> The 9 Moroccan exceptional leave types (Article 274) are created automatically on install. Their legal durations are not enforced — the validating manager is responsible for checking them.
 
 ---
 

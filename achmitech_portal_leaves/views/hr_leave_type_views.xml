@@ -7,7 +7,7 @@
         <field name="inherit_id" ref="hr_holidays.edit_holiday_status_form"/>
         <field name="arch" type="xml">
             <xpath expr="//group[@name='leave_validation']" position="after">
-                <group name="client_approval_config" string="Approbation client (Intérimaires)">
+                <group name="client_approval_config" string="Approbation client (Collaborateurs)">
                     <field name="require_client_approval" widget="boolean_toggle"/>
                     <field name="notify_client_on_confirm" widget="boolean_toggle"/>
                     <field name="client_response_deadline_days"

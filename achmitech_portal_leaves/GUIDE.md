@@ -1,4 +1,4 @@
-# Guide fonctionnel — Approbation des congés intérimaires
+# Guide fonctionnel — Approbation des congés collaborateurs
 
 **Module :** achmitech_portal_leaves
 **Odoo :** 19.0
@@ -7,13 +7,13 @@
 
 ## Vue d'ensemble
 
-Ce module permet de gérer les demandes de congés des intérimaires en impliquant leur client (responsable de site) dans le processus d'approbation. Trois profils d'utilisateurs sont concernés :
+Ce module permet de gérer les demandes de congés des collaborateurs en impliquant leur client (responsable de site) dans le processus d'approbation. Trois profils d'utilisateurs sont concernés :
 
 | Profil | Rôle dans le module |
 |---|---|
-| **RH / Administrateur** | Configure les types de congés, affecte les intérimaires à leurs missions, surveille les demandes en cours, peut forcer une décision si nécessaire |
-| **Client** | Reçoit les notifications et approuve ou refuse les demandes de congés de ses intérimaires via le portail |
-| **Intérimaire** | Soumet ses demandes de congés via le portail et suit leur statut |
+| **RH / Administrateur** | Configure les types de congés, affecte les collaborateurs à leurs missions, surveille les demandes en cours, peut forcer une décision si nécessaire |
+| **Client** | Reçoit les notifications et approuve ou refuse les demandes de congés de ses collaborateurs via le portail |
+| **Collaborateur** | Soumet ses demandes de congés via le portail et suit leur statut |
 
 ---
 
@@ -23,7 +23,7 @@ Ce module permet de gérer les demandes de congés des intérimaires en impliqua
 
 Accès : **Configuration → Types de congés**
 
-Pour chaque type de congé, un groupe de paramètres « Approbation client (Intérimaires) » est disponible :
+Pour chaque type de congé, un groupe de paramètres « Approbation client (Collaborateurs) » est disponible :
 
 #### Option A — Approbation client requise
 À utiliser pour les congés payés, non payés, compensation, etc.
@@ -43,30 +43,30 @@ Pour chaque type de congé, un groupe de paramètres « Approbation client (Int�
 
 ---
 
-### 1.2 Affecter les intérimaires à leur mission
+### 1.2 Affecter les collaborateurs à leur mission
 
-Accès : **Employés → [fiche de l'intérimaire] → Onglet Informations professionnelles**
+Accès : **Employés → [fiche du collaborateur] → Onglet Informations professionnelles**
 
 - Renseigner le champ **« Projet client (mission actuelle) »**
-- Sélectionner le projet correspondant à la mission en cours de l'intérimaire
+- Sélectionner le projet correspondant à la mission en cours du collaborateur
 - Le partenaire associé à ce projet sera automatiquement reconnu comme le client approbateur
 
 > **Prérequis :** Le projet doit avoir un partenaire renseigné (champ « Client » sur la fiche projet). C'est ce partenaire qui recevra les emails et verra les demandes sur le portail.
 
 ---
 
-### 1.3 Donner l'accès portail aux clients et aux intérimaires
+### 1.3 Donner l'accès portail aux clients et aux collaborateurs
 
 Accès : **Paramètres → Utilisateurs → Utilisateurs**
 
-Pour chaque client et chaque intérimaire :
+Pour chaque client et chaque collaborateur :
 
 1. Ouvrir la fiche du partenaire (ou de l'utilisateur)
 2. Cliquer sur **« Accorder l'accès portail »**
 3. L'utilisateur reçoit un email d'invitation avec ses identifiants de connexion
 
 > **Pour le client :** le partenaire portail doit être le même que celui renseigné sur le projet de mission.
-> **Pour l'intérimaire :** l'utilisateur portail doit être lié à la fiche employé via le champ « Utilisateur associé » (Paramètres → Utilisateurs, ou directement sur la fiche employé).
+> **Pour le collaborateur :** l'utilisateur portail doit être lié à la fiche employé via le champ « Utilisateur associé » (Paramètres → Utilisateurs, ou directement sur la fiche employé).
 
 ---
 
@@ -74,9 +74,24 @@ Pour chaque client et chaque intérimaire :
 
 Accès : **Paramètres → Technique → Automatisation → Actions planifiées**
 
-- Rechercher **« Absences intérimaires: rappel client en attente »**
+- Rechercher **« Absences collaborateurs: rappel client en attente »**
 - Vérifier qu'il est actif et configuré sur **1 jour**
 - Ce cron envoie automatiquement un email de rappel aux clients dont le délai de réponse est dépassé (un seul rappel par demande)
+
+---
+
+### 1.5 Types de congés exceptionnels (Article 274)
+
+Les types de congés suivants sont créés automatiquement à l'installation du module :
+
+- Mariage de l'employé
+- Mariage d'un enfant
+- Naissance d'un enfant
+- Décès du conjoint / d'un enfant / du père ou de la mère / d'un frère ou d'une sœur
+- Circoncision d'un enfant
+- Opération chirurgicale (conjoint ou enfant)
+
+Tous sont configurés sans allocation (droits légaux accordés sur événement), avec notification client, validation par le responsable congés, et justificatif obligatoire. Les durées légales ne sont pas bloquées par le système — le responsable valide en connaissance de cause.
 
 ---
 
@@ -100,19 +115,19 @@ La page liste comporte deux onglets :
 - **Historique** : demandes déjà traitées (approuvées ou refusées)
 
 Des outils de recherche et de tri sont disponibles :
-- Trier par date, par intérimaire, par type de congé ou par délai de réponse
-- Regrouper par intérimaire ou par type de congé
-- Rechercher par nom d'intérimaire ou par type de congé
+- Trier par date, par collaborateur, par type de congé ou par délai de réponse
+- Regrouper par collaborateur ou par type de congé
+- Rechercher par nom de collaborateur ou par type de congé
 
 ---
 
 ### 2.3 Approuver une demande
 
 1. Cliquer sur **« Voir »** sur la ligne de la demande (ou directement sur le lien dans l'email reçu)
-2. Vérifier les informations : intérimaire, type de congé, dates, durée, motif éventuel
+2. Vérifier les informations : collaborateur, type de congé, dates, durée, motif éventuel
 3. Cliquer sur **« Approuver »**
 4. Confirmer dans la boîte de dialogue
-5. L'intérimaire reçoit automatiquement un email de confirmation
+5. Le collaborateur reçoit automatiquement un email de confirmation
 
 ---
 
@@ -122,7 +137,7 @@ Des outils de recherche et de tri sont disponibles :
 2. Cliquer sur **« Refuser »**
 3. Saisir un motif de refus (facultatif mais recommandé)
 4. Confirmer
-5. L'intérimaire reçoit automatiquement un email de refus avec le motif renseigné
+5. Le collaborateur reçoit automatiquement un email de refus avec le motif renseigné
 
 ---
 
@@ -132,11 +147,11 @@ Si le client n'a pas répondu dans le délai configuré sur le type de congé, i
 
 ---
 
-## 3. Utilisation — Intérimaire
+## 3. Utilisation — Collaborateur
 
 ### 3.1 Accéder au portail
 
-L'intérimaire se connecte sur `[URL du site]/web/login` avec ses identifiants portail.
+Le collaborateur se connecte sur `[URL du site]/web/login` avec ses identifiants portail.
 
 Sur la page d'accueil, une carte **« Mes demandes de congé »** est visible. Cliquer dessus pour accéder à la liste de ses demandes.
 
@@ -164,11 +179,11 @@ Le tableau de bord affiche toutes les demandes avec leur statut :
 | Statut | Signification |
 |---|---|
 | **À confirmer** | Demande en cours de traitement initial |
-| **En attente du client** | En attente de la décision du client |
+| **En attente de validation** | Demande transmise, en cours de traitement |
 | **Approuvé** | Congé validé |
 | **Refusé** | Congé refusé (le motif du refus est indiqué dans l'email reçu) |
 
-L'intérimaire reçoit un email automatique dès que le client prend une décision (approbation ou refus).
+Le collaborateur reçoit un email automatique dès que le client prend une décision (approbation ou refus).
 
 ---
 
@@ -189,14 +204,26 @@ Deux boutons sont disponibles lorsqu'une demande est au statut *« En attente du
 
 ## 5. Cas particuliers et points d'attention
 
-### L'intérimaire change de mission en cours de contrat
+### Le collaborateur change de mission en cours de contrat
 Mettre à jour le champ **« Projet client »** sur la fiche employé. Les nouvelles demandes iront au nouveau client. Les demandes déjà en cours restent rattachées à l'ancien client (le champ `client_partner_id` est calculé à la création et stocké).
 
 ### Un type de congé nécessite une allocation préalable
-Si l'intérimaire n't a pas d'allocation approuvée pour un type de congé donné (ex. congés payés), ce type n'apparaîtra pas dans le formulaire de soumission. Il faut d'abord qu'un gestionnaire RH crée une allocation approuvée pour cet employé.
+Si le collaborateur n'a pas d'allocation approuvée pour un type de congé donné (ex. congés payés), ce type n'apparaîtra pas dans le formulaire de soumission. Il faut d'abord qu'un gestionnaire RH crée une allocation approuvée pour cet employé.
 
 ### Le client n'a pas de compte portail
 Sans accès portail, le client ne peut pas approuver les demandes en ligne. Il faut lui créer un accès (voir section 1.3) ou utiliser les boutons de forçage RH pour traiter les demandes manuellement.
 
-### L'intérimaire n'a pas de projet client renseigné
-Si aucun projet client n'est associé à l'intérimaire, aucune notification ne sera envoyée au client et la demande ne passera pas par le workflow d'approbation, même si le type de congé est configuré avec approbation requise. Vérifier que le champ « Projet client » est bien renseigné sur la fiche employé.
+### Le collaborateur n'a pas de projet client renseigné
+Si aucun projet client n'est associé au collaborateur, aucune notification ne sera envoyée au client et la demande ne passera pas par le workflow d'approbation, même si le type de congé est configuré avec approbation requise. Vérifier que le champ « Projet client » est bien renseigné sur la fiche employé.
+
+### Solde affiché sur le portail
+Le solde affiché correspond aux jours alloués moins les congés **validés** (approuvés définitivement), y compris les congés futurs déjà approuvés. Les demandes en attente (client ou RH) n'impactent pas l'affichage — elles sont néanmoins prises en compte dans le contrôle de la limite de jours négatifs au moment de la soumission.
+
+### Limite de jours négatifs
+Si le type de congé autorise un solde négatif, le système bloque toute soumission qui ferait dépasser cette limite, en tenant compte de toutes les demandes en cours (y compris celles en attente d'approbation client). De même, si le client tente d'approuver une demande qui dépasserait la limite (suite à d'autres validations entre-temps), l'approbation est annulée et un message d'erreur est affiché.
+
+### Soumission sur jours fériés ou week-ends
+Le portail rejette automatiquement toute demande dont la période ne contient aucun jour ouvrable (week-end ou jour férié). La vérification utilise le calendrier de travail de l'employé.
+
+### Soumission pour une date passée
+Le portail rejette les demandes dont la date de début est antérieure à la date du jour.

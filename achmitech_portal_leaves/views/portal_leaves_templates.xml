@@ -26,7 +26,7 @@
 
     <!-- ── Portal home: add entry for team leaves ──────────────────────────── -->
     <template id="portal_my_home_team_leaves"
-              name="Portal: Demandes de congés intérimaires"
+              name="Portal: Demandes de congés collaborateurs"
               inherit_id="portal.portal_my_home"
               priority="30"
               customize_show="True">
@@ -38,7 +38,7 @@
                 <t t-call="portal.portal_docs_entry">
                     <t t-set="title">Demandes de congés</t>
                     <t t-set="url" t-value="'/my/team-leaves'"/>
-                    <t t-set="text">Approuver ou refuser les demandes de congés de vos intérimaires.</t>
+                    <t t-set="text">Approuver ou refuser les demandes de congés de vos collaborateurs.</t>
                     <t t-set="placeholder_count" t-value="'pending_leaves_count'"/>
                     <t t-set="count" t-value="pending_leaves_count or False"/>
                     <t t-set="bg_color" t-value="'alert alert-primary align-items-center' if pending_leaves_count else False"/>
@@ -50,7 +50,7 @@
     </template>
 
     <!-- ── List page: /my/team-leaves ──────────────────────────────────────── -->
-    <template id="portal_team_leaves_list" name="Demandes de congés intérimaires">
+    <template id="portal_team_leaves_list" name="Demandes de congés collaborateurs">
         <t t-call="portal.portal_layout">
 
             <!-- Flash message -->
@@ -63,7 +63,7 @@
             </t>
 
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h3 class="mb-0">Demandes de congés de mes intérimaires</h3>
+                <h3 class="mb-0">Demandes de congés de mes collaborateurs</h3>
             </div>
 
             <!-- Tabs -->
@@ -472,7 +472,7 @@
                                             <span class="badge bg-secondary">En cours de traitement</span>
                                         </t>
                                         <t t-elif="leave.state == 'client_validate'">
-                                            <span class="badge bg-warning text-dark">En attente du client</span>
+                                            <span class="badge bg-warning text-dark">En attente de validation</span>
                                         </t>
                                         <t t-elif="leave.state in ('validate1', 'validate')">
                                             <span class="badge bg-success">Approuvée</span>
