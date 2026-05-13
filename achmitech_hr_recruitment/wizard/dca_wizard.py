@@ -43,6 +43,7 @@ class DcaWizard(models.TransientModel) :
         'Marketing',
     ]
     _LANGUAGE_LEVELS = {'A1', 'A2', 'B1', 'B2', 'C1', 'C2'}
+    _LANGUAGE_LEVEL_RE = re.compile(r'\b(A1|A2|B1|B2|C1|C2)\b', re.IGNORECASE)
     _EMPTY = 'A Compléter'
 
 
@@ -337,9 +338,16 @@ class DcaWizard(models.TransientModel) :
         skills = {}
         for raw_name, raw_level in skills_raw.items():
             name = self._to_text(raw_name)
-            level = self._to_text(raw_level)
-            if name and level:
-                skills[name] = level
+            if not name:
+                continue
+            if isinstance(raw_level, dict):
+                nested = {self._to_text(n): self._to_text(l) for n, l in raw_level.items() if self._to_text(n) and self._to_text(l)}
+                if nested:
+                    skills[name] = nested
+            else:
+                level = self._to_text(raw_level)
+                if level:
+                    skills[name] = level
 
         certifications = []
         seen_certifications = set()
@@ -468,11 +476,14 @@ class DcaWizard(models.TransientModel) :
         category_values = {}
         for category_name in self._DCA_CATEGORY_ORDER:
             if category_name == 'Langues':
-                category_values[category_name] = [
-                    self._to_text(skill_name)
-                    for skill_name, level in skills.items()
-                    if self._to_text(level).upper() in self._LANGUAGE_LEVELS and self._to_text(skill_name)
-                ]
+                lang_names = []
+                for skill_name, level in skills.items():
+                    if isinstance(level, dict):
+                        if self._normalize_label(skill_name) == 'langues':
+                            lang_names = [n for n in level.keys() if n]
+                    elif self._LANGUAGE_LEVEL_RE.search(self._to_text(level)) and self._to_text(skill_name):
+                        lang_names.append(self._to_text(skill_name))
+                category_values[category_name] = lang_names
                 continue
 
             category_bucket = []
