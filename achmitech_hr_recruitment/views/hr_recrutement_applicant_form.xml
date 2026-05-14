@@ -115,6 +115,27 @@
         </field>
     </record>
 
+    <record id="hr_applicant_kanban_view_inherited" model="ir.ui.view">
+        <field name="name">hr.applicant.kanban.view.inherited</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_kanban_view_applicant"/>
+        <field name="arch" type="xml">
+            <!-- Declare fields at kanban level so they are fetched -->
+            <xpath expr="//kanban/field[@name='user_id']" position="after">
+                <field name="ai_score"/>
+                <field name="ai_scoring_status"/>
+            </xpath>
+            <!-- Insert score badge in footer, before the attachment link -->
+            <xpath expr="//t[@t-name='card']//a[@name='action_open_attachments']" position="before">
+                <t t-if="record.ai_scoring_status.raw_value == 'done'">
+                    <span t-attf-class="badge rounded-pill me-1 {{ record.ai_score.raw_value >= 70 ? 'text-bg-success' : record.ai_score.raw_value >= 40 ? 'text-bg-warning' : 'text-bg-danger' }}">
+                        IA : <t t-esc="record.ai_score.value"/>
+                    </span>
+                </t>
+            </xpath>
+        </field>
+    </record>
+
     <record id="hr_applicant_dossier_experience_view_form" model="ir.ui.view">
         <field name="name">hr.applicant.dossier.experience.view.form</field>
         <field name="model">hr.applicant.dossier.experience</field>
