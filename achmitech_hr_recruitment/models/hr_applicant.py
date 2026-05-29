@@ -18,6 +18,11 @@ _logger = logging.getLogger(__name__)
 class HrApplicant(models.Model):
     _inherit = "hr.applicant"
 
+    # hr_contract_salary's copy_data() calls hr.version._search() even for empty M2M,
+    # which fails for recruitment users who lack hr.group_hr_user. New candidatures
+    # created from the talent pool should not inherit proposed contracts anyway.
+    proposed_contracts = fields.Many2many('hr.version', copy=False)
+
     availability_negotiable = fields.Boolean(string="Négociable", default=False)
 
     ai_score = fields.Integer(string='Score IA', default=0)
@@ -163,7 +168,7 @@ class HrApplicant(models.Model):
 
             if not attachment:
                 _logger.warning("AI Scoring: aucun CV trouvé pour le candidat %s", record.id)
-                record.ai_scoring_status = 'error'
+                record.ai_scoring_status = 'no_cv'
                 continue
 
             cv_text = attachment.index_content or ''
@@ -203,6 +208,15 @@ class HrApplicant(models.Model):
         if not pending:
             return
         pending._send_to_n8n()
+
+    def _cron_reset_no_cv(self):
+        no_cv = self.search([('ai_scoring_status', '=', 'no_cv'), ('active', '=', True)])
+        if not no_cv:
+            return
+        with_cv = no_cv.filtered(lambda r: r.attachment_ids and r.attachment_ids[0].index_content)
+        if with_cv:
+            with_cv.write({'ai_scoring_status': 'pending'})
+            _logger.info("AI Scoring: %d candidat(s) remis en attente après détection de CV", len(with_cv))
 
     def _get_alten_table_rows_from_experiences(self):
         """
