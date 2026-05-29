@@ -18,6 +18,11 @@ _logger = logging.getLogger(__name__)
 class HrApplicant(models.Model):
     _inherit = "hr.applicant"
 
+    # hr_contract_salary's copy_data() calls hr.version._search() even for empty M2M,
+    # which fails for recruitment users who lack hr.group_hr_user. New candidatures
+    # created from the talent pool should not inherit proposed contracts anyway.
+    proposed_contracts = fields.Many2many('hr.version', copy=False)
+
     availability_negotiable = fields.Boolean(string="Négociable", default=False)
 
     ai_score = fields.Integer(string='Score IA', default=0)
