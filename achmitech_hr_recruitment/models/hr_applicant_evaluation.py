@@ -52,7 +52,7 @@ class HrApplicantEvaluation(models.Model):
     )
 
     decision_state = fields.Selection(
-        selection=[("normal", "Normal"), ("done", "Done"), ("blocked", "Blocked")],
+        selection=[("normal", "Normal"), ("done", "Done"), ("waiting", "Waiting"), ("blocked", "Blocked")],
         string="Décision (clé)"
     )
 
@@ -67,6 +67,8 @@ class HrApplicantEvaluation(models.Model):
             return stage.legend_done or "Prêt pour l'étape suivante"
         if state == "blocked":
             return stage.legend_blocked or "Bloqué"
+        if state == "waiting":
+            return stage.legend_waiting or "En attente"
         return stage.legend_normal or "En cours"
 
     def _snapshot_decision(self):
