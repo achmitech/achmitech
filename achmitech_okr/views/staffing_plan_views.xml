@@ -90,7 +90,7 @@
                   <button name="action_assign" type="object"
                           icon="fa-user-plus" title="Affecter"
                           invisible="state != 'draft'"
-                          groups="achmitech_okr.group_okr_manager"/>
+                          groups="achmitech_okr.group_okr_user"/>
                   <button name="action_close" type="object"
                           icon="fa-check-circle" title="Clôturer"
                           invisible="state != 'assigned'"
