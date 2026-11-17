@@ -1,4 +1,5 @@
 import base64
+import copy
 import io
 import json
 import logging
@@ -297,6 +298,28 @@ class DcaWizard(models.TransientModel) :
             run_element = run._element
             for break_element in list(run_element.findall('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}br')):
                 run_element.remove(break_element)
+
+    # les modèles Word ne prévoient qu'un nombre fixe de blocs "projet" (8) : on duplique le premier bloc
+    # (tableau d'en-tête -> paragraphes -> tableau environnement technique) pour en avoir autant que d'expériences.
+    def _ensure_project_slots(self, document, experiences_count, project_start_table_idx=3):
+        project_pair_step = 2
+        tables = document.tables
+        slots = max(0, (len(tables) - project_start_table_idx) // project_pair_step)
+        if slots < 2 or experiences_count <= slots:
+            return
+        body_children = list(document.element.body)
+        block_start = body_children.index(tables[project_start_table_idx]._element)
+        block_end = body_children.index(tables[project_start_table_idx + project_pair_step]._element)
+        template_block = body_children[block_start:block_end]
+        # les nouveaux blocs (vierges) sont insérés avant le dernier bloc : tous restent identiques et contigus.
+        anchor = tables[project_start_table_idx + project_pair_step * (slots - 1)]._element
+        for _missing in range(experiences_count - slots):
+            for element in template_block:
+                clone = copy.deepcopy(element)
+                # signets en double = fichier signalé comme corrompu par Word : on les retire des copies.
+                for bookmark in list(clone.iter(qn('w:bookmarkStart'))) + list(clone.iter(qn('w:bookmarkEnd'))):
+                    bookmark.getparent().remove(bookmark)
+                anchor.addprevious(clone)
 
     def _prune_unused_project_sections(self, document, experiences_count, project_start_table_idx=3):
         project_pair_step = 2
@@ -733,6 +756,8 @@ class DcaWizard(models.TransientModel) :
                     self._set_cell_text(row.cells[1], value or self._EMPTY)
             self._remove_table_rows(formation_table, rows_to_remove)
 
+        if qn is not None:
+            self._ensure_project_slots(document, len(experiences), project_start_table_idx)
         self._prune_unused_project_sections(document, len(experiences), project_start_table_idx)
 
         project_pair_step = 2
