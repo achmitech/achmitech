@@ -538,6 +538,7 @@ class DcaWizard(models.TransientModel) :
             'skills': skills,
             'skills_by_category': self._normalize_skill_categories(clean_payload.get('skills_by_category')),
             'inferred_skills': self._dedup_texts(clean_payload.get('inferred_skills')),
+            'extraction_warnings': self._dedup_texts(clean_payload.get('extraction_warnings')),
             'experiences': normalized_experiences,
             'certification': self._dedup_texts(clean_payload.get('certification')),
             'experience_years': self._to_text(clean_payload.get('experience_years')),
@@ -591,7 +592,8 @@ class DcaWizard(models.TransientModel) :
             return [_("Aucune donnée extraite : lancez le scoring IA.")], []
 
         data = self._normalize_applicant_payload_for_word(payload)
-        blocking = []
+        # alertes du contrôle automatique n8n (textes ou compétences recopiés, dates illisibles...).
+        blocking = [_("Alerte extraction : %s") % warning for warning in data['extraction_warnings']]
         to_review = []
 
         if not applicant.availability:
