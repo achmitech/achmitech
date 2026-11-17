@@ -6,6 +6,12 @@
         <field name="model">dca.wizard</field>
         <field name="arch" type="xml">
             <form string="Dossier de Compétences">
+                <field name="dca_ready" invisible="1"/>
+                <div class="alert alert-warning" role="alert" invisible="not dca_review_notes">
+                    <strong invisible="dca_ready">Dossier incomplet : les rubriques manquantes afficheront « A Compléter ».</strong>
+                    <strong invisible="not dca_ready">Dossier complet. Points déduits par l'IA à relire :</strong>
+                    <field name="dca_review_notes" nolabel="1" readonly="1"/>
+                </div>
                 <group col="4" colspan="6">
                     <field name="report_models"/>
                     <newline/>

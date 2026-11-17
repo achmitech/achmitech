@@ -35,6 +35,10 @@
                     <group>
                         <field name="applicant_extracted_json" invisible="1"/>
                     </group>
+                    <group string="Dossier de compétences IA">
+                        <field name="dca_ready"/>
+                    </group>
+                    <field name="dca_review_notes" nolabel="1" invisible="not dca_review_notes"/>
                     <footer>
                         <button name="action_trigger_ai_scoring" string="Lancer le scoring IA" type="object" class="btn-primary"/>
                     </footer>
