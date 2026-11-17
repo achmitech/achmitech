@@ -527,6 +527,7 @@ class DcaWizard(models.TransientModel) :
                 'tasks': self._normalize_task_list(experience.get('tasks')),
                 'skills_pertinents': self._normalize_skill_categories(experience.get('skills_pertinents')),
                 'inferred_fields': sorted(inferred),
+                'inferred_skills': self._dedup_texts(experience.get('inferred_skills')),
             })
 
         clean_payload = self._strip_ai_markers(payload)
@@ -536,6 +537,7 @@ class DcaWizard(models.TransientModel) :
             'languages': self._normalize_languages(clean_payload),
             'skills': skills,
             'skills_by_category': self._normalize_skill_categories(clean_payload.get('skills_by_category')),
+            'inferred_skills': self._dedup_texts(clean_payload.get('inferred_skills')),
             'experiences': normalized_experiences,
             'certification': self._dedup_texts(clean_payload.get('certification')),
             'experience_years': self._to_text(clean_payload.get('experience_years')),
@@ -601,6 +603,8 @@ class DcaWizard(models.TransientModel) :
         inferred_languages = [lang['name'] for lang in data['languages'] if lang.get('inferred')]
         if inferred_languages:
             to_review.append(_("Langues déduites : %s.") % ', '.join(inferred_languages))
+        if data['inferred_skills']:
+            to_review.append(_("Compétences globales déduites : %s.") % ', '.join(data['inferred_skills']))
         if not data['experiences']:
             blocking.append(_("Aucune expérience extraite."))
 
@@ -623,6 +627,9 @@ class DcaWizard(models.TransientModel) :
             ]
             if inferred:
                 to_review.append(_("%(label)s : déduit par l'IA - %(fields)s.", label=label, fields=', '.join(inferred)))
+            if experience['inferred_skills']:
+                to_review.append(_("%(label)s : compétences déduites - %(skills)s.",
+                                   label=label, skills=', '.join(experience['inferred_skills'])))
 
         return blocking, to_review
 
