@@ -40,6 +40,9 @@ class HrApplicant(models.Model):
         ('no_cv', 'Pas de CV'),
     ], string='Statut scoring IA')
     applicant_extracted_json = fields.Text(string='Données extraites (JSON)', readonly=True, copy=False)
+    dca_ready = fields.Boolean(string="Dossier complet", compute="_compute_dca_review",
+                               help="Toutes les rubriques du dossier de compétences sont remplies.")
+    dca_review_notes = fields.Text(string="Contrôle du dossier", compute="_compute_dca_review")
 
     evaluation_ids = fields.One2many(
         comodel_name="hr.applicant.evaluation",
@@ -74,6 +77,19 @@ class HrApplicant(models.Model):
         "applicant_id",
         string="Habilitations",
     )
+
+    @api.depends('applicant_extracted_json', 'availability')
+    def _compute_dca_review(self):
+        wizard = self.env['dca.wizard']
+        for applicant in self:
+            blocking, to_review = wizard._get_dca_review(applicant)
+            sections = []
+            if blocking:
+                sections.append("À compléter avant envoi :\n" + "\n".join("- %s" % msg for msg in blocking))
+            if to_review:
+                sections.append("À relire (déduit par l'IA) :\n" + "\n".join("- %s" % msg for msg in to_review))
+            applicant.dca_ready = not blocking
+            applicant.dca_review_notes = "\n\n".join(sections) or False
 
     @api.depends("dca_access_token", "stage_id")
     def _construct_dossier_url(self):
@@ -149,22 +165,41 @@ class HrApplicant(models.Model):
         self._send_to_n8n()
 
     def _send_to_n8n(self):
-        n8n_webhook_url = self.env['ir.config_parameter'].sudo().get_param(
-            'achmitech_hr_recruitment.n8n_webhook_url'
-        )
+        params = self.env['ir.config_parameter'].sudo()
+        n8n_webhook_url = params.get_param('achmitech_hr_recruitment.n8n_webhook_url')
         if not n8n_webhook_url:
             _logger.error("AI Scoring: paramètre 'achmitech_hr_recruitment.n8n_webhook_url' non configuré")
             return
 
-        ctx = ssl.create_default_context()
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
+        headers = {'Content-Type': 'application/json'}
+        # secret partagé avec le nœud Webhook n8n (Header Auth), envoyé seulement s'il est configuré.
+        webhook_secret = params.get_param('achmitech_hr_recruitment.n8n_webhook_secret')
+        if webhook_secret:
+            headers['X-N8N-Secret'] = webhook_secret
 
+        ctx = ssl.create_default_context()
+        # échappatoire si le certificat de n8n n'est pas valide (déconseillé).
+        if str(params.get_param('achmitech_hr_recruitment.n8n_ssl_insecure', '')).lower() in ('1', 'true'):
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+
+        cv_mimetypes = (
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.oasis.opendocument.text',
+        )
         for record in self:
-            attachment = self.env['ir.attachment'].search([
+            attachments = self.env['ir.attachment'].search([
                 ('res_model', '=', 'hr.applicant'),
                 ('res_id', '=', record.id),
-            ], limit=1)
+            ], order='create_date desc, id desc')
+            # CV le plus récent dont le texte est indexé, sinon n'importe quelle pièce jointe indexée.
+            attachment = (
+                attachments.filtered(lambda a: a.mimetype in cv_mimetypes and a.index_content)[:1]
+                or attachments.filtered('index_content')[:1]
+                or attachments[:1]
+            )
 
             if not attachment:
                 _logger.warning("AI Scoring: aucun CV trouvé pour le candidat %s", record.id)
@@ -172,13 +207,8 @@ class HrApplicant(models.Model):
                 continue
 
             cv_text = attachment.index_content or ''
+            # une fiche de poste vide est envoyée telle quelle : n8n extrait le dossier et saute le scoring.
             job_description = re.sub(r'<[^>]+>', ' ', record.job_id.description or '').strip()
-
-            if not job_description:
-                _logger.warning("AI Scoring: fiche de poste vide pour le candidat %s, ignoré", record.id)
-                record.ai_scoring_status = 'error'
-                record.ai_notes = "Fiche de poste non renseignée, analyse ignorée."
-                continue
 
             payload = json.dumps({
                 'applicant_id': record.id,
@@ -193,7 +223,7 @@ class HrApplicant(models.Model):
                 req = urllib.request.Request(
                     n8n_webhook_url,
                     data=payload,
-                    headers={'Content-Type': 'application/json'},
+                    headers=headers,
                     method='POST',
                 )
                 urllib.request.urlopen(req, timeout=10, context=ctx)
