@@ -1,4 +1,5 @@
 import base64
+import copy
 import io
 import json
 import logging
@@ -30,6 +31,8 @@ class DcaWizard(models.TransientModel) :
     applicant_id = fields.Many2one('hr.applicant', 'candidate')
     code_job = fields.Char('Reference de poste')
     report_type = fields.Selection([('PDF', 'PDF'), ('WORD', 'Word')], 'Type de Fichier', required=True, default='WORD')
+    dca_ready = fields.Boolean(related='applicant_id.dca_ready')
+    dca_review_notes = fields.Text(related='applicant_id.dca_review_notes')
     _DCA_CATEGORY_ORDER = [
         'Soft Skills',
         'Langues',
@@ -45,6 +48,42 @@ class DcaWizard(models.TransientModel) :
     _LANGUAGE_LEVELS = {'A1', 'A2', 'B1', 'B2', 'C1', 'C2'}
     _LANGUAGE_LEVEL_RE = re.compile(r'\b(A1|A2|B1|B2|C1|C2)\b', re.IGNORECASE)
     _EMPTY = 'A Compléter'
+    # "[À valider]", "[IA - À valider]", "(À valider)"...
+    _AI_MARKER_RE = re.compile(r'\s*[\[(]\s*(?:IA\s*[-–:]?\s*)?[ÀAà]\s+valider\s*[\])]', re.IGNORECASE)
+    _LANGUAGE_NAMES = {
+        'francais': 'Français', 'french': 'Français',
+        'anglais': 'Anglais', 'english': 'Anglais',
+        'arabe': 'Arabe', 'arabic': 'Arabe',
+        'espagnol': 'Espagnol', 'spanish': 'Espagnol',
+        'allemand': 'Allemand', 'german': 'Allemand',
+        'italien': 'Italien', 'italian': 'Italien',
+        'portugais': 'Portugais', 'portuguese': 'Portugais',
+    }
+    _NARRATIVE_FIELDS = ('general_context', 'project_topic', 'responsibilities', 'work_done', 'results_obtained')
+    _NARRATIVE_ALIASES = {
+        'general_context': ('general_context', 'contexte_general', 'generalContext', 'context', 'contexte'),
+        'project_topic': ('project_topic', 'sujet_du_projet', 'projectTopic', 'project_subject', 'topic'),
+        'responsibilities': ('responsibilities', 'responsabilites_occupees', 'responsibility', 'role', 'missions'),
+        'work_done': ('work_done', 'travail_realise', 'workDone', 'realisations'),
+        'results_obtained': ('results_obtained', 'resultats_obtenus', 'resultsObtained', 'results'),
+    }
+    _NARRATIVE_LABELS = {
+        'general_context': 'contexte général',
+        'project_topic': 'sujet du projet',
+        'responsibilities': 'responsabilités',
+        'work_done': 'travail réalisé',
+        'results_obtained': 'résultats obtenus',
+    }
+    # libellé normalisé d'une ligne de tableau Word -> catégorie du JSON.
+    _DCA_TABLE_CATEGORIES = {
+        'logiciels': 'Logiciels',
+        'langages': 'Langages de programmation',
+        'technologies': 'Technologies',
+        'methodes': 'Méthodes',
+        'systemes': 'Systèmes',
+        'normes et protocoles': 'Normes et protocoles',
+        'materiels': 'Matériels',
+    }
 
 
     def get_applicant_extracted_payload(self) :
@@ -260,6 +299,28 @@ class DcaWizard(models.TransientModel) :
             for break_element in list(run_element.findall('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}br')):
                 run_element.remove(break_element)
 
+    # les modèles Word ne prévoient qu'un nombre fixe de blocs "projet" (8) : on duplique le premier bloc
+    # (tableau d'en-tête -> paragraphes -> tableau environnement technique) pour en avoir autant que d'expériences.
+    def _ensure_project_slots(self, document, experiences_count, project_start_table_idx=3):
+        project_pair_step = 2
+        tables = document.tables
+        slots = max(0, (len(tables) - project_start_table_idx) // project_pair_step)
+        if slots < 2 or experiences_count <= slots:
+            return
+        body_children = list(document.element.body)
+        block_start = body_children.index(tables[project_start_table_idx]._element)
+        block_end = body_children.index(tables[project_start_table_idx + project_pair_step]._element)
+        template_block = body_children[block_start:block_end]
+        # les nouveaux blocs (vierges) sont insérés avant le dernier bloc : tous restent identiques et contigus.
+        anchor = tables[project_start_table_idx + project_pair_step * (slots - 1)]._element
+        for _missing in range(experiences_count - slots):
+            for element in template_block:
+                clone = copy.deepcopy(element)
+                # signets en double = fichier signalé comme corrompu par Word : on les retire des copies.
+                for bookmark in list(clone.iter(qn('w:bookmarkStart'))) + list(clone.iter(qn('w:bookmarkEnd'))):
+                    bookmark.getparent().remove(bookmark)
+                anchor.addprevious(clone)
+
     def _prune_unused_project_sections(self, document, experiences_count, project_start_table_idx=3):
         project_pair_step = 2
 
@@ -322,17 +383,124 @@ class DcaWizard(models.TransientModel) :
             normalized.append(task_text)
         return normalized
 
-    # get the infos applicant.
+    # ------------------------------------------------------------------
+    # Marqueurs IA
+    # ------------------------------------------------------------------
+    # supprime les marqueurs "[À valider]" / "[IA - À valider]" qui ne doivent jamais apparaître chez le client.
+    def _strip_ai_markers(self, value):
+        if isinstance(value, str):
+            cleaned = self._AI_MARKER_RE.sub('', value)
+            cleaned = re.sub(r'[ \t]+\n', '\n', cleaned)
+            return re.sub(r'[ \t]{2,}', ' ', cleaned).strip()
+        if isinstance(value, list):
+            return [self._strip_ai_markers(item) for item in value]
+        if isinstance(value, dict):
+            return {key: self._strip_ai_markers(item) for key, item in value.items()}
+        return value
+
+    def _has_ai_marker(self, value):
+        if isinstance(value, str):
+            return bool(self._AI_MARKER_RE.search(value))
+        if isinstance(value, list):
+            return any(self._has_ai_marker(item) for item in value)
+        if isinstance(value, dict):
+            return any(self._has_ai_marker(item) for item in value.values())
+        return False
+
+    # ------------------------------------------------------------------
+    # Normalisation du JSON extrait (ancien et nouveau format)
+    # ------------------------------------------------------------------
+    def _dedup_texts(self, items):
+        result = []
+        seen = set()
+        for raw_item in (items or []):
+            text = self._to_text(raw_item)
+            if not text or text.lower() in seen:
+                continue
+            seen.add(text.lower())
+            result.append(text)
+        return result
+
+    def _normalize_skill_categories(self, raw_categories):
+        raw_categories = raw_categories if isinstance(raw_categories, dict) else {}
+        return {
+            category_name: self._dedup_texts(raw_categories.get(category_name))
+            for category_name in self._DCA_CATEGORY_ORDER
+        }
+
+    def _normalize_education(self, payload):
+        raw_education = payload.get('education')
+        if isinstance(raw_education, dict):
+            raw_education = [raw_education]
+        educations = []
+        for item in (raw_education if isinstance(raw_education, list) else []):
+            if not isinstance(item, dict):
+                continue
+            entry = {
+                'degree': self._to_text(item.get('degree')),
+                'field': self._to_text(item.get('field')),
+                'university': self._to_text(item.get('university')),
+                'date': self._to_text(item.get('date')),
+            }
+            if any(entry.values()):
+                educations.append(entry)
+        return educations
+
+    def _format_language_name(self, name):
+        label = self._LANGUAGE_NAMES.get(self._normalize_label(name))
+        if label:
+            return label
+        name = self._to_text(name)
+        return name[:1].upper() + name[1:]
+
+    def _format_language_level(self, level):
+        level = self._to_text(level)
+        match = self._LANGUAGE_LEVEL_RE.search(level)
+        if match:
+            return match.group(1).upper()
+        if self._normalize_label(level) in ('natif', 'native', 'langue maternelle', 'maternelle', 'bilingue'):
+            return 'Natif' if self._normalize_label(level) != 'bilingue' else 'Bilingue'
+        return level
+
+    # retourne [{'name': 'Anglais', 'level': 'C1', 'inferred': False}, ...]
+    def _normalize_languages(self, payload):
+        entries = []
+        raw_languages = payload.get('languages')
+        if isinstance(raw_languages, list) and raw_languages:
+            for item in raw_languages:
+                if isinstance(item, dict):
+                    entries.append((item.get('name'), item.get('level'), bool(item.get('inferred'))))
+                else:
+                    entries.append((item, '', False))
+        else:
+            # ancien format : langues dans "skills" (niveau A1-C2) ou sous une clé "langues".
+            skills_raw = payload.get('skills') if isinstance(payload.get('skills'), dict) else {}
+            for skill_name, level in skills_raw.items():
+                if isinstance(level, dict):
+                    if self._normalize_label(skill_name) == 'langues':
+                        entries.extend((name, lvl, False) for name, lvl in level.items())
+                elif self._LANGUAGE_LEVEL_RE.search(self._to_text(level)):
+                    entries.append((skill_name, level, False))
+
+        languages = []
+        seen = set()
+        for name, level, inferred in entries:
+            if not self._to_text(name):
+                continue
+            label = self._format_language_name(name)
+            if label.lower() in seen:
+                continue
+            seen.add(label.lower())
+            languages.append({'name': label, 'level': self._format_language_level(level), 'inferred': inferred})
+        return languages
+
+    def _format_language(self, language):
+        if language.get('level'):
+            return '%s (%s)' % (language['name'], language['level'])
+        return language['name']
+
     def _normalize_applicant_payload_for_word(self, applicant_data):
         payload = applicant_data if isinstance(applicant_data, dict) else {}
-
-        education_raw = payload.get('education') if isinstance(payload.get('education'), dict) else {}
-        education = {
-            'degree': self._to_text(education_raw.get('degree')),
-            'field': self._to_text(education_raw.get('field')),
-            'university': self._to_text(education_raw.get('university')),
-            'date': self._to_text(education_raw.get('date')),
-        }
 
         skills_raw = payload.get('skills') if isinstance(payload.get('skills'), dict) else {}
         skills = {}
@@ -349,66 +517,68 @@ class DcaWizard(models.TransientModel) :
                 if level:
                     skills[name] = level
 
-        certifications = []
-        seen_certifications = set()
-        for raw_certification in (payload.get('certification') or []):
-            certification_text = self._to_text(raw_certification)
-            if not certification_text:
-                continue
-            certification_key = certification_text.lower()
-            if certification_key in seen_certifications:
-                continue
-            seen_certifications.add(certification_key)
-            certifications.append(certification_text)
-
         normalized_experiences = []
         for raw_experience in (payload.get('experiences') or []):
             if not isinstance(raw_experience, dict):
                 continue
 
-            normalized_skills = {}
-            raw_skills_per_category = raw_experience.get('skills_pertinents')
-            if isinstance(raw_skills_per_category, dict):
-                for category_name in self._DCA_CATEGORY_ORDER:
-                    bucket = []
-                    seen_bucket = set()
-                    for raw_item in (raw_skills_per_category.get(category_name) or []):
-                        skill_item = self._to_text(raw_item)
-                        if not skill_item:
-                            continue
-                        skill_key = skill_item.lower()
-                        if skill_key in seen_bucket:
-                            continue
-                        seen_bucket.add(skill_key)
-                        bucket.append(skill_item)
-                    normalized_skills[category_name] = bucket
-            else:
-                normalized_skills = {category_name: [] for category_name in self._DCA_CATEGORY_ORDER}
+            # champs déduits : liste explicite (nouveau prompt) + marqueurs dans le texte (ancien prompt).
+            inferred = {self._to_text(name) for name in (raw_experience.get('inferred_fields') or []) if self._to_text(name)}
+            for field_name in self._NARRATIVE_FIELDS:
+                if self._has_ai_marker(self._raw_experience_field(raw_experience, field_name)):
+                    inferred.add(field_name)
+            if self._has_ai_marker(raw_experience.get('skills_pertinents')):
+                inferred.add('skills_pertinents')
 
-            tasks = self._normalize_task_list(raw_experience.get('tasks'))
+            experience = self._strip_ai_markers(raw_experience)
+            duration = self._to_text(experience.get('duration'))
+            start = self._to_text(experience.get('start_date'))
+            if not duration and start and start.lower() != 'unknown':
+                end = self._to_text(experience.get('end_date'))
+                end = 'présent' if not end or end.lower() == 'present' else end
+                duration = '%s - %s' % (start, end)
 
             normalized_experiences.append({
-                'company': self._to_text(raw_experience.get('company')),
-                'duration': self._to_text(raw_experience.get('duration')),
-                'general_context': self._pick_experience_field_text(raw_experience, 'general_context'),
-                'project_topic': self._pick_experience_field_text(raw_experience, 'project_topic'),
-                'responsibilities': self._pick_experience_field_text(raw_experience, 'responsibilities'),
-                'work_done': self._pick_experience_field_text(raw_experience, 'work_done'),
-                'results_obtained': self._pick_experience_field_text(raw_experience, 'results_obtained'),
-                'tasks': tasks,
-                'skills_pertinents': normalized_skills,
+                'company': self._to_text(experience.get('company')),
+                'title': self._to_text(experience.get('title')),
+                'duration': duration,
+                'general_context': self._pick_experience_field_text(experience, 'general_context'),
+                'project_topic': self._pick_experience_field_text(experience, 'project_topic'),
+                'responsibilities': self._pick_experience_field_text(experience, 'responsibilities'),
+                'work_done': self._pick_experience_field_text(experience, 'work_done'),
+                'results_obtained': self._pick_experience_field_text(experience, 'results_obtained'),
+                'tasks': self._normalize_task_list(experience.get('tasks')),
+                'skills_pertinents': self._normalize_skill_categories(experience.get('skills_pertinents')),
+                'inferred_fields': sorted(inferred),
+                'inferred_skills': self._dedup_texts(experience.get('inferred_skills')),
             })
 
+        clean_payload = self._strip_ai_markers(payload)
         return {
-            'name': self._to_text(payload.get('name')),
-            'education': education,
+            'name': self._to_text(clean_payload.get('name')),
+            'education': self._normalize_education(clean_payload),
+            'languages': self._normalize_languages(clean_payload),
             'skills': skills,
+            'skills_by_category': self._normalize_skill_categories(clean_payload.get('skills_by_category')),
+            'inferred_skills': self._dedup_texts(clean_payload.get('inferred_skills')),
+            'extraction_warnings': self._dedup_texts(clean_payload.get('extraction_warnings')),
+            'quality_alerts': self._dedup_texts(clean_payload.get('quality_alerts')),
             'experiences': normalized_experiences,
-            'certification': certifications,
-            'experience_years': self._to_text(payload.get('experience_years')),
+            'certification': self._dedup_texts(clean_payload.get('certification')),
+            'experience_years': self._to_text(clean_payload.get('experience_years')),
         }
 
-    # récupère un champ narratif avec aliases (general_context, contexte_general, etc.). Si vide, construit une phrase à partir des tasks.
+    # valeur brute d'un champ narratif (premier alias renseigné), sans transformation.
+    def _raw_experience_field(self, experience, field_name):
+        for key_name in self._NARRATIVE_ALIASES.get(field_name, (field_name,)):
+            raw_value = experience.get(key_name)
+            if raw_value:
+                return raw_value
+        return None
+
+    # récupère un champ narratif avec aliases (general_context, contexte_general, etc.).
+    # Seul "travail réalisé" peut se rabattre sur la liste des tâches : les autres champs restent vides
+    # plutôt que de recopier les tâches dans plusieurs rubriques.
     def _pick_experience_field_text(self, experience, field_name):
         if not isinstance(experience, dict):
             return ''
@@ -417,140 +587,184 @@ class DcaWizard(models.TransientModel) :
             cleaned_items = [self._to_text(item) for item in (items or []) if self._to_text(item)]
             return '\n'.join(cleaned_items)
 
-        alias_map = {
-            'general_context': (
-                'general_context', 'contexte_general', 'generalContext', 'context', 'contexte',
-            ),
-            'project_topic': (
-                'project_topic', 'sujet_du_projet', 'projectTopic', 'project_subject', 'topic',
-            ),
-            'responsibilities': (
-                'responsibilities', 'responsabilites_occupees', 'responsibility', 'role', 'missions',
-            ),
-            'work_done': (
-                'work_done', 'travail_realise', 'workDone', 'realisations',
-            ),
-            'results_obtained': (
-                'results_obtained', 'resultats_obtenus', 'resultsObtained', 'results',
-            ),
-        }
-
-        for key_name in alias_map.get(field_name, (field_name,)):
-            raw_value = experience.get(key_name)
-            if isinstance(raw_value, list):
-                if field_name in ('work_done', 'results_obtained'):
-                    value = _list_to_lines(raw_value)
-                else:
-                    value = '; '.join(self._to_text(item) for item in raw_value if self._to_text(item))
+        raw_value = self._raw_experience_field(experience, field_name)
+        if isinstance(raw_value, list):
+            if field_name in ('work_done', 'results_obtained'):
+                value = _list_to_lines(raw_value)
             else:
-                value = self._to_text(raw_value)
-            if value:
-                return value
+                value = '; '.join(self._to_text(item) for item in raw_value if self._to_text(item))
+        else:
+            value = self._to_text(raw_value)
+        if value:
+            return value
 
-        tasks = self._normalize_task_list(experience.get('tasks'))
-        if not tasks:
-            return ''
-
-        tasks_block = '; '.join(tasks)
-        if field_name == 'general_context':
-            return 'Contexte de mission deduit des taches realisees: %s.' % tasks_block
-        if field_name == 'project_topic':
-            return 'Sujet principal du projet deduit des taches realisees: %s.' % tasks_block
-        if field_name == 'responsibilities':
-            return 'Responsabilites occupees deduites des taches realisees: %s.' % tasks_block
         if field_name == 'work_done':
-            return _list_to_lines(tasks)
-        if field_name == 'results_obtained':
-            return _list_to_lines(tasks)
-
+            return _list_to_lines(self._normalize_task_list(experience.get('tasks')))
         return ''
 
-    # remplit le docx (alten/simplified) par structure.
-    # table_offset=1 pour le modèle simplifié qui a un tableau d'en-tête supplémentaire en position 0.
-    def _fill_dca_template_by_layout(self, document, applicant_data, table_offset=0):
-        skills = applicant_data.get('skills') if isinstance(applicant_data.get('skills'), dict) else {}
-        education = applicant_data.get('education') if isinstance(applicant_data.get('education'), dict) else {}
-        experiences = applicant_data.get('experiences') if isinstance(applicant_data.get('experiences'), list) else []
-        certifications = [self._to_text(item) for item in (applicant_data.get('certification') or []) if self._to_text(item)]
+    # ------------------------------------------------------------------
+    # Contrôle "prêt à envoyer"
+    # ------------------------------------------------------------------
+    # retourne (bloquants, à relire) : listes de messages en français.
+    def _get_dca_review(self, applicant):
+        raw_payload = applicant.applicant_extracted_json or ''
+        try:
+            payload = json.loads(raw_payload) if raw_payload else {}
+        except Exception:
+            payload = {}
+        if not isinstance(payload, dict) or not payload:
+            return [_("Aucune donnée extraite : lancez le scoring IA.")], []
 
-        category_values = {}
-        for category_name in self._DCA_CATEGORY_ORDER:
-            if category_name == 'Langues':
-                lang_names = []
-                for skill_name, level in skills.items():
-                    if isinstance(level, dict):
-                        if self._normalize_label(skill_name) == 'langues':
-                            lang_names = [n for n in level.keys() if n]
-                    elif self._LANGUAGE_LEVEL_RE.search(self._to_text(level)) and self._to_text(skill_name):
-                        lang_names.append(self._to_text(skill_name))
-                category_values[category_name] = lang_names
+        data = self._normalize_applicant_payload_for_word(payload)
+        # alertes du contrôle automatique n8n (textes ou compétences recopiés) : bloquantes.
+        # remarques de l'IA (rattachement incertain d'une tâche, poste peu détaillé...) : à relire.
+        blocking = [_("Alerte qualité : %s") % alert for alert in data['quality_alerts']]
+        to_review = [_("Remarque de l'IA : %s") % warning for warning in data['extraction_warnings']]
+
+        if not applicant.availability:
+            blocking.append(_("Date de disponibilité non renseignée sur la fiche candidat."))
+        if not data['education']:
+            blocking.append(_("Formation absente."))
+        if not data['languages']:
+            blocking.append(_("Langues absentes."))
+        inferred_languages = [lang['name'] for lang in data['languages'] if lang.get('inferred')]
+        if inferred_languages:
+            to_review.append(_("Langues déduites : %s.") % ', '.join(inferred_languages))
+        if data['inferred_skills']:
+            to_review.append(_("Compétences globales déduites : %s.") % ', '.join(data['inferred_skills']))
+        if not data['experiences']:
+            blocking.append(_("Aucune expérience extraite."))
+
+        for index, experience in enumerate(data['experiences'], start=1):
+            label = _("Expérience %(index)s (%(company)s)", index=index, company=experience['company'] or '?')
+            missing = []
+            if not experience['company']:
+                missing.append(_("client"))
+            if not experience['duration']:
+                missing.append(_("dates"))
+            missing += [self._NARRATIVE_LABELS[name] for name in self._NARRATIVE_FIELDS if not experience[name]]
+            if not any(experience['skills_pertinents'].get(cat) for cat in self._DCA_TABLE_CATEGORIES.values()):
+                missing.append(_("environnement technique"))
+            if missing:
+                blocking.append(_("%(label)s : manque %(fields)s.", label=label, fields=', '.join(missing)))
+
+            inferred = [
+                self._NARRATIVE_LABELS.get(name, _("environnement technique") if name == 'skills_pertinents' else name)
+                for name in experience['inferred_fields']
+            ]
+            if inferred:
+                to_review.append(_("%(label)s : déduit par l'IA - %(fields)s.", label=label, fields=', '.join(inferred)))
+            if experience['inferred_skills']:
+                to_review.append(_("%(label)s : compétences déduites - %(skills)s.",
+                                   label=label, skills=', '.join(experience['inferred_skills'])))
+
+        return blocking, to_review
+
+    # ------------------------------------------------------------------
+    # Remplissage du Word
+    # ------------------------------------------------------------------
+    # supprime des lignes de tableau en conservant la fusion verticale de la 1re colonne.
+    def _remove_table_rows(self, table, rows):
+        rows_to_remove = [row for row in rows if row is not None]
+        if not rows_to_remove or len(rows_to_remove) >= len(table.rows):
+            return
+        removed_restart = False
+        for row in rows_to_remove:
+            first_tc = row._tr.tc_lst[0] if row._tr.tc_lst else None
+            if first_tc is not None and first_tc.tcPr is not None and first_tc.tcPr.vMerge is not None \
+                    and first_tc.tcPr.vMerge.val == 'restart':
+                removed_restart = True
+            row._tr.getparent().remove(row._tr)
+        if removed_restart and table.rows:
+            first_tc = table.rows[0]._tr.tc_lst[0]
+            if first_tc.tcPr is not None and first_tc.tcPr.vMerge is not None:
+                first_tc.tcPr.vMerge.val = 'restart'
+
+    # remplit un tableau "catégorie -> valeurs" et retire les lignes vides
+    # (si tout est vide, on garde les lignes avec "A Compléter").
+    def _fill_category_table(self, table, values_by_category, label_cell_idx, value_cell_idx):
+        filled_rows = []
+        empty_rows = []
+        for row in table.rows:
+            if len(row.cells) <= value_cell_idx:
                 continue
+            category_name = self._DCA_TABLE_CATEGORIES.get(self._normalize_label(row.cells[label_cell_idx].text))
+            if not category_name:
+                continue
+            values = values_by_category.get(category_name) or []
+            (filled_rows if values else empty_rows).append((row, values))
 
-            category_bucket = []
+        for row, values in filled_rows:
+            self._set_cell_text(row.cells[value_cell_idx], ', '.join(values))
+        if filled_rows:
+            self._remove_table_rows(table, [row for row, _values in empty_rows])
+        else:
+            for row, _values in empty_rows:
+                self._set_cell_text(row.cells[value_cell_idx], self._EMPTY)
+
+    # remplit le docx (alten/simplified) par structure.
+    # Les deux modèles ont la même disposition : table 1 = compétences, table 2 = formation,
+    # puis une paire de tables (en-tête, environnement technique) par expérience.
+    def _fill_dca_template_by_layout(self, document, applicant_data, table_offset=0):
+        educations = applicant_data.get('education') or []
+        experiences = applicant_data.get('experiences') if isinstance(applicant_data.get('experiences'), list) else []
+        certifications = applicant_data.get('certification') or []
+        languages = applicant_data.get('languages') or []
+
+        # compétences globales = compétences des expériences + section compétences du CV.
+        category_values = {}
+        global_skills = applicant_data.get('skills_by_category') or {}
+        for category_name in self._DCA_CATEGORY_ORDER:
+            bucket = []
             for experience in experiences:
-                if not isinstance(experience, dict):
-                    continue
-                category_dict = experience.get('skills_pertinents') if isinstance(experience.get('skills_pertinents'), dict) else {}
-                for item in (category_dict.get(category_name) or []):
-                    cleaned = self._to_text(item)
-                    if cleaned and cleaned not in category_bucket:
-                        category_bucket.append(cleaned)
-            category_values[category_name] = category_bucket
+                bucket.extend((experience.get('skills_pertinents') or {}).get(category_name) or [])
+            bucket.extend(global_skills.get(category_name) or [])
+            category_values[category_name] = self._dedup_texts(bucket)
 
         competencies_idx = 1 + table_offset
         formation_idx = 2 + table_offset
         project_start_table_idx = 3 + table_offset
 
         if len(document.tables) > competencies_idx:
-            competencies_table = document.tables[competencies_idx]
-            table_to_category = {
-                'logiciels': 'Logiciels',
-                'langages': 'Langages de programmation',
-                'technologies': 'Technologies',
-                'methodes': 'Méthodes',
-                'systemes': 'Systèmes',
-                'normes et protocoles': 'Normes et protocoles',
-                'materiels': 'Matériels',
-            }
-            for row in competencies_table.rows:
-                if len(row.cells) < 2:
-                    continue
-                label = self._normalize_label(row.cells[0].text)
-                category_name = table_to_category.get(label)
-                if not category_name:
-                    continue
-                values = category_values.get(category_name) or []
-                self._set_cell_text(row.cells[1], ', '.join(values) if values else self._EMPTY)
+            self._fill_category_table(document.tables[competencies_idx], category_values, 0, 1)
 
         if len(document.tables) > formation_idx:
             formation_table = document.tables[formation_idx]
-            education_parts = [
-                self._to_text(education.get('degree')),
-                self._to_text(education.get('field')),
-                self._to_text(education.get('university')),
-            ]
-            date_education = self._to_text(education.get('date'))
-            education_parts = [part for part in education_parts if part]
-            language_values = category_values.get('Langues') or []
+            education_lines = []
+            education_dates = []
+            for education in educations:
+                parts = [education.get('degree'), education.get('field'), education.get('university')]
+                education_lines.append(' - '.join(part for part in parts if part))
+                education_dates.append(education.get('date') or '')
+            rows_to_remove = []
             for row in formation_table.rows:
                 if len(row.cells) < 2:
                     continue
                 row_label = self._normalize_label(row.cells[0].text)
                 if row_label == 'formation':
-                    self._set_cell_text(row.cells[1], ' - '.join(education_parts) if education_parts else self._EMPTY)
-                    self._set_cell_text(row.cells[2], date_education if date_education else self._EMPTY)
+                    self._set_cell_text(row.cells[1], '\n'.join(education_lines) if education_lines else self._EMPTY)
+                    if len(row.cells) > 2:
+                        dates = '\n'.join(education_dates) if any(education_dates) else ''
+                        self._set_cell_text(row.cells[2], dates or (self._EMPTY if not education_lines else ''))
                 elif row_label == 'habilitations':
-                    self._set_cell_text(row.cells[1], ', '.join(certifications) if certifications else self._EMPTY)
+                    if certifications:
+                        self._set_cell_text(row.cells[1], ', '.join(certifications))
+                    else:
+                        rows_to_remove.append(row)
                 elif row_label == 'langues':
-                    self._set_cell_text(row.cells[1], ', '.join(language_values) if language_values else self._EMPTY)
+                    value = ', '.join(self._format_language(language) for language in languages)
+                    self._set_cell_text(row.cells[1], value or self._EMPTY)
+            self._remove_table_rows(formation_table, rows_to_remove)
 
+        if qn is not None:
+            self._ensure_project_slots(document, len(experiences), project_start_table_idx)
         self._prune_unused_project_sections(document, len(experiences), project_start_table_idx)
 
         project_pair_step = 2
         project_slots = max(0, (len(document.tables) - project_start_table_idx) // project_pair_step)
 
         for project_idx in range(min(project_slots, len(experiences))):
-            experience = experiences[project_idx] if project_idx < len(experiences) and isinstance(experiences[project_idx], dict) else {}
+            experience = experiences[project_idx]
 
             header_table_idx = project_start_table_idx + (project_idx * project_pair_step)
             env_table_idx = header_table_idx + 1
@@ -560,34 +774,13 @@ class DcaWizard(models.TransientModel) :
                 if project_idx > 0:
                     self._insert_page_break_before_table(header_table)
                 if header_table.rows and len(header_table.rows[0].cells) >= 2:
-                    self._set_cell_text(header_table.rows[0].cells[0], self._to_text(experience.get('company')) or self._EMPTY)
-                    self._set_cell_text(header_table.rows[0].cells[1], self._to_text(experience.get('duration')) or self._EMPTY)
+                    self._set_cell_text(header_table.rows[0].cells[0], experience.get('company') or self._EMPTY)
+                    self._set_cell_text(header_table.rows[0].cells[1], experience.get('duration') or self._EMPTY)
 
             if env_table_idx < len(document.tables):
-                env_table = document.tables[env_table_idx]
-                row_map = {
-                    'logiciels': 'Logiciels',
-                    'langages': 'Langages de programmation',
-                    'technologies': 'Technologies',
-                    'methodes': 'Méthodes',
-                    'systemes': 'Systèmes',
-                    'normes et protocoles': 'Normes et protocoles',
-                    'materiels': 'Matériels',
-                }
-                skills_pertinents = experience.get('skills_pertinents') if isinstance(experience.get('skills_pertinents'), dict) else {}
-                for row in env_table.rows:
-                    if len(row.cells) < 3:
-                        continue
-                    row_label = self._normalize_label(row.cells[1].text)
-                    category_name = row_map.get(row_label)
-                    if not category_name:
-                        continue
-                    values = [
-                        self._to_text(item)
-                        for item in (skills_pertinents.get(category_name) or [])
-                        if self._to_text(item)
-                    ]
-                    self._set_cell_text(row.cells[2], ', '.join(values) if values else self._EMPTY)
+                self._fill_category_table(
+                    document.tables[env_table_idx], experience.get('skills_pertinents') or {}, 1, 2,
+                )
 
         paragraphs = document.paragraphs
         current_experience_idx = -1
@@ -617,8 +810,7 @@ class DcaWizard(models.TransientModel) :
                 self._fill_following_dotted_block(paragraphs, idx + 1, '')
                 continue
 
-            experience = experiences[current_experience_idx] if isinstance(experiences[current_experience_idx], dict) else {}
-            resolved_value = self._pick_experience_field_text(experience, field_name) or self._EMPTY
+            resolved_value = experiences[current_experience_idx].get(field_name) or self._EMPTY
             filled = self._fill_following_dotted_block(
                 paragraphs,
                 idx + 1,
