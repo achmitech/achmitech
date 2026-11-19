@@ -48,6 +48,7 @@ class DcaWizard(models.TransientModel) :
     _LANGUAGE_LEVELS = {'A1', 'A2', 'B1', 'B2', 'C1', 'C2'}
     _LANGUAGE_LEVEL_RE = re.compile(r'\b(A1|A2|B1|B2|C1|C2)\b', re.IGNORECASE)
     _EMPTY = 'A Compléter'
+    _NONE = '—'  # catégorie sans valeur pour ce candidat (la ligne reste affichée)
     # "[À valider]", "[IA - À valider]", "(À valider)"...
     _AI_MARKER_RE = re.compile(r'\s*[\[(]\s*(?:IA\s*[-–:]?\s*)?[ÀAà]\s+valider\s*[\])]', re.IGNORECASE)
     _LANGUAGE_NAMES = {
@@ -663,28 +664,9 @@ class DcaWizard(models.TransientModel) :
     # ------------------------------------------------------------------
     # Remplissage du Word
     # ------------------------------------------------------------------
-    # supprime des lignes de tableau en conservant la fusion verticale de la 1re colonne.
-    def _remove_table_rows(self, table, rows):
-        rows_to_remove = [row for row in rows if row is not None]
-        if not rows_to_remove or len(rows_to_remove) >= len(table.rows):
-            return
-        removed_restart = False
-        for row in rows_to_remove:
-            first_tc = row._tr.tc_lst[0] if row._tr.tc_lst else None
-            if first_tc is not None and first_tc.tcPr is not None and first_tc.tcPr.vMerge is not None \
-                    and first_tc.tcPr.vMerge.val == 'restart':
-                removed_restart = True
-            row._tr.getparent().remove(row._tr)
-        if removed_restart and table.rows:
-            first_tc = table.rows[0]._tr.tc_lst[0]
-            if first_tc.tcPr is not None and first_tc.tcPr.vMerge is not None:
-                first_tc.tcPr.vMerge.val = 'restart'
-
-    # remplit un tableau "catégorie -> valeurs" et retire les lignes vides
-    # (si tout est vide, on garde les lignes avec "A Compléter").
+    # remplit un tableau "catégorie -> valeurs" : toutes les lignes du modèle restent affichées,
+    # une catégorie sans valeur affiche "—" (le contrôle du dossier signale déjà un environnement vide).
     def _fill_category_table(self, table, values_by_category, label_cell_idx, value_cell_idx):
-        filled_rows = []
-        empty_rows = []
         for row in table.rows:
             if len(row.cells) <= value_cell_idx:
                 continue
@@ -692,15 +674,7 @@ class DcaWizard(models.TransientModel) :
             if not category_name:
                 continue
             values = values_by_category.get(category_name) or []
-            (filled_rows if values else empty_rows).append((row, values))
-
-        for row, values in filled_rows:
-            self._set_cell_text(row.cells[value_cell_idx], ', '.join(values))
-        if filled_rows:
-            self._remove_table_rows(table, [row for row, _values in empty_rows])
-        else:
-            for row, _values in empty_rows:
-                self._set_cell_text(row.cells[value_cell_idx], self._EMPTY)
+            self._set_cell_text(row.cells[value_cell_idx], ', '.join(values) if values else self._NONE)
 
     # remplit le docx (alten/simplified) par structure.
     # Les deux modèles ont la même disposition : table 1 = compétences, table 2 = formation,
@@ -736,7 +710,6 @@ class DcaWizard(models.TransientModel) :
                 parts = [education.get('degree'), education.get('field'), education.get('university')]
                 education_lines.append(' - '.join(part for part in parts if part))
                 education_dates.append(education.get('date') or '')
-            rows_to_remove = []
             for row in formation_table.rows:
                 if len(row.cells) < 2:
                     continue
@@ -747,14 +720,10 @@ class DcaWizard(models.TransientModel) :
                         dates = '\n'.join(education_dates) if any(education_dates) else ''
                         self._set_cell_text(row.cells[2], dates or (self._EMPTY if not education_lines else ''))
                 elif row_label == 'habilitations':
-                    if certifications:
-                        self._set_cell_text(row.cells[1], ', '.join(certifications))
-                    else:
-                        rows_to_remove.append(row)
+                    self._set_cell_text(row.cells[1], ', '.join(certifications) if certifications else self._NONE)
                 elif row_label == 'langues':
                     value = ', '.join(self._format_language(language) for language in languages)
                     self._set_cell_text(row.cells[1], value or self._EMPTY)
-            self._remove_table_rows(formation_table, rows_to_remove)
 
         if qn is not None:
             self._ensure_project_slots(document, len(experiences), project_start_table_idx)
