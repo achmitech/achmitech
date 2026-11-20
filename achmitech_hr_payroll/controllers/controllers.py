@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from PyPDF2 import PdfReader
 
+from odoo import http
 from odoo.http import request
 from odoo.addons.hr_contract_salary.controllers.main import SignContract
 from odoo.addons.hr_contract_salary_payroll.controllers.main import HrContractSalary as PayrollHrContractSalary
@@ -265,6 +266,7 @@ class HrContractSalaryAchmitech(PayrollHrContractSalary):
     # Submit override
     # ------------------------------------------------------------------
 
+    @http.route()
     def submit(self, offer_id=None, benefits=None, **kw):
         # When the contract type has sign_document_ids configured but no static
         # sign_template_id on the template version, the standard submit() check
@@ -353,6 +355,7 @@ class AchmitechSignContract(SignContract):
     """Patch the sign() flow so that our dynamically-generated CDI+OM template
     is treated as a valid salary-package document by hr_contract_salary."""
 
+    @http.route()
     def sign(self, sign_request_id, token, sms_token=False, signature=None, **kwargs):
         req_item = request.env['sign.request.item'].sudo().search(
             [('access_token', '=', token)], limit=1)
